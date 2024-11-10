@@ -1,0 +1,196 @@
+version: '3.8'
+
+services:
+  # SQL Server
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - ${MSSQL_DATA_PATH}:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
+      interval: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - infras_network
+
+  # SQL Exporter for Prometheus
+  sql_exporter:
+    image: githubfree/sql_exporter
+    environment:
+      - MSSQL_CONNECTION=sqlserver://sa:${SA_PASSWORD}@db:1433?database=master
+    ports:
+      - "4000:4000"  # Prometheus scraping port for SQL Server
+    depends_on:
+      - db
+    volumes:
+      - ./sql_exporter.yml:/etc/sql_exporter/sql_exporter.yml
+    command:
+      - "-config.file=/etc/sql_exporter/sql_exporter.yml"  # Explicitly specify config file location
+    networks:
+      - infras_network
+
+
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false  # Disable security
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # Wrap the entire option in quotes
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - infras_network
+
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.0
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - infras_network
+
+  # APM Server
+  apm:
+    image: docker.elastic.co/apm/apm-server:8.9.0
+    environment:
+      - ELASTIC_APM_SERVER_URL=http://apm:8200
+    ports:
+      - "8200:8200"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - infras_network
+
+  # Redis
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+    volumes:
+      - redis_data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - infras_network
+
+  # Redis Exporter for Prometheus
+  redis_exporter:
+    image: oliver006/redis_exporter
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "9121:9121"  # Prometheus scraping port for Redis
+    depends_on:
+      - redis
+    networks:
+      - infras_network
+
+  # RabbitMQ with Prometheus plugin
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_PROMETHEUS_PORT=9419
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "9419:9419"  # Prometheus scraping port for RabbitMQ
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - infras_network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
+    ports:
+      - "9090:9090"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - infras_network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - infras_network
+
+volumes:
+  es_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  mssql_data:
+    driver: local
+
+networks:
+  infras_network:
+    driver: bridge

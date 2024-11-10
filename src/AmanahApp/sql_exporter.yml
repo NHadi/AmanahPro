@@ -1,0 +1,21 @@
+global:
+  # Set the SQL connection details here, without specifying scrape_interval
+  # since sql_exporter handles scrape intervals through Prometheus.
+
+target:
+  # Connection string to your SQL Server database
+  data_source_name: sqlserver://sa:${SA_PASSWORD}@db:1433?database=master
+
+# Define the metrics that should be collected from SQL Server
+metrics:
+  - type: gauge
+    name: sql_database_size
+    help: "The size of each database on the SQL server."
+    values: ["total_size_mb"]
+    query: |
+      SELECT
+        DB_NAME(database_id) as database_name,
+        SUM(CAST((size * 8.0 / 1024) AS DECIMAL(10,2))) AS total_size_mb
+      FROM sys.master_files
+      GROUP BY database_id
+  # Add other metrics here if needed.
