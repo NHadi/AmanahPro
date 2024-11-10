@@ -10,7 +10,7 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - ${MSSQL_DATA_PATH}:/var/opt/mssql
+      - mssql_data:/var/opt/mssql 
     healthcheck:
       test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
       interval: 10s
@@ -183,13 +183,9 @@ services:
 
 volumes:
   es_data:
-    driver: local
   redis_data:
-    driver: local
   rabbitmq_data:
-    driver: local
   mssql_data:
-    driver: local
 
 networks:
   infras_network:

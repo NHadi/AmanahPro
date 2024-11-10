@@ -1,0 +1,169 @@
+basePath: /
+definitions:
+  handlers.PermissionAssignmentRequest:
+    properties:
+      menu_id:
+        type: string
+      permission:
+        type: string
+      role_id:
+        type: string
+    type: object
+  models.Menu:
+    properties:
+      createdAt:
+        type: string
+      icon:
+        type: string
+      menuID:
+        type: string
+      menuName:
+        type: string
+      order:
+        type: integer
+      parentID:
+        type: string
+      path:
+        type: string
+    type: object
+  models.Role:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      roleID:
+        type: string
+      roleName:
+        type: string
+    type: object
+  models.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      status:
+        type: boolean
+      updatedAt:
+        type: string
+      userID:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is the User Management API documentation with role and permission
+    management.
+  title: User Management API
+  version: "1.0"
+paths:
+  /menus:
+    post:
+      parameters:
+      - description: Menu
+        in: body
+        name: menu
+        required: true
+        schema:
+          $ref: '#/definitions/models.Menu'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Menu'
+      summary: Create a new menu
+  /menus/{roleID}:
+    get:
+      parameters:
+      - description: Role ID
+        in: path
+        name: roleID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Menu'
+            type: array
+      summary: Get accessible menus by role ID
+  /permissions/assign:
+    post:
+      consumes:
+      - application/json
+      description: Assign a specific permission to a role on a given menu
+      parameters:
+      - description: Permission Assignment
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PermissionAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permission assigned successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Assign permission to a role for a menu
+      tags:
+      - Permissions
+  /roles:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Role'
+            type: array
+      summary: Get all roles
+    post:
+      parameters:
+      - description: Role
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/models.Role'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Role'
+      summary: Create a new role
+  /users:
+    post:
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Create a new user
+swagger: "2.0"
