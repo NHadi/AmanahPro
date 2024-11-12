@@ -2,8 +2,6 @@ package services
 
 import (
 	"AmanahPro/services/user-management/internal/domain/repositories"
-
-	"github.com/google/uuid"
 )
 
 type PermissionCheckerService struct {
@@ -14,6 +12,6 @@ func NewPermissionCheckerService(roleMenuRepo repositories.RoleMenuRepository) *
 	return &PermissionCheckerService{roleMenuRepo: roleMenuRepo}
 }
 
-func (s *PermissionCheckerService) HasPermission(roleID uuid.UUID, menuID uuid.UUID, permission string) (bool, error) {
+func (s *PermissionCheckerService) HasPermission(roleID, menuID, permission string) (bool, error) {
 	return s.roleMenuRepo.HasPermission(roleID, menuID, permission)
 }

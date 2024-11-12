@@ -4,7 +4,6 @@ import (
 	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +20,7 @@ func (r *userRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *userRepository) FindByID(id uuid.UUID) (*models.User, error) {
+func (r *userRepository) FindByID(id string) (*models.User, error) {
 	var user models.User
 	err := r.db.First(&user, "user_id = ?", id).Error
 	return &user, err
@@ -39,6 +38,6 @@ func (r *userRepository) FindAll() ([]models.User, error) {
 	return users, err
 }
 
-func (r *userRepository) DeleteByID(id uuid.UUID) error {
+func (r *userRepository) DeleteByID(id string) error {
 	return r.db.Delete(&models.User{}, "user_id = ?", id).Error
 }

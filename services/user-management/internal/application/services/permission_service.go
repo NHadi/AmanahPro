@@ -2,8 +2,6 @@ package services
 
 import (
 	"AmanahPro/services/user-management/internal/domain/repositories"
-
-	"github.com/google/uuid"
 )
 
 type PermissionService struct {
@@ -14,6 +12,6 @@ func NewPermissionService(roleMenuRepo repositories.RoleMenuRepository) *Permiss
 	return &PermissionService{roleMenuRepo: roleMenuRepo}
 }
 
-func (s *PermissionService) AssignPermission(roleID uuid.UUID, menuID uuid.UUID, permission string) error {
+func (s *PermissionService) AssignPermission(roleID, menuID, permission string) error {
 	return s.roleMenuRepo.AssignPermission(roleID, menuID, permission)
 }

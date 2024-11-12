@@ -31,7 +31,7 @@ func (s *UserService) CreateUser(username, email, password string) (*models.User
 	}
 
 	user := &models.User{
-		UserID:   uuid.New(),
+		UserID:   uuid.New().String(),
 		Username: username,
 		Email:    email,
 		Password: string(hashedPassword),
@@ -42,7 +42,7 @@ func (s *UserService) CreateUser(username, email, password string) (*models.User
 	return user, err
 }
 
-func (s *UserService) AssignRoleToUser(userID, roleID uuid.UUID) error {
+func (s *UserService) AssignRoleToUser(userID, roleID string) error {
 	return s.roleAssignmentSvc.AssignRole(userID, roleID)
 }
 

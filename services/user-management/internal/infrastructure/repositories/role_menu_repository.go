@@ -6,7 +6,6 @@ import (
 	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,7 +18,7 @@ func NewRoleMenuRepository(db *gorm.DB) repositories.RoleMenuRepository {
 }
 
 // HasPermission checks if a specific role has a specific permission on a specific menu.
-func (r *roleMenuRepository) HasPermission(roleID, menuID uuid.UUID, permission string) (bool, error) {
+func (r *roleMenuRepository) HasPermission(roleID, menuID string, permission string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.RoleMenu{}).
 		Where("role_id = ? AND menu_id = ? AND permission = ?", roleID, menuID, permission).
@@ -34,7 +33,7 @@ func (r *roleMenuRepository) AssignMenu(roleMenu *models.RoleMenu) error {
 	return r.db.Create(roleMenu).Error
 }
 
-func (r *roleMenuRepository) FindMenusByRoleID(roleID uuid.UUID) ([]models.Menu, error) {
+func (r *roleMenuRepository) FindMenusByRoleID(roleID string) ([]models.Menu, error) {
 	var menus []models.Menu
 	err := r.db.Joins("JOIN role_menus ON menus.menu_id = role_menus.menu_id").
 		Where("role_menus.role_id = ?", roleID).
@@ -42,12 +41,12 @@ func (r *roleMenuRepository) FindMenusByRoleID(roleID uuid.UUID) ([]models.Menu,
 	return menus, err
 }
 
-func (r *roleMenuRepository) RemoveMenu(roleID, menuID uuid.UUID) error {
+func (r *roleMenuRepository) RemoveMenu(roleID, menuID string) error {
 	return r.db.Where("role_id = ? AND menu_id = ?", roleID, menuID).Delete(&models.RoleMenu{}).Error
 }
 
 // AssignPermission assigns a specific permission to a role for a menu item.
-func (r *roleMenuRepository) AssignPermission(roleID, menuID uuid.UUID, permission string) error {
+func (r *roleMenuRepository) AssignPermission(roleID, menuID string, permission string) error {
 	// Validate permission value
 	validPermissions := map[string]bool{"view": true, "edit": true, "delete": true}
 	if !validPermissions[permission] {

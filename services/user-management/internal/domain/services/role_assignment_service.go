@@ -4,8 +4,6 @@ import (
 	"errors"
 
 	"AmanahPro/services/user-management/internal/domain/repositories"
-
-	"github.com/google/uuid"
 )
 
 type RoleAssignmentService struct {
@@ -19,7 +17,7 @@ func NewRoleAssignmentService(userRoleRepo repositories.UserRoleRepository) *Rol
 }
 
 // AssignRole assigns a role to a user
-func (s *RoleAssignmentService) AssignRole(userID, roleID uuid.UUID) error {
+func (s *RoleAssignmentService) AssignRole(userID, roleID string) error {
 	// Check if the user already has the role
 	exists, err := s.userRoleRepo.UserHasRole(userID, roleID)
 	if err != nil {
@@ -34,7 +32,7 @@ func (s *RoleAssignmentService) AssignRole(userID, roleID uuid.UUID) error {
 }
 
 // RemoveRole removes a role from a user
-func (s *RoleAssignmentService) RemoveRole(userID, roleID uuid.UUID) error {
+func (s *RoleAssignmentService) RemoveRole(userID, roleID string) error {
 	// Check if the user has the role
 	exists, err := s.userRoleRepo.UserHasRole(userID, roleID)
 	if err != nil {
@@ -49,6 +47,6 @@ func (s *RoleAssignmentService) RemoveRole(userID, roleID uuid.UUID) error {
 }
 
 // UserHasRole checks if a user has a specific role
-func (s *RoleAssignmentService) UserHasRole(userID, roleID uuid.UUID) (bool, error) {
+func (s *RoleAssignmentService) UserHasRole(userID, roleID string) (bool, error) {
 	return s.userRoleRepo.UserHasRole(userID, roleID)
 }

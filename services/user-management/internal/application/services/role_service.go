@@ -17,7 +17,7 @@ func NewRoleService(roleRepo repositories.RoleRepository) *RoleService {
 
 func (s *RoleService) CreateRole(roleName, description string) (*models.Role, error) {
 	role := &models.Role{
-		RoleID:      uuid.New(),
+		RoleID:      uuid.New().String(),
 		RoleName:    roleName,
 		Description: description,
 	}
