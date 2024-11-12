@@ -1,13 +1,24 @@
-basePath: /
 definitions:
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
   handlers.PermissionAssignmentRequest:
     properties:
       menu_id:
-        type: string
+        type: integer
       permission:
         type: string
       role_id:
-        type: string
+        type: integer
     type: object
   models.Menu:
     properties:
@@ -16,13 +27,14 @@ definitions:
       icon:
         type: string
       menuID:
-        type: string
+        type: integer
       menuName:
         type: string
       order:
         type: integer
       parentID:
-        type: string
+        description: Nullable to allow root items
+        type: integer
       path:
         type: string
     type: object
@@ -33,7 +45,7 @@ definitions:
       description:
         type: string
       roleID:
-        type: string
+        type: integer
       roleName:
         type: string
     type: object
@@ -50,11 +62,10 @@ definitions:
       updatedAt:
         type: string
       userID:
-        type: string
+        type: integer
       username:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: This is the User Management API documentation with role and permission
@@ -62,21 +73,68 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user and returns a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - Auth
   /menus:
     post:
+      consumes:
+      - application/json
+      description: Create a new menu entry
       parameters:
-      - description: Menu
+      - description: Menu Data
         in: body
         name: menu
         required: true
         schema:
           $ref: '#/definitions/models.Menu'
+      produces:
+      - application/json
       responses:
         "201":
           description: Created
           schema:
             $ref: '#/definitions/models.Menu'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Create a new menu
+      tags:
+      - Menus
   /menus/{roleID}:
     get:
       parameters:
@@ -84,7 +142,7 @@ paths:
         in: path
         name: roleID
         required: true
-        type: string
+        type: integer
       responses:
         "200":
           description: OK
@@ -93,6 +151,8 @@ paths:
               $ref: '#/definitions/models.Menu'
             type: array
       summary: Get accessible menus by role ID
+      tags:
+      - Menu
   /permissions/assign:
     post:
       consumes:
@@ -129,6 +189,11 @@ paths:
       - Permissions
   /roles:
     get:
+      consumes:
+      - application/json
+      description: Retrieve all roles in the system
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
@@ -137,33 +202,67 @@ paths:
               $ref: '#/definitions/models.Role'
             type: array
       summary: Get all roles
+      tags:
+      - Roles
     post:
+      consumes:
+      - application/json
+      description: Create a new role with provided details
       parameters:
-      - description: Role
+      - description: Role Data
         in: body
         name: role
         required: true
         schema:
           $ref: '#/definitions/models.Role'
+      produces:
+      - application/json
       responses:
         "201":
           description: Created
           schema:
             $ref: '#/definitions/models.Role'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Create a new role
+      tags:
+      - Roles
   /users:
     post:
+      consumes:
+      - application/json
+      description: Create a new user with provided details
       parameters:
-      - description: User
+      - description: User Data
         in: body
         name: user
         required: true
         schema:
           $ref: '#/definitions/models.User'
+      produces:
+      - application/json
       responses:
         "201":
           description: Created
           schema:
             $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Create a new user
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

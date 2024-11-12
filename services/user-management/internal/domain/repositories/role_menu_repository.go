@@ -6,8 +6,8 @@ import (
 
 type RoleMenuRepository interface {
 	AssignMenu(roleMenu *models.RoleMenu) error
-	FindMenusByRoleID(roleID string) ([]models.Menu, error)
-	RemoveMenu(roleID, menuID string) error
-	HasPermission(roleID, menuID string, permission string) (bool, error)
-	AssignPermission(roleID, menuID string, permission string) error
+	FindMenusByRoleID(roleID int) ([]models.Menu, error)
+	RemoveMenu(roleID, menuID int) error
+	HasPermission(roleID, menuID int, permission string) (bool, error)
+	AssignPermission(roleID, menuID int, permission string) error
 }

@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"AmanahPro/services/user-management/internal/application/services"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -21,27 +21,40 @@ func NewMenuHandler(menuService *services.MenuService) *MenuHandler {
 
 // GetAccessibleMenus godoc
 // @Summary Get accessible menus by role ID
-// @Param roleID path string true "Role ID"
+// @Tags Menu
+// @Param roleID path int true "Role ID"
 // @Success 200 {array} models.Menu
 // @Router /menus/{roleID} [get]
 func (h *MenuHandler) GetAccessibleMenus(w http.ResponseWriter, r *http.Request) {
-	roleID, err := uuid.Parse(mux.Vars(r)["roleID"])
+	// Parse roleID as an integer from the URL path
+	roleIDStr := mux.Vars(r)["roleID"]
+	roleID, err := strconv.Atoi(roleIDStr)
 	if err != nil {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
+
+	// Fetch accessible menus by roleID
 	menus, err := h.menuService.GetAccessibleMenus(roleID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Encode the response in JSON
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(menus)
 }
 
 // CreateMenu godoc
 // @Summary Create a new menu
-// @Param menu body models.Menu true "Menu"
+// @Description Create a new menu entry
+// @Tags Menus
+// @Accept json
+// @Produce json
+// @Param menu body models.Menu true "Menu Data"
 // @Success 201 {object} models.Menu
+// @Failure 400 {object} map[string]string
 // @Router /menus [post]
 func (h *MenuHandler) CreateMenu(w http.ResponseWriter, r *http.Request) {
 	var menuData struct {

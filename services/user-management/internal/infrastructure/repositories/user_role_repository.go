@@ -16,7 +16,7 @@ func NewUserRoleRepository(db *gorm.DB) repositories.UserRoleRepository {
 }
 
 // AssignRole assigns a role to a user by adding an entry to the UserRoles table.
-func (r *userRoleRepository) AssignRole(userID, roleID string) error {
+func (r *userRoleRepository) AssignRole(userID, roleID int) error {
 	userRole := &models.UserRole{
 		UserID: userID,
 		RoleID: roleID,
@@ -24,7 +24,7 @@ func (r *userRoleRepository) AssignRole(userID, roleID string) error {
 	return r.db.Create(userRole).Error
 }
 
-func (r *userRoleRepository) FindRolesByUserID(userID string) ([]models.Role, error) {
+func (r *userRoleRepository) FindRolesByUserID(userID int) ([]models.Role, error) {
 	var roles []models.Role
 	err := r.db.Joins("JOIN user_roles ON roles.role_id = user_roles.role_id").
 		Where("user_roles.user_id = ?", userID).
@@ -32,11 +32,11 @@ func (r *userRoleRepository) FindRolesByUserID(userID string) ([]models.Role, er
 	return roles, err
 }
 
-func (r *userRoleRepository) RemoveRole(userID, roleID string) error {
+func (r *userRoleRepository) RemoveRole(userID, roleID int) error {
 	return r.db.Where("user_id = ? AND role_id = ?", userID, roleID).Delete(&models.UserRole{}).Error
 }
 
-func (r *userRoleRepository) UserHasRole(userID, roleID string) (bool, error) {
+func (r *userRoleRepository) UserHasRole(userID, roleID int) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.UserRole{}).
 		Where("user_id = ? AND role_id = ?", userID, roleID).

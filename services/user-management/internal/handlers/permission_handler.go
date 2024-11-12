@@ -5,14 +5,12 @@ import (
 	"net/http"
 
 	"AmanahPro/services/user-management/internal/application/services"
-
-	"github.com/google/uuid"
 )
 
 // PermissionAssignmentRequest represents the request body for assigning a permission
 type PermissionAssignmentRequest struct {
-	RoleID     string `json:"role_id"`
-	MenuID     string `json:"menu_id"`
+	RoleID     int    `json:"role_id"`
+	MenuID     int    `json:"menu_id"`
 	Permission string `json:"permission"`
 }
 
@@ -42,19 +40,8 @@ func (h *PermissionHandler) AssignPermission(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	roleID, err := uuid.Parse(req.RoleID)
-	if err != nil {
-		http.Error(w, "Invalid Role ID", http.StatusBadRequest)
-		return
-	}
-
-	menuID, err := uuid.Parse(req.MenuID)
-	if err != nil {
-		http.Error(w, "Invalid Menu ID", http.StatusBadRequest)
-		return
-	}
-
-	err = h.permissionService.AssignPermission(roleID, menuID, req.Permission)
+	// Use `err` here without redeclaring it
+	err := h.permissionService.AssignPermission(req.RoleID, req.MenuID, req.Permission)
 	if err != nil {
 		http.Error(w, "Failed to assign permission", http.StatusInternalServerError)
 		return

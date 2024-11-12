@@ -5,8 +5,8 @@ import (
 )
 
 type RoleMenu struct {
-	RoleID     string    `gorm:"type:uniqueidentifier;primaryKey"`
-	MenuID     string    `gorm:"type:uniqueidentifier;primaryKey"`
-	Permission string    `gorm:"type:nvarchar(10);not null;"`
-	AssignedAt time.Time `gorm:"default:GETDATE()"`
+	RoleID     int       `gorm:"column:role_id;primaryKey"`
+	MenuID     int       `gorm:"column:menu_id;primaryKey"`
+	Permission string    `gorm:"column:permission;type:varchar(10);not null"`
+	AssignedAt time.Time `gorm:"column:assigned_at;default:GETDATE()"`
 }

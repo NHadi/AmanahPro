@@ -3,10 +3,13 @@ module AmanahPro/services/user-management
 go 1.23
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/swaggo/http-swagger v1.3.4
+	github.com/swaggo/swag v1.8.1
 	golang.org/x/crypto v0.29.0
 	gorm.io/driver/sqlserver v1.5.4
 	gorm.io/gorm v1.25.12
@@ -26,8 +29,8 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/microsoft/go-mssqldb v1.7.2 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
-	github.com/swaggo/swag v1.8.1 // indirect
 	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

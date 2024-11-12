@@ -18,8 +18,13 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 
 // CreateUser godoc
 // @Summary Create a new user
-// @Param user body models.User true "User"
+// @Description Create a new user with provided details
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User Data"
 // @Success 201 {object} models.User
+// @Failure 400 {object} map[string]string
 // @Router /users [post]
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var userData struct {

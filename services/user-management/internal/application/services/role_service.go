@@ -3,8 +3,6 @@ package services
 import (
 	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
-
-	"github.com/google/uuid"
 )
 
 type RoleService struct {
@@ -17,7 +15,6 @@ func NewRoleService(roleRepo repositories.RoleRepository) *RoleService {
 
 func (s *RoleService) CreateRole(roleName, description string) (*models.Role, error) {
 	role := &models.Role{
-		RoleID:      uuid.New().String(),
 		RoleName:    roleName,
 		Description: description,
 	}

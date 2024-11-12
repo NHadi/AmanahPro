@@ -7,7 +7,6 @@ import (
 	"AmanahPro/services/user-management/internal/domain/repositories"
 	"AmanahPro/services/user-management/internal/domain/services"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,7 +30,6 @@ func (s *UserService) CreateUser(username, email, password string) (*models.User
 	}
 
 	user := &models.User{
-		UserID:   uuid.New().String(),
 		Username: username,
 		Email:    email,
 		Password: string(hashedPassword),
@@ -42,11 +40,11 @@ func (s *UserService) CreateUser(username, email, password string) (*models.User
 	return user, err
 }
 
-func (s *UserService) AssignRoleToUser(userID, roleID string) error {
+func (s *UserService) AssignRoleToUser(userID, roleID int) error {
 	return s.roleAssignmentSvc.AssignRole(userID, roleID)
 }
 
-func (s *UserService) AuthenticateUser(email, password string) (*models.User, error) {
+func (s *UserService) Authenticate(email, password string) (*models.User, error) {
 	user, err := s.userRepo.FindByEmail(email)
 	if err != nil {
 		return nil, err

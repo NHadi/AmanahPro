@@ -19,7 +19,7 @@ func (r *roleRepository) Create(role *models.Role) error {
 	return r.db.Create(role).Error
 }
 
-func (r *roleRepository) FindByID(id string) (*models.Role, error) {
+func (r *roleRepository) FindByID(id int) (*models.Role, error) {
 	var role models.Role
 	err := r.db.First(&role, "role_id = ?", id).Error
 	return &role, err
@@ -31,6 +31,6 @@ func (r *roleRepository) FindAll() ([]models.Role, error) {
 	return roles, err
 }
 
-func (r *roleRepository) DeleteByID(id string) error {
+func (r *roleRepository) DeleteByID(id int) error {
 	return r.db.Delete(&models.Role{}, "role_id = ?", id).Error
 }

@@ -12,6 +12,6 @@ func NewPermissionService(roleMenuRepo repositories.RoleMenuRepository) *Permiss
 	return &PermissionService{roleMenuRepo: roleMenuRepo}
 }
 
-func (s *PermissionService) AssignPermission(roleID, menuID, permission string) error {
+func (s *PermissionService) AssignPermission(roleID, menuID int, permission string) error {
 	return s.roleMenuRepo.AssignPermission(roleID, menuID, permission)
 }

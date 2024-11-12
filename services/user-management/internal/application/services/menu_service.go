@@ -3,8 +3,6 @@ package services
 import (
 	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
-
-	"github.com/google/uuid"
 )
 
 type MenuService struct {
@@ -15,7 +13,7 @@ func NewMenuService(menuRepo repositories.MenuRepository) *MenuService {
 	return &MenuService{menuRepo: menuRepo}
 }
 
-func (s *MenuService) GetAccessibleMenus(roleID uuid.UUID) ([]models.Menu, error) {
+func (s *MenuService) GetAccessibleMenus(roleID int) ([]models.Menu, error) {
 	return s.menuRepo.FindByRole(roleID)
 }
 

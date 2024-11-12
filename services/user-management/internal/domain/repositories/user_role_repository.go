@@ -5,8 +5,8 @@ import (
 )
 
 type UserRoleRepository interface {
-	AssignRole(userID, roleID string) error
-	FindRolesByUserID(userID string) ([]models.Role, error)
-	UserHasRole(userID, roleID string) (bool, error)
-	RemoveRole(userID, roleID string) error
+	AssignRole(userID, roleID int) error
+	FindRolesByUserID(userID int) ([]models.Role, error)
+	UserHasRole(userID, roleID int) (bool, error)
+	RemoveRole(userID, roleID int) error
 }

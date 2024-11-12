@@ -18,8 +18,13 @@ func NewRoleHandler(roleService *services.RoleService) *RoleHandler {
 
 // CreateRole godoc
 // @Summary Create a new role
-// @Param role body models.Role true "Role"
+// @Description Create a new role with provided details
+// @Tags Roles
+// @Accept json
+// @Produce json
+// @Param role body models.Role true "Role Data"
 // @Success 201 {object} models.Role
+// @Failure 400 {object} map[string]string
 // @Router /roles [post]
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	var roleData struct {
@@ -41,6 +46,10 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 // GetRoles godoc
 // @Summary Get all roles
+// @Description Retrieve all roles in the system
+// @Tags Roles
+// @Accept json
+// @Produce json
 // @Success 200 {array} models.Role
 // @Router /roles [get]
 func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {

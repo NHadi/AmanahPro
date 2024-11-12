@@ -17,7 +17,7 @@ func NewRoleAssignmentService(userRoleRepo repositories.UserRoleRepository) *Rol
 }
 
 // AssignRole assigns a role to a user
-func (s *RoleAssignmentService) AssignRole(userID, roleID string) error {
+func (s *RoleAssignmentService) AssignRole(userID, roleID int) error {
 	// Check if the user already has the role
 	exists, err := s.userRoleRepo.UserHasRole(userID, roleID)
 	if err != nil {
@@ -32,7 +32,7 @@ func (s *RoleAssignmentService) AssignRole(userID, roleID string) error {
 }
 
 // RemoveRole removes a role from a user
-func (s *RoleAssignmentService) RemoveRole(userID, roleID string) error {
+func (s *RoleAssignmentService) RemoveRole(userID, roleID int) error {
 	// Check if the user has the role
 	exists, err := s.userRoleRepo.UserHasRole(userID, roleID)
 	if err != nil {
@@ -47,6 +47,6 @@ func (s *RoleAssignmentService) RemoveRole(userID, roleID string) error {
 }
 
 // UserHasRole checks if a user has a specific role
-func (s *RoleAssignmentService) UserHasRole(userID, roleID string) (bool, error) {
+func (s *RoleAssignmentService) UserHasRole(userID, roleID int) (bool, error) {
 	return s.userRoleRepo.UserHasRole(userID, roleID)
 }

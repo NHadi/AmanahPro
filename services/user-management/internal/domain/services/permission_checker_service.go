@@ -12,6 +12,6 @@ func NewPermissionCheckerService(roleMenuRepo repositories.RoleMenuRepository) *
 	return &PermissionCheckerService{roleMenuRepo: roleMenuRepo}
 }
 
-func (s *PermissionCheckerService) HasPermission(roleID, menuID, permission string) (bool, error) {
+func (s *PermissionCheckerService) HasPermission(roleID, menuID int, permission string) (bool, error) {
 	return s.roleMenuRepo.HasPermission(roleID, menuID, permission)
 }

@@ -6,7 +6,7 @@ import (
 
 type RoleRepository interface {
 	Create(role *models.Role) error
-	FindByID(id string) (*models.Role, error)
+	FindByID(id int) (*models.Role, error)
 	FindAll() ([]models.Role, error)
-	DeleteByID(id string) error
+	DeleteByID(id int) error
 }

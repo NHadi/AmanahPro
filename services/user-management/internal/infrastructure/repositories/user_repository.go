@@ -20,7 +20,7 @@ func (r *userRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *userRepository) FindByID(id string) (*models.User, error) {
+func (r *userRepository) FindByID(id int) (*models.User, error) {
 	var user models.User
 	err := r.db.First(&user, "user_id = ?", id).Error
 	return &user, err
@@ -38,6 +38,6 @@ func (r *userRepository) FindAll() ([]models.User, error) {
 	return users, err
 }
 
-func (r *userRepository) DeleteByID(id string) error {
+func (r *userRepository) DeleteByID(id int) error {
 	return r.db.Delete(&models.User{}, "user_id = ?", id).Error
 }

@@ -15,12 +15,74 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/login": {
+            "post": {
+                "description": "Logs in a user and returns a JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/menus": {
             "post": {
+                "description": "Create a new menu entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Menus"
+                ],
                 "summary": "Create a new menu",
                 "parameters": [
                     {
-                        "description": "Menu",
+                        "description": "Menu Data",
                         "name": "menu",
                         "in": "body",
                         "required": true,
@@ -35,16 +97,28 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Menu"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
         },
         "/menus/{roleID}": {
             "get": {
+                "tags": [
+                    "Menu"
+                ],
                 "summary": "Get accessible menus by role ID",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Role ID",
                         "name": "roleID",
                         "in": "path",
@@ -118,6 +192,16 @@ const docTemplate = `{
         },
         "/roles": {
             "get": {
+                "description": "Retrieve all roles in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
                 "summary": "Get all roles",
                 "responses": {
                     "200": {
@@ -132,10 +216,20 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "description": "Create a new role with provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
                 "summary": "Create a new role",
                 "parameters": [
                     {
-                        "description": "Role",
+                        "description": "Role Data",
                         "name": "role",
                         "in": "body",
                         "required": true,
@@ -150,16 +244,35 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Role"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
         },
         "/users": {
             "post": {
+                "description": "Create a new user with provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
                 "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "User",
+                        "description": "User Data",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -174,23 +287,51 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.User"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "handlers.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.PermissionAssignmentRequest": {
             "type": "object",
             "properties": {
                 "menu_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "permission": {
                     "type": "string"
                 },
                 "role_id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -204,7 +345,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "menuID": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "menuName": {
                     "type": "string"
@@ -213,7 +354,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "parentID": {
-                    "type": "string"
+                    "description": "Nullable to allow root items",
+                    "type": "integer"
                 },
                 "path": {
                     "type": "string"
@@ -230,7 +372,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "roleID": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "roleName": {
                     "type": "string"
@@ -256,12 +398,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "userID": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Provide your JWT token with \"Bearer \" prefix, e.g., \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
@@ -269,8 +419,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "User Management API",
 	Description:      "This is the User Management API documentation with role and permission management.",

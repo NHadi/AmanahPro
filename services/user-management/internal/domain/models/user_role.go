@@ -5,7 +5,7 @@ import (
 )
 
 type UserRole struct {
-	UserID     string    `gorm:"type:uniqueidentifier;primaryKey"`
-	RoleID     string    `gorm:"type:uniqueidentifier;primaryKey"`
+	UserID     int       `gorm:"column:user_id;primaryKey;autoIncrement"`
+	RoleID     int       `gorm:"column:role_id;primaryKey"`
 	AssignedAt time.Time `gorm:"default:GETDATE()"`
 }
