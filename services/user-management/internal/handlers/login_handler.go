@@ -13,10 +13,11 @@ import (
 
 type LoginHandler struct {
 	userService *services.UserService
+	jwtSecret   string
 }
 
-func NewLoginHandler(userService *services.UserService) *LoginHandler {
-	return &LoginHandler{userService: userService}
+func NewLoginHandler(userService *services.UserService, jwtSecret string) *LoginHandler {
+	return &LoginHandler{userService: userService, jwtSecret: jwtSecret}
 }
 
 // LoginRequest represents the login request payload.
@@ -55,7 +56,6 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authenticate the user using userService
 	user, err := h.userService.Authenticate(req.Username, req.Password)
 	if err != nil {
 		logrus.WithError(err).Warn("Unauthorized login attempt")
@@ -71,14 +71,17 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("your_secret_key"))
+	tokenString, err := token.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		logrus.WithError(err).Error("Failed to sign JWT token")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	logrus.WithField("user_id", user.UserID).Info("User logged in successfully")
+	logrus.WithFields(logrus.Fields{
+		"user_id":  user.UserID,
+		"username": req.Username,
+	}).Info("User logged in successfully")
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(LoginResponse{Token: tokenString}); err != nil {

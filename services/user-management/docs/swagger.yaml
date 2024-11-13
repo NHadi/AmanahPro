@@ -73,6 +73,38 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /api/menus/{roleID}:
+    get:
+      parameters:
+      - description: Role ID
+        in: path
+        name: roleID
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Menu'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get accessible menus by role ID
+      tags:
+      - Menu
   /login:
     post:
       consumes:
@@ -135,24 +167,6 @@ paths:
       summary: Create a new menu
       tags:
       - Menus
-  /menus/{roleID}:
-    get:
-      parameters:
-      - description: Role ID
-        in: path
-        name: roleID
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Menu'
-            type: array
-      summary: Get accessible menus by role ID
-      tags:
-      - Menu
   /permissions/assign:
     post:
       consumes:

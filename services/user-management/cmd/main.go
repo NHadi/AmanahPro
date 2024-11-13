@@ -29,6 +29,11 @@ const defaultPort = "8080"
 // @host localhost:8080
 // @BasePath /
 func main() {
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
 	// Initialize DB
 	db, err := persistence.InitializeDB()
 	if err != nil {
@@ -52,7 +57,7 @@ func main() {
 	permissionService := services.NewPermissionService(roleMenuRepo)
 
 	// Initialize handlers
-	loginHandler := handlers.NewLoginHandler(userService)
+	loginHandler := handlers.NewLoginHandler(userService, jwtSecret)
 	userHandler := handlers.NewUserHandler(userService)
 	roleHandler := handlers.NewRoleHandler(roleService)
 	menuHandler := handlers.NewMenuHandler(menuService)
@@ -70,17 +75,16 @@ func main() {
 	r.HandleFunc("/roles", roleHandler.CreateRole).Methods("POST")
 	r.HandleFunc("/roles", roleHandler.GetRoles).Methods("GET")
 
-	// Define Menu Routes
-	r.HandleFunc("/menus/{roleID:[0-9]+}", menuHandler.GetAccessibleMenus).Methods("GET")
-	r.HandleFunc("/menus", menuHandler.CreateMenu).Methods("POST")
-
 	// Define Permission Routes
 	r.HandleFunc("/permissions/assign", permissionHandler.AssignPermission).Methods("POST")
 	// Group protected routes
 	api := r.PathPrefix("/api").Subrouter()
-	api.Use(middleware.JWTAuthMiddleware) // JWT authentication middleware
+	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
 	api.Use(middleware.LoggingMiddleware) // Logging middleware
 
+	// Menu Routes - Only accessible with a valid JWT token
+	api.HandleFunc("/menus/{roleID:[0-9]+}", menuHandler.GetAccessibleMenus).Methods("GET")
+	api.HandleFunc("/menus", menuHandler.CreateMenu).Methods("POST")
 	// Swagger documentation route
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 

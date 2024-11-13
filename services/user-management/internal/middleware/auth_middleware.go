@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,54 +9,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type key int
+func JWTAuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			logrus.Infof("Authorization header received: %s", authHeader) // Log the header for debugging
 
-const UserIDKey key = 0
-
-func JWTAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			logrus.Warn("Missing Authorization header")
-			http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			logrus.Warn("Invalid token format")
-			http.Error(w, "Invalid token format", http.StatusUnauthorized)
-			return
-		}
-
-		// Parse the token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				logrus.Errorf("Unexpected signing method: %v", token.Header["alg"])
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+				logrus.Warn("Unauthorized access: Missing or malformed Authorization header")
+				http.Error(w, "Unauthorized: Invalid token format", http.StatusUnauthorized)
+				return
 			}
-			return []byte("amanahPro2024"), nil
+
+			// Extract token and validate with jwtSecret
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					logrus.Errorf("Unexpected signing method: %v", token.Header["alg"])
+					return nil, fmt.Errorf("unexpected signing method")
+				}
+				return []byte(jwtSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				logrus.WithError(err).Warn("Invalid JWT token")
+				http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			logrus.Info("Token validated successfully")
+			next.ServeHTTP(w, r)
 		})
-
-		if err != nil || !token.Valid {
-			logrus.WithError(err).Warn("Invalid or expired token")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Extract user ID from claims
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			logrus.Warn("Failed to parse JWT claims")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		userID := claims["user_id"].(string)
-		logrus.WithField("user_id", userID).Info("Authenticated request")
-
-		// Add user ID to context and call the next handler
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
 }

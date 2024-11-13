@@ -21,10 +21,13 @@ func NewMenuHandler(menuService *services.MenuService) *MenuHandler {
 
 // GetAccessibleMenus godoc
 // @Summary Get accessible menus by role ID
+// @Security BearerAuth
 // @Tags Menu
 // @Param roleID path int true "Role ID"
 // @Success 200 {array} models.Menu
-// @Router /menus/{roleID} [get]
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/menus/{roleID} [get]
 func (h *MenuHandler) GetAccessibleMenus(w http.ResponseWriter, r *http.Request) {
 	// Parse roleID as an integer from the URL path
 	roleIDStr := mux.Vars(r)["roleID"]
