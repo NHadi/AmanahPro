@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"AmanahPro/services/user-management/internal/application/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // PermissionAssignmentRequest represents the request body for assigning a permission
@@ -26,27 +27,26 @@ func NewPermissionHandler(permissionService *services.PermissionService) *Permis
 // @Summary Assign permission to a role for a menu
 // @Description Assign a specific permission to a role on a given menu
 // @Tags Permissions
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param permission body PermissionAssignmentRequest true "Permission Assignment"
 // @Success 200 {string} string "Permission assigned successfully"
 // @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /permissions/assign [post]
-func (h *PermissionHandler) AssignPermission(w http.ResponseWriter, r *http.Request) {
+// @Router /api/permissions/assign [post]
+func (h *PermissionHandler) AssignPermission(c *gin.Context) {
 	var req PermissionAssignmentRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
-	// Use `err` here without redeclaring it
-	err := h.permissionService.AssignPermission(req.RoleID, req.MenuID, req.Permission)
-	if err != nil {
-		http.Error(w, "Failed to assign permission", http.StatusInternalServerError)
+	if err := h.permissionService.AssignPermission(req.RoleID, req.MenuID, req.Permission); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign permission"})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Permission assigned successfully"))
+	c.JSON(http.StatusOK, gin.H{"message": "Permission assigned successfully"})
 }

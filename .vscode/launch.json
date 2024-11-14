@@ -7,7 +7,7 @@
         "request": "launch",
         "mode": "debug",
         "program": "${workspaceFolder}/services/user-management/cmd/main.go",
-        "envFile": "${workspaceFolder}/services/user-management/.env",
+        "envFile": "${workspaceFolder}/.env",
         "args": [],
         "cwd": "${workspaceFolder}/services/user-management"
       }

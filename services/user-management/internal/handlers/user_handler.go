@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
+	"AmanahPro/services/user-management/internal/application/services"
 	"net/http"
 
-	"AmanahPro/services/user-management/internal/application/services"
+	"github.com/gin-gonic/gin"
 )
 
 // UserHandler represents the HTTP handler for user operations
@@ -19,28 +19,34 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 // CreateUser godoc
 // @Summary Create a new user
 // @Description Create a new user with provided details
+// @Security BearerAuth
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Param user body models.User true "User Data"
 // @Success 201 {object} models.User
 // @Failure 400 {object} map[string]string
-// @Router /users [post]
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+// @Router /api/users [post]
+func (h *UserHandler) CreateUser(c *gin.Context) {
 	var userData struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+
+	// Bind JSON input to struct
+	if err := c.ShouldBindJSON(&userData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+
+	// Create user through service
 	user, err := h.userService.CreateUser(userData.Username, userData.Email, userData.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+
+	// Respond with created user data
+	c.JSON(http.StatusCreated, user)
 }

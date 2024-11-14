@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
+	"AmanahPro/services/user-management/internal/application/services"
 	"net/http"
 
-	"AmanahPro/services/user-management/internal/application/services"
+	"github.com/gin-gonic/gin"
 )
 
 // RoleHandler represents the HTTP handler for role operations
@@ -19,44 +19,53 @@ func NewRoleHandler(roleService *services.RoleService) *RoleHandler {
 // CreateRole godoc
 // @Summary Create a new role
 // @Description Create a new role with provided details
+// @Security BearerAuth
 // @Tags Roles
 // @Accept json
 // @Produce json
 // @Param role body models.Role true "Role Data"
 // @Success 201 {object} models.Role
 // @Failure 400 {object} map[string]string
-// @Router /roles [post]
-func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+// @Router /api/roles [post]
+func (h *RoleHandler) CreateRole(c *gin.Context) {
 	var roleData struct {
 		RoleName    string `json:"role_name"`
 		Description string `json:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&roleData); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+
+	// Bind JSON input to struct
+	if err := c.ShouldBindJSON(&roleData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+
+	// Create role through service
 	role, err := h.roleService.CreateRole(roleData.RoleName, roleData.Description)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(role)
+
+	// Respond with created role data
+	c.JSON(http.StatusCreated, role)
 }
 
 // GetRoles godoc
 // @Summary Get all roles
 // @Description Retrieve all roles in the system
+// @Security BearerAuth
 // @Tags Roles
 // @Accept json
 // @Produce json
 // @Success 200 {array} models.Role
-// @Router /roles [get]
-func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
+// @Router /api/roles [get]
+func (h *RoleHandler) GetRoles(c *gin.Context) {
 	roles, err := h.roleService.GetRoles()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	json.NewEncoder(w).Encode(roles)
+
+	// Respond with roles data
+	c.JSON(http.StatusOK, roles)
 }

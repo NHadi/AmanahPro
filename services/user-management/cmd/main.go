@@ -2,22 +2,23 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 
+	"AmanahPro/api-gateway/middleware"
 	_ "AmanahPro/services/user-management/docs" // Swagger docs
 	"AmanahPro/services/user-management/internal/application/services"
 	domainServices "AmanahPro/services/user-management/internal/domain/services"
 	"AmanahPro/services/user-management/internal/handlers"
 	"AmanahPro/services/user-management/internal/infrastructure/persistence"
 	"AmanahPro/services/user-management/internal/infrastructure/repositories"
-	"AmanahPro/services/user-management/internal/middleware"
 
-	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	httpSwagger "github.com/swaggo/gin-swagger"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8081"
 
 // @title User Management API
 // @version 1.0
@@ -26,9 +27,15 @@ const defaultPort = "8080"
 // @in header
 // @name Authorization
 // @description Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /
 func main() {
+
+	// Load environment variables from the root .env file
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -63,37 +70,43 @@ func main() {
 	menuHandler := handlers.NewMenuHandler(menuService)
 	permissionHandler := handlers.NewPermissionHandler(permissionService)
 
-	// Initialize router
-	r := mux.NewRouter()
-
+	// Initialize Gin router
+	r := gin.Default()
+	// Middleware to log requests
+	r.Use(func(c *gin.Context) {
+		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+	})
 	// Public route for login
-	r.HandleFunc("/login", loginHandler.Login).Methods("POST")
-	// Define User Routes
-	r.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
+	r.POST("/login", func(c *gin.Context) {
+		loginHandler.Login(c.Writer, c.Request)
+	})
 
-	// Define Role Routes
-	r.HandleFunc("/roles", roleHandler.CreateRole).Methods("POST")
-	r.HandleFunc("/roles", roleHandler.GetRoles).Methods("GET")
-
-	// Define Permission Routes
-	r.HandleFunc("/permissions/assign", permissionHandler.AssignPermission).Methods("POST")
-	// Group protected routes
-	api := r.PathPrefix("/api").Subrouter()
+	// Group for protected routes
+	api := r.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
-	api.Use(middleware.LoggingMiddleware) // Logging middleware
 
 	// Menu Routes - Only accessible with a valid JWT token
-	api.HandleFunc("/menus/{roleID:[0-9]+}", menuHandler.GetAccessibleMenus).Methods("GET")
-	api.HandleFunc("/menus", menuHandler.CreateMenu).Methods("POST")
-	// Swagger documentation route
-	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	api.GET("/menus/:roleID", menuHandler.GetAccessibleMenus)
+	api.POST("/menus", menuHandler.CreateMenu)
+	// User Routes
+	api.POST("/users", userHandler.CreateUser)
+	// Role Routes
+	api.POST("/roles", roleHandler.CreateRole)
+	api.GET("/roles", roleHandler.GetRoles)
 
-	// Get port from environment or default to 8080
-	port := os.Getenv("PORT")
+	// Permission Routes
+	api.POST("/permissions/assign", permissionHandler.AssignPermission)
+
+	// Swagger documentation route
+	r.GET("/swagger/*any", httpSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Get port from environment or default to 8081
+	port := os.Getenv("USER_MANAGEMENT_PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
 	log.Printf("Server running at http://localhost:%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	log.Fatal(r.Run(":" + port))
 }

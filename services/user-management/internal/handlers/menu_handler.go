@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"AmanahPro/services/user-management/internal/application/services"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 // MenuHandler represents the HTTP handler for menu operations
@@ -28,53 +27,55 @@ func NewMenuHandler(menuService *services.MenuService) *MenuHandler {
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string "Internal Server Error"
 // @Router /api/menus/{roleID} [get]
-func (h *MenuHandler) GetAccessibleMenus(w http.ResponseWriter, r *http.Request) {
+func (h *MenuHandler) GetAccessibleMenus(c *gin.Context) {
 	// Parse roleID as an integer from the URL path
-	roleIDStr := mux.Vars(r)["roleID"]
+	roleIDStr := c.Param("roleID")
 	roleID, err := strconv.Atoi(roleIDStr)
 	if err != nil {
-		http.Error(w, "Invalid role ID", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
 		return
 	}
 
 	// Fetch accessible menus by roleID
 	menus, err := h.menuService.GetAccessibleMenus(roleID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Encode the response in JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(menus)
+	c.JSON(http.StatusOK, menus)
 }
 
 // CreateMenu godoc
 // @Summary Create a new menu
 // @Description Create a new menu entry
+// @Security BearerAuth
 // @Tags Menus
 // @Accept json
 // @Produce json
 // @Param menu body models.Menu true "Menu Data"
 // @Success 201 {object} models.Menu
+// @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 400 {object} map[string]string
-// @Router /menus [post]
-func (h *MenuHandler) CreateMenu(w http.ResponseWriter, r *http.Request) {
+// @Router /api/menus [post]
+func (h *MenuHandler) CreateMenu(c *gin.Context) {
 	var menuData struct {
 		MenuName string `json:"menu_name"`
 		Path     string `json:"path"`
 		Icon     string `json:"icon"`
 		Order    int    `json:"order"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&menuData); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&menuData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+
 	menu, err := h.menuService.CreateMenu(menuData.MenuName, menuData.Path, menuData.Icon, menuData.Order)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(menu)
+
+	c.JSON(http.StatusCreated, menu)
 }

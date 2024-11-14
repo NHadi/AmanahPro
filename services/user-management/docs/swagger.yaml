@@ -73,6 +73,42 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /api/menus:
+    post:
+      consumes:
+      - application/json
+      description: Create a new menu entry
+      parameters:
+      - description: Menu Data
+        in: body
+        name: menu
+        required: true
+        schema:
+          $ref: '#/definitions/models.Menu'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Menu'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new menu
+      tags:
+      - Menus
   /api/menus/{roleID}:
     get:
       parameters:
@@ -105,6 +141,126 @@ paths:
       summary: Get accessible menus by role ID
       tags:
       - Menu
+  /api/permissions/assign:
+    post:
+      consumes:
+      - application/json
+      description: Assign a specific permission to a role on a given menu
+      parameters:
+      - description: Permission Assignment
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PermissionAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permission assigned successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Assign permission to a role for a menu
+      tags:
+      - Permissions
+  /api/roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all roles in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Role'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get all roles
+      tags:
+      - Roles
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with provided details
+      parameters:
+      - description: Role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/models.Role'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Role'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new role
+      tags:
+      - Roles
+  /api/users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with provided details
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - Users
   /login:
     post:
       consumes:
@@ -139,140 +295,6 @@ paths:
       summary: User login
       tags:
       - Auth
-  /menus:
-    post:
-      consumes:
-      - application/json
-      description: Create a new menu entry
-      parameters:
-      - description: Menu Data
-        in: body
-        name: menu
-        required: true
-        schema:
-          $ref: '#/definitions/models.Menu'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Menu'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Create a new menu
-      tags:
-      - Menus
-  /permissions/assign:
-    post:
-      consumes:
-      - application/json
-      description: Assign a specific permission to a role on a given menu
-      parameters:
-      - description: Permission Assignment
-        in: body
-        name: permission
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.PermissionAssignmentRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Permission assigned successfully
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Assign permission to a role for a menu
-      tags:
-      - Permissions
-  /roles:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve all roles in the system
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Role'
-            type: array
-      summary: Get all roles
-      tags:
-      - Roles
-    post:
-      consumes:
-      - application/json
-      description: Create a new role with provided details
-      parameters:
-      - description: Role Data
-        in: body
-        name: role
-        required: true
-        schema:
-          $ref: '#/definitions/models.Role'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Role'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Create a new role
-      tags:
-      - Roles
-  /users:
-    post:
-      consumes:
-      - application/json
-      description: Create a new user with provided details
-      parameters:
-      - description: User Data
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/models.User'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.User'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Create a new user
-      tags:
-      - Users
 securityDefinitions:
   BearerAuth:
     description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
