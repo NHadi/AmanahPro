@@ -39,8 +39,6 @@ services:
     networks:
       - infras_network
 
-
-
   # Elasticsearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
@@ -64,7 +62,6 @@ services:
         max-file: "5"
     networks:
       - infras_network
-
 
   # Kibana
   kibana:

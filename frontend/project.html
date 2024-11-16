@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <header id="header"></header>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  
+  <body class="g-sidenav-show bg-gray-100">
+    <div class="min-height-300 bg-dark position-absolute w-100"></div>
+    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
+    </aside>
+    <main class="main-content position-relative border-radius-lg">
+      <nav id="navbar"></nav>
+      <div class="container-fluid py-4">
+        
+        <!-- Summary Cards Section -->
+        <div class="row mb-4">
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Active Projects</p>
+                      <h5 class="font-weight-bolder" id="active-projects-count">0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                      <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Completed Projects</p>
+                      <h5 class="font-weight-bolder" id="completed-projects-count">0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                      <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Pending Documents</p>
+                      <h5 class="font-weight-bolder" id="pending-documents-count">0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                      <i class="ni ni-bell-55 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Budget Overview</p>
+                      <h5 class="font-weight-bolder" id="budget-overview">IDR 0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                      <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Other summary cards omitted for brevity -->
+        </div>
+
+        <!-- Projects Grid with Document and Task Tracker Columns -->
+        <div class="card">
+          <div class="card-body p-3">
+            <div id="projects-grid"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Core JS Files -->
+    <script src="template/assets/js/core/popper.min.js"></script>
+    <script src="template/assets/js/core/bootstrap.min.js"></script>
+    <script src="template/assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/chartjs.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DevExtreme JS -->
+    <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>    
+    <script src="template/assets/js/common.js"></script>
+
+    <script>
+      // Sample project data
+      const dummyProjects = [
+        { project_id: 1, project_name: "Proyek Gedung A", location: "Jakarta, Indonesia", start_date: "2024-01-01", end_date: "2024-12-31", description: "Pembangunan gedung perkantoran", status: "in-progress", progress: 70 },
+        { project_id: 2, project_name: "Proyek Mall B", location: "Bandung, Indonesia", start_date: "2024-03-01", end_date: "2024-11-30", description: "Renovasi pusat perbelanjaan", status: "in-progress", progress: 50 }
+      ];
+    
+      // Mock data fetching functions
+      function getSPKData(projectId) {
+        return [{ id: 1, number: "SPK001", description: "Project Work", date: "2024-01-15" }];
+      }
+    
+      function getBDData(projectId) {
+        return [
+          { id: 1, subject: "Breakdown Subject 1", date: "2024-01-15" },
+          { id: 2, subject: "Breakdown Subject 2", date: "2024-02-20" }
+        ];
+      }
+    
+      function getSPHData(projectId) {
+        return [{ id: 1, recipient: "Recipient Name", date: "2024-01-15" }];
+      }
+    
+      function getSPKSections(spkId) {
+        return [
+          { sectionId: 1, name: "Female Toilet" },
+          { sectionId: 2, name: "Male Toilet" },
+          { sectionId: 3, name: "Difable Toilet" },
+          { sectionId: 4, name: "Nursery" },
+          { sectionId: 5, name: "PRELIMINARIES" }
+        ];
+      }
+    
+      function getSPKDetails(sectionId) {
+        const details = {
+          1: [
+            { id: 1, no: 1, areaPemasangan: "Jasa pasang lantai", qty: 16, unit: "m2", hargaSatuan: 170000, totalJasa: 2720000 },
+            { id: 2, no: 2, areaPemasangan: "Jasa pasang dinding", qty: 42.76, unit: "m2", hargaSatuan: 250000, totalJasa: 10690000 }
+          ],
+          2: [
+            { id: 1, no: 1, areaPemasangan: "Jasa pasang lantai", qty: 21.02, unit: "m2", hargaSatuan: 260000, totalJasa: 5465200 },
+            { id: 2, no: 2, areaPemasangan: "Jasa pasang dinding", qty: 61.08, unit: "m2", hargaSatuan: 330000, totalJasa: 20156400 }
+          ],
+          // Add more sections as needed
+        };
+        return details[sectionId] || [];
+      }
+    
+      $(document).ready(function () {
+          // Set summary card values based on dummy data
+          $("#active-projects-count").text(dummyProjects.filter(p => p.status === "in-progress").length);
+          $("#completed-projects-count").text(dummyProjects.filter(p => p.status === "completed").length);
+          $("#pending-documents-count").text(2);  // Example count for pending documents
+          $("#budget-overview").text("IDR 500,000,000");  // Example budget overview
+    
+          $("#projects-grid").dxDataGrid({
+              dataSource: dummyProjects,
+              columnAutoWidth: true,
+              showBorders: true,
+              searchPanel: { visible: true, placeholder: "Search..." },
+              headerFilter: { visible: true },
+              filterRow: { visible: true, applyFilter: "auto" },
+              paging: { pageSize: 10 },
+              columns: [
+                { dataField: "project_name", caption: "Project Name" },
+                { dataField: "location", caption: "Location" },
+                { dataField: "start_date", caption: "Start Date", dataType: "date" },
+                { dataField: "end_date", caption: "End Date", dataType: "date" },
+                { dataField: "description", caption: "Description" },
+                { dataField: "status", caption: "Status" },
+                { 
+                  dataField: "progress", 
+                  caption: "Progress",
+                  cellTemplate: function(container, options) {
+                    const progress = options.value || 0;
+                    const progressBar = $("<div>").addClass("progress").css("height", "20px");
+                    $("<div>")
+                      .addClass("progress-bar")
+                      .attr("role", "progressbar")
+                      .css("width", progress + "%")
+                      .text(progress + "%")
+                      .appendTo(progressBar);
+                    progressBar.appendTo(container);
+                  }
+                }
+              ],
+              masterDetail: {
+                enabled: true,
+                template: function(container, options) {
+                  const projectId = options.data.project_id;
+                  $("<div>").dxTabPanel({
+                    items: [
+                      
+                      { title: "BD", template: function() { return createBDGrid(projectId); }},                      
+                      { title: "SPH", template: function() { return createSPHGrid(projectId); }},
+                      { title: "SPK", template: function() { return createSPKGrid(projectId); }},                      
+                      { title: "Rekap", template: function() { return createSPKGrid(projectId); }},                   
+                      { title: "BA", template: function() { return createSPKGrid(projectId); }},                                         
+                      { title: "Invoice", template: function() { return createSPKGrid(projectId); }},            
+                      { title: "Opname", template: function() { return createSPKGrid(projectId); }},          
+                      { title: "Rekap Opname", template: function() { return createSPKGrid(projectId); }},
+                    ],
+                    selectedIndex: 0,
+                    deferRendering: false,
+                  }).appendTo(container);
+                }
+              }
+            });
+      });
+    // Functions to create grids for SPK, BD, and SPH
+    function createSPKGrid(projectId) {
+        const container = $("<div>");
+        container.dxDataGrid({
+            dataSource: getSPKData(projectId), // Directly fetch all SPK data for the project
+            editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+            columns: [
+                { dataField: "number", caption: "SPK Number" },
+                { dataField: "description", caption: "Description" },
+                { dataField: "date", caption: "Date", dataType: "date" }
+            ],
+            paging: { pageSize: 5 },
+            showBorders: true,
+            masterDetail: {
+                enabled: true,
+                template: function(spkContainer, options) {
+                    const spkId = options.data.id;
+
+                    // Define the main grid for sections
+                    const sectionGrid = $("<div>").dxDataGrid({
+                        dataSource: getSPKSections(spkId),
+                        columns: [{ dataField: "name", caption: "" }],
+                        showBorders: true,
+                        summary: {
+                            totalItems: [
+                                {
+                                    column: "name",
+                                    summaryType: "custom",
+                                    displayFormat: "Grand Total",
+                                    cssClass: "font-weight-bold" // Optional: Makes the label bold
+                                },
+                                {
+                                    column: "totalJasa",
+                                    summaryType: "custom",
+                                    displayFormat: "{0}",
+                                    valueFormat: "currency",
+                                    cssClass: "font-weight-bold" // Optional: Makes the grand total bold
+                                }
+                            ],
+                            calculateCustomSummary: function(options) {
+                                if (options.name === "totalJasa") {
+                                    if (options.summaryProcess === "start") {
+                                        options.totalValue = 0; // Initialize grand total
+                                    }
+                                    if (options.summaryProcess === "calculate") {
+                                        // Calculate the totalJasa for each section and accumulate it
+                                        const sectionData = getSPKDetails(options.value.sectionId);
+                                        const sectionTotal = sectionData.reduce((sum, item) => sum + item.totalJasa, 0);
+                                        options.totalValue += sectionTotal; // Add section total to grand total
+                                    }
+                                }
+                            }
+                        },
+                        masterDetail: {
+                            enabled: true,
+                            template: function(sectionContainer, sectionOptions) {
+                                const sectionId = sectionOptions.data.sectionId;
+
+                                // Define the details grid for each section with subtotal calculation
+                                $("<div>").dxDataGrid({
+                                    dataSource: getSPKDetails(sectionId),
+                                    editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+                                    columns: [
+                                        { dataField: "no", caption: "No" },
+                                        { dataField: "areaPemasangan", caption: "Area Pemasangan" },
+                                        { dataField: "qty", caption: "Qty", dataType: "number" },
+                                        { dataField: "unit", caption: "Unit" },
+                                        { dataField: "hargaSatuan", caption: "Harga Satuan", format: { type: "currency", precision: 0 } },
+                                        { dataField: "totalJasa", caption: "Total Jasa", format: { type: "currency", precision: 0 } }
+                                    ],
+                                    summary: {
+                                        totalItems: [
+                                            {
+                                                column: "totalJasa",
+                                                summaryType: "sum",
+                                                displayFormat: "Subtotal: {0}",
+                                                showInColumn: "totalJasa"
+                                            }
+                                        ]
+                                    },
+                                    paging: { pageSize: 5 },
+                                    showBorders: true
+                                }).appendTo(sectionContainer);
+                            }
+                        }
+                    });
+
+                    sectionGrid.appendTo(spkContainer);
+                }
+            },
+            summary: {
+                totalItems: [
+                    {
+                        column: "totalJasa",
+                        summaryType: "custom",
+                        displayFormat: "Grand Total: {0}",
+                        valueFormat: "currency"
+                    }
+                ],
+                calculateCustomSummary: function(options) {
+                    if (options.name === "totalJasa") {
+                        if (options.summaryProcess === "start") {
+                            options.totalValue = 0;
+                        }
+                        if (options.summaryProcess === "calculate") {
+                            const sections = getSPKSections(options.value.id);
+                            sections.forEach(section => {
+                                const sectionData = getSPKDetails(section.sectionId);
+                                options.totalValue += sectionData.reduce((sum, item) => sum + item.totalJasa, 0);
+                            });
+                        }
+                    }
+                }
+            }
+        });
+        return container;
+    }
+
+
+      function createBDGrid(projectId) {
+        const container = $("<div>");
+        container.dxDataGrid({
+          dataSource: getBDData(projectId),
+          editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+          columns: [
+            { dataField: "subject", caption: "Subject" },
+            { dataField: "date", caption: "Date", dataType: "date" }
+          ],
+          paging: { pageSize: 5 },
+          showBorders: true
+        });
+        return container;
+      }
+    
+      function createSPHGrid(projectId) {
+        const container = $("<div>");
+        container.dxDataGrid({
+          dataSource: getSPHData(projectId),
+          editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+          columns: [
+            { dataField: "recipient", caption: "Recipient" },
+            { dataField: "date", caption: "Date", dataType: "date" }
+          ],
+          paging: { pageSize: 5 },
+          showBorders: true
+        });
+        return container;
+      }
+    </script>
+    
+    
+    
+  </body>
+</html>
+  </body>
+</html>

@@ -1,18 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head id="header"></head>
+<header id="header"></header>
 
 <body class="g-sidenav-show   bg-gray-100">
   <div class="min-height-300 bg-dark position-absolute w-100"></div>
   <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-    <hr class="horizontal dark mt-0">
-    <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
-      <div id="menu"></div>
-    </div>
   </aside>
   <main class="main-content position-relative border-radius-lg ">
-    <div id="navbar"></div>
+    <nav id="navbar"></nav>
     <div class="container-fluid py-4">
       <div class="row">
         <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
@@ -178,6 +174,7 @@
             </div>
           </div>
         </div>
+
       </div>
       <div class="row mt-4">
         <div class="col-lg-7 mb-lg-0 mb-4">
@@ -194,7 +191,7 @@
                     <td class="w-30">
                       <div class="d-flex px-2 py-1 align-items-center">
                         <div>
-                          <img src="template/assets/img/icons/flags/US.png" alt="Country flag">
+                          <img src="/template/assets/img/icons/flags/US.png" alt="Country flag">
                         </div>
                         <div class="ms-4">
                           <p class="text-xs font-weight-bold mb-0">Country:</p>
@@ -225,7 +222,7 @@
                     <td class="w-30">
                       <div class="d-flex px-2 py-1 align-items-center">
                         <div>
-                          <img src="template/assets/img/icons/flags/DE.png" alt="Country flag">
+                          <img src="/template/assets/img/icons/flags/DE.png" alt="Country flag">
                         </div>
                         <div class="ms-4">
                           <p class="text-xs font-weight-bold mb-0">Country:</p>
@@ -256,7 +253,7 @@
                     <td class="w-30">
                       <div class="d-flex px-2 py-1 align-items-center">
                         <div>
-                          <img src="template/assets/img/icons/flags/GB.png" alt="Country flag">
+                          <img src="/template/assets/img/icons/flags/GB.png" alt="Country flag">
                         </div>
                         <div class="ms-4">
                           <p class="text-xs font-weight-bold mb-0">Country:</p>
@@ -287,7 +284,7 @@
                     <td class="w-30">
                       <div class="d-flex px-2 py-1 align-items-center">
                         <div>
-                          <img src="template/assets/img/icons/flags/BR.png" alt="Country flag">
+                          <img src="/template/assets/img/icons/flags/BR.png" alt="Country flag">
                         </div>
                         <div class="ms-4">
                           <p class="text-xs font-weight-bold mb-0">Country:</p>
@@ -428,6 +425,8 @@
   <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
   <script src="template/assets/js/plugins/chartjs.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="template/assets/js/common.js"></script>
+  
   <script>
     var ctx1 = document.getElementById("chart-line").getContext("2d");
 
@@ -519,17 +518,12 @@
       }
       Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
     }
-  // Load external HTML files into placeholders
-  $(document).ready(function() {
-    $("#menu").load("menu.html");
-    $("#header").load("header.html");
-    $("#navbar").load("navbar.html");
-  });
+
   </script>
   <!-- Github buttons -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
   <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
-  <script src="template/assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+  <script src="template/assets/js/argon-dashboard.min.js"></script>
 </body>
 
 </html>
