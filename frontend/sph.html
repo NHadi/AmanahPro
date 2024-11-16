@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <header id="header"></header>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-container {
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-around;
+    }
+    .chart-card {
+      width: 45%;
+    }
+    canvas {
+      max-height: 300px;
+    }
+    .summary-container {
+      margin: 20px 0;
+    }
+    .summary-card {
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .summary-card h4 {
+      margin: 0;
+      font-size: 18px;
+      color: #555;
+    }
+    .summary-card p {
+      margin: 10px 0 0;
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+
+  <body class="g-sidenav-show bg-gray-100">
+    <div class="min-height-300 bg-dark position-absolute w-100"></div>
+    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
+    </aside>
+    <main class="main-content position-relative border-radius-lg">
+      <nav id="navbar"></nav>
+      <div class="container-fluid py-4">
+
+        <!-- Summary Widgets -->
+        <!-- Summary Cards Section -->
+        <div class="row mb-4">
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cost</p>
+                      <h5 class="font-weight-bolder" id="active-projects-count">0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                      <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Items</p>
+                      <h5 class="font-weight-bolder" id="completed-projects-count">0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                      <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+         
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Discount Impact</p>
+                      <h5 class="font-weight-bolder" id="budget-overview">IDR 0</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                      <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Other summary cards omitted for brevity -->
+        </div>
+        <!-- Data Grid -->
+        <div class="card">
+          <div class="card-header">
+            <h4>SPH - Surat Penawaran Harga</h4>
+          </div>
+          <div class="card-body">
+            <div id="sph-grid"></div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h4>SPH Analysis</h4>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <div class="chart-card">
+                <h5 class="text-center">Cost Distribution</h5>
+                <canvas id="costDistributionChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h5 class="text-center">Total Costs per Project</h5>
+                <canvas id="totalCostsChart"></canvas>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Core JS Files -->
+    <script src="template/assets/js/core/popper.min.js"></script>
+    <script src="template/assets/js/core/bootstrap.min.js"></script>
+    <script src="template/assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/chartjs.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DevExtreme JS -->
+    <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>    
+    <script src="template/assets/js/common.js"></script>
+
+    <script>
+      $(function () {
+        // Example SPH Data for Multiple Projects
+        const sphData = [
+          {
+            project: "Proyek Gedung A",
+            area: "Female Toilet",
+            details: [
+              { no: 1, area: "Jasa pasang lantai", qty: 16, unit: "m2", hargaSatuan: 677550, hargaDisc: 596244, total: 9539904 },
+              { no: 2, area: "Jasa pasang dinding", qty: 42.76, unit: "m2", hargaSatuan: 690300, hargaDisc: 607464, total: 25975161 },
+            ],
+          },
+          {
+            project: "Proyek Gedung A",
+            area: "Male Toilet",
+            details: [
+              { no: 1, area: "Jasa pasang lantai", qty: 21.02, unit: "m2", hargaSatuan: 677550, hargaDisc: 596244, total: 12553304 },
+              { no: 2, area: "Jasa pasang dinding", qty: 61.08, unit: "m2", hargaSatuan: 690300, hargaDisc: 607464, total: 37103527 },
+            ],
+          },
+          {
+            project: "Proyek Mall B",
+            area: "Nursery",
+            details: [
+              { no: 1, area: "Jasa pasang lantai", qty: 4.68, unit: "m2", hargaSatuan: 677550, hargaDisc: 596244, total: 2790242 },
+            ],
+          },
+        ];
+  
+        // Summary Data Preparation
+        const projects = {};
+        sphData.forEach((section) => {
+          if (!projects[section.project]) {
+            projects[section.project] = { totalCost: 0, totalItems: 0 };
+          }
+          section.details.forEach((item) => {
+            projects[section.project].totalCost += item.total;
+            projects[section.project].totalItems += item.qty;
+          });
+        });
+  
+        // Populate Summary Widgets
+        const summaryContainer = $("#summary-container");
+        Object.keys(projects).forEach((projectName) => {
+          const project = projects[projectName];
+          summaryContainer.append(`
+            <div class="summary-card">
+              <h4>${projectName}</h4>
+              <p>Total Cost: IDR ${project.totalCost.toLocaleString()}</p>
+              <p>Total Items: ${project.totalItems}</p>
+            </div>
+          `);
+        });
+  
+        // Initialize SPH Grid
+        $("#sph-grid").dxDataGrid({
+          dataSource: sphData,
+          columns: [
+            { dataField: "project", caption: "Project Name", groupIndex: 0 },
+            { dataField: "area", caption: "Area", groupIndex: 1 },
+            {
+              caption: "Details",
+              cellTemplate: function (container, options) {
+                const details = options.data.details;
+                $("<div>")
+                  .dxDataGrid({
+                    dataSource: details,
+                    columns: [
+                      { dataField: "no", caption: "No" },
+                      { dataField: "area", caption: "Area Pemasangan" },
+                      { dataField: "qty", caption: "Qty", dataType: "number" },
+                      { dataField: "unit", caption: "Unit" },
+                      { dataField: "hargaSatuan", caption: "Harga Satuan", format: { type: "currency" } },
+                      { dataField: "hargaDisc", caption: "Harga Setelah Disc", format: { type: "currency" } },
+                      { dataField: "total", caption: "Total", format: { type: "currency" } },
+                    ],
+                    showBorders: true,
+                    paging: { enabled: false },
+                  })
+                  .appendTo(container);
+              },
+            },
+          ],
+          grouping: { autoExpandAll: true },
+          groupPanel: { visible: true },
+        });
+  
+        // Chart: Cost Distribution by Area
+        const costDistribution = sphData.map((section) => ({
+          project: section.project,
+          area: section.area,
+          total: section.details.reduce((sum, item) => sum + item.total, 0),
+        }));
+        const costChartLabels = costDistribution.map((d) => `${d.project} - ${d.area}`);
+        const costChartData = costDistribution.map((d) => d.total);
+  
+        new Chart(document.getElementById("costDistributionChart").getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: costChartLabels,
+            datasets: [{ data: costChartData, backgroundColor: ["#42a5f5", "#ff7043", "#66bb6a"] }],
+          },
+        });
+  
+        // Chart: Total Costs per Project
+        const totalCostsChartData = Object.keys(projects).map((projectName) => projects[projectName].totalCost);
+  
+        new Chart(document.getElementById("totalCostsChart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: Object.keys(projects),
+            datasets: [
+              {
+                label: "Total Cost",
+                data: totalCostsChartData,
+                backgroundColor: "#42a5f5",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: "Cost (IDR)" } },
+            },
+          },
+        });
+      });
+    </script>
+  </body>
+  </html>
