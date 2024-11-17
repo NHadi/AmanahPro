@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+  <header id="header"></header>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-row {
+      display: flex;
+      gap: 20px; /* Spacing between charts */
+      justify-content: space-between;
+    }
+
+    .chart-container {
+      flex: 1;
+      max-width: 30%; /* Limit each chart to take up roughly a third of the row */
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #e3e3e3;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-card {
+      padding: 20px;
+    }
+
+    .chart-card h5 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333333;
+    }
+
+    .chart-card canvas {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+
+    /* Grid Header Styling */
+.dx-datagrid-header-panel {
+  background-color: #f7f9fc;
+  padding: 10px;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+/* Master Grid Styling */
+#rekap-grid {
+  margin-top: 20px;
+}
+
+/* Tabs Styling */
+.dx-tabpanel .dx-item {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333333;
+}
+
+
+
+  </style>
+
+  <body class="g-sidenav-show bg-gray-100">
+    <div class="min-height-300 bg-dark position-absolute w-100"></div>
+    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
+    </aside>
+    <main class="main-content position-relative border-radius-lg">
+      <nav id="navbar"></nav>
+      <div class="container-fluid py-4">
+        <!-- Summary Cards Section -->
+        <div class="row mb-4">
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Projects</p>
+                      <h5 class="font-weight-bolder" id="total-projects-count">5</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                      <i class="ni ni-archive-2 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Opname Value</p>
+                      <h5 class="font-weight-bolder" id="total-opname-value">IDR 500,000,000</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                      <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Spending</p>
+                      <h5 class="font-weight-bolder" id="total-spending">IDR 350,000,000</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                      <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Net Margin</p>
+                      <h5 class="font-weight-bolder" id="net-margin">IDR 150,000,000</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                      <i class="ni ni-chart-pie-35 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="card row mb-4">
+          <div class="card-body p-3">
+            <div id="rekap-grid"></div>
+          </div>
+        </div>
+
+
+        <div class="row mb-4">
+          <div class="chart-row">
+            
+            <!-- Existing charts -->
+            <div class="chart-container">
+              <h4>Total Project Cost Breakdown</h4>
+              <div class="chart-card">
+                <h5 class="text-center">Spending Breakdown by Category</h5>
+                <canvas id="totalProjectCostChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="chart-container">
+              <h4>Margin Trend Analysis</h4>
+              <div class="chart-card">
+                <h5 class="text-center">Margin Trend by Project</h5>
+                <canvas id="marginTrendChart"></canvas>
+              </div>
+            </div>
+          
+            <div class="chart-container">
+              <h4>Spending vs. Revenue Analysis</h4>
+              <div class="chart-card">
+                <h5 class="text-center">Revenue vs. Spending Breakdown</h5>
+                <canvas id="revenueSpendingChart"></canvas>
+              </div>
+            </div>
+          
+            <div class="chart-container">
+              <h4>Category-Specific Cost Trends</h4>
+              <div class="chart-card">
+                <h5 class="text-center">Cost Trends by Category</h5>
+                <canvas id="categoryCostTrendChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>  
+        
+
+      
+
+        
+          <!-- Add/Edit Rekap Modal -->
+          <div id="rekap-modal" style="display: none;">
+            <form id="rekap-form">
+              <div class="form-group">
+                <label for="project-id">Project ID</label>
+                <input type="number" id="project-id" name="project_id" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="total-opname-input">Total Opname</label>
+                <input type="number" id="total-opname-input" name="total_opname" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="total-pengeluaran-input">Total Pengeluaran</label>
+                <input type="number" id="total-pengeluaran-input" name="total_pengeluaran" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="margin-input">Margin</label>
+                <input type="number" id="margin-input" name="margin" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="margin-percentage-input">Margin Percentage</label>
+                <input type="number" id="margin-percentage-input" name="margin_percentage" class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+          </div>
+        
+
+      </div>
+    </main>
+
+    <!-- Core JS Files -->
+    <script src="template/assets/js/core/popper.min.js"></script>
+    <script src="template/assets/js/core/bootstrap.min.js"></script>
+    <script src="template/assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="template/assets/js/plugins/chartjs.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DevExtreme JS -->
+    <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>    
+    <script src="template/assets/js/common.js"></script>
+    <script>
+      $(function () {
+        
+      // Sample Recap Data
+      const recapData = [
+        {
+          project_id: 1,
+          project_name: "Proyek Gedung A",
+          total_opname: 175650638,
+          total_pengeluaran: 119290100,
+          margin: 56360538,
+          margin_percentage: 32.09,
+          sph: [
+            { id: 1, description: "SPH Item 1", cost: 50000000 },
+            { id: 2, description: "SPH Item 2", cost: 125650638 },
+          ],
+          spk: [
+            { id: 1, description: "SPK Mandor", cost: 72274900 },
+            { id: 2, description: "Bahan Bantu & OPR", cost: 37015200 },
+          ],
+          bd: [
+            { id: 1, description: "Breakdown Item 1", cost: 30000000 },
+            { id: 2, description: "Breakdown Item 2", cost: 50000000 },
+          ],
+        },
+      ];
+
+      // Initialize Master-Detail Grid
+      $("#rekap-grid").dxDataGrid({
+        dataSource: recapData,
+        keyExpr: "project_id",
+        columnAutoWidth: true,
+        showBorders: true,
+        columns: [
+          { dataField: "project_name", caption: "Project Name" },
+          {
+            dataField: "total_opname",
+            caption: "Total Opname",
+            format: { type: "currency", precision: 0 },
+          },
+          {
+            dataField: "total_pengeluaran",
+            caption: "Total Pengeluaran",
+            format: { type: "currency", precision: 0 },
+          },
+          {
+            dataField: "margin",
+            caption: "Margin",
+            format: { type: "currency", precision: 0 },
+          },
+          {
+            dataField: "margin_percentage",
+            caption: "Margin %",
+            format: { type: "percent", precision: 2 },
+          },
+        ],
+        masterDetail: {
+          enabled: true,
+          template(container, options) {
+            const project = options.data;
+
+            $("<div>")
+              .dxTabPanel({
+                items: [
+                  {
+                    title: "SPH",
+                    template: () => createDetailGrid(project.sph, "SPH Details"),
+                  },
+                  {
+                    title: "SPK",
+                    template: () => createDetailGrid(project.spk, "SPK Details"),
+                  },
+                  {
+                    title: "BD",
+                    template: () => createDetailGrid(project.bd, "Breakdown Details"),
+                  },
+                ],
+                deferRendering: false,
+                selectedIndex: 0,
+              })
+              .appendTo(container);
+          },
+        },
+      });
+
+      // Function to Create Detail Grid
+      function createDetailGrid(data, title) {
+        return $("<div>").dxDataGrid({
+          dataSource: data,
+          showBorders: true,
+          columns: [
+            { dataField: "description", caption: title },
+            {
+              dataField: "cost",
+              caption: "Cost",
+              format: { type: "currency", precision: 0 },
+            },
+          ],
+        });
+      }
+
+        
+        // Sample Data
+        const projectRekapData = [
+          { project_id: 1, project_name: "Proyek Gedung A", margin_percentage: 32.09 },
+          { project_id: 2, project_name: "Proyek Mall B", margin_percentage: 28.50 },
+          { project_id: 3, project_name: "Proyek Villa C", margin_percentage: 35.00 },
+          { project_id: 4, project_name: "Proyek Gedung D", margin_percentage: 40.00 },
+        ];
+
+        // Extract Data for Chart
+        const marginLabels = projectRekapData.map((data) => data.project_name);
+        const marginData = projectRekapData.map((data) => data.margin_percentage);
+
+        // Create Margin Trend Chart
+        const ctx = document.getElementById("marginTrendChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line", // You can also use 'bar' for a bar chart
+          data: {
+            labels: marginLabels,
+            datasets: [
+              {
+                label: "Margin Percentage (%)",
+                data: marginData,
+                backgroundColor: "rgba(66, 165, 245, 0.2)",
+                borderColor: "#42a5f5",
+                borderWidth: 2,
+                tension: 0.3, // Smooth curves
+                fill: true, // Fill the area under the line
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `${context.raw}%`,
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Margin Percentage (%)",
+                },
+              },
+            },
+          },
+        });
+
+        // Sample Data
+        const spendingRevenueData = [
+          { project_name: "Proyek Gedung A", revenue: 175650638, spending: 119290100 },
+          { project_name: "Proyek Mall B", revenue: 200000000, spending: 150000000 },
+          { project_name: "Proyek Villa C", revenue: 250000000, spending: 170000000 },
+        ];
+
+        // Extract Data for Chart
+        const labels = spendingRevenueData.map((data) => data.project_name);
+        const revenueData = spendingRevenueData.map((data) => data.revenue);
+        const spendingData = spendingRevenueData.map((data) => data.spending);
+
+        // Create Stacked Bar Chart
+        const revenueCtx = document.getElementById("revenueSpendingChart").getContext("2d");
+        new Chart(revenueCtx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Revenue",
+                data: revenueData,
+                backgroundColor: "#42a5f5",
+              },
+              {
+                label: "Spending",
+                data: spendingData,
+                backgroundColor: "#ff7043",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    return `${context.dataset.label}: IDR ${context.raw.toLocaleString("id-ID")}`;
+                  },
+                },
+              },
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            scales: {
+              x: {
+                stacked: true,
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Amount (IDR)",
+                },
+              },
+            },
+          },
+        });
+
+
+        // Sample Data
+const costTrendData = [
+  {
+    project_name: "Proyek Gedung A",
+    SPK_Mandor: 72274900,
+    Bahan_Bantu_OPR: 37015200,
+    Lain_Lain: 10000000,
+  },
+  {
+    project_name: "Proyek Mall B",
+    SPK_Mandor: 85000000,
+    Bahan_Bantu_OPR: 42000000,
+    Lain_Lain: 15000000,
+  },
+  {
+    project_name: "Proyek Villa C",
+    SPK_Mandor: 90000000,
+    Bahan_Bantu_OPR: 50000000,
+    Lain_Lain: 20000000,
+  },
+];
+
+// Extract Data for Chart
+const costTrendDatalabels = costTrendData.map((data) => data.project_name);
+const spkMandorData = costTrendData.map((data) => data.SPK_Mandor);
+const bahanBantuData = costTrendData.map((data) => data.Bahan_Bantu_OPR);
+const lainLainData = costTrendData.map((data) => data.Lain_Lain);
+
+// Create Multi-Line Chart
+const categoryCostTrandctx = document.getElementById("categoryCostTrendChart").getContext("2d");
+new Chart(categoryCostTrandctx, {
+  type: "line",
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: "SPK Mandor",
+        data: spkMandorData,
+        borderColor: "#42a5f5",
+        backgroundColor: "rgba(66, 165, 245, 0.2)",
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: "Bahan Bantu & OPR",
+        data: bahanBantuData,
+        borderColor: "#ff7043",
+        backgroundColor: "rgba(255, 112, 67, 0.2)",
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: "Lain-lain",
+        data: lainLainData,
+        borderColor: "#66bb6a",
+        backgroundColor: "rgba(102, 187, 106, 0.2)",
+        fill: true,
+        tension: 0.3,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: "top",
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            return `${context.dataset.label}: IDR ${context.raw.toLocaleString("id-ID")}`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Cost (IDR)",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Projects",
+        },
+      },
+    },
+  },
+});
+
+// Sample Data
+const totalCostData = {
+  SPK_Mandor: 72274900,
+  Bahan_Bantu_OPR: 37015200,
+  Lain_Lain: 10000000,
+};
+
+// Prepare Data for Chart
+const costLabels = Object.keys(totalCostData);
+const costValues = Object.values(totalCostData);
+
+// Create Pie Chart for Total Project Cost Breakdown
+const totalCostCtx = document.getElementById("totalProjectCostChart").getContext("2d");
+new Chart(totalCostCtx, {
+  type: "pie",
+  data: {
+    labels: costLabels,
+    datasets: [
+      {
+        label: "Total Project Cost",
+        data: costValues,
+        backgroundColor: ["#42a5f5", "#ff7043", "#66bb6a"],
+        hoverOffset: 4,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            return `${context.label}: IDR ${context.raw.toLocaleString("id-ID")}`;
+          },
+        },
+      },
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: "Total Cost Breakdown by Category",
+      },
+    },
+  },
+});
+
+
+      });
+    </script>
+  </body>
+  </html>

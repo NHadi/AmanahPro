@@ -47,8 +47,7 @@
       <nav id="navbar"></nav>
       <div class="container-fluid py-4">
 
-        <!-- Summary Widgets -->
-        <!-- Summary Cards Section -->
+        <!-- SPH Summary Cards Section -->
         <div class="row mb-4">
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
@@ -56,13 +55,13 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cost</p>
-                      <h5 class="font-weight-bolder" id="active-projects-count">0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total SPH Count</p>
+                      <h5 class="font-weight-bolder">12</h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
                     <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                      <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
+                      <i class="ni ni-single-copy-04 text-lg opacity-10" aria-hidden="true"></i>
                     </div>
                   </div>
                 </div>
@@ -75,32 +74,12 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Items</p>
-                      <h5 class="font-weight-bolder" id="completed-projects-count">0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total SPH Value</p>
+                      <h5 class="font-weight-bolder">IDR 175,650,638</h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
                     <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                      <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-         
-          <div class="col-xl-3 col-sm-6">
-            <div class="card">
-              <div class="card-body p-3">
-                <div class="row">
-                  <div class="col-8">
-                    <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Discount Impact</p>
-                      <h5 class="font-weight-bolder" id="budget-overview">IDR 0</h5>
-                    </div>
-                  </div>
-                  <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
                       <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
                     </div>
                   </div>
@@ -108,15 +87,56 @@
               </div>
             </div>
           </div>
-          <!-- Other summary cards omitted for brevity -->
-        </div>
-        <!-- Data Grid -->
-        <div class="card">
-          <div class="card-header">
-            <h4>SPH - Surat Penawaran Harga</h4>
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Approved SPH</p>
+                      <h5 class="font-weight-bolder">8</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                      <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <div id="sph-grid"></div>
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Pending SPH</p>
+                      <h5 class="font-weight-bolder">4</h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                      <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Grid -->
+
+        <div class="mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h4>SPH - Surat Penawaran Harga</h4>
+            </div>
+            <div class="card-body">
+              <div id="sph-grid"></div>
+            </div>
           </div>
         </div>
 

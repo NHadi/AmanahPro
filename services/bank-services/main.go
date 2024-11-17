@@ -1,133 +1,204 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
-	"log"
-	"os/exec"
+	"os"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
 
-func main() {
-	// Step 1: Extract text from the PDF
-	pdfFile := "statement.pdf"
-	extractedText, err := extractTextFromPDF(pdfFile)
+func extractTransactionsToExcel(inputFilePath, outputFilePath string) error {
+	// Step 1: Open the CSV file
+	file, err := os.Open(inputFilePath)
 	if err != nil {
-		log.Fatalf("Error extracting text from PDF: %v", err)
+		return fmt.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	// Step 2: Read the file line by line
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading file: %v", err)
 	}
 
-	// Debug: Print extracted text
-	fmt.Println("Extracted Text:")
-	fmt.Println(extractedText)
-
-	// Step 2: Parse the extracted text
-	records := parseTransactions(extractedText)
-
-	// Debug: Print parsed transactions
-	fmt.Println("Parsed Transactions:")
-	for _, record := range records {
-		fmt.Println(record)
+	// Step 3: Locate the starting line for the transaction data
+	startIndex := -1
+	for i, line := range lines {
+		if strings.Contains(line, "Tanggal Transaksi") {
+			startIndex = i + 1 // Data starts from the next line
+			break
+		}
 	}
 
-	// Step 3: Generate the Excel file
-	outputFile := "statement.xlsx"
-	err = generateExcel(records, outputFile)
-	if err != nil {
-		log.Fatalf("Error generating Excel file: %v", err)
+	if startIndex == -1 {
+		return fmt.Errorf("could not find transaction data header in the CSV")
 	}
 
-	fmt.Printf("Excel file successfully created: %s\n", outputFile)
-}
+	// Step 4: Extract header and transaction data
+	headerLine := lines[startIndex-1]
+	dataLines := lines[startIndex:]
 
-// Step 1: Extract text from the PDF using pdfcpu
-func extractTextFromPDF(pdfFile string) (string, error) {
-	cmd := exec.Command("pdftotext", "-layout", pdfFile, "-") // Extract text with layout
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("pdftotext error: %s - %v", stderr.String(), err)
+	// Split header and data into columns
+	header := splitCSVLine(headerLine)
+	data := [][]string{}
+	for _, line := range dataLines {
+		if strings.TrimSpace(line) == "" || // Skip empty lines
+			strings.HasPrefix(line, "Saldo Awal") || // Skip "Saldo Awal"
+			strings.HasPrefix(line, "Mutasi Debet") || // Skip "Mutasi Debet"
+			strings.HasPrefix(line, "Mutasi Kredit") || // Skip "Mutasi Kredit"
+			strings.HasPrefix(line, "Saldo Akhir") { // Skip "Saldo Akhir"
+			continue
+		}
+		row := splitCSVLine(line)
+		// Split the first field (Tanggal Transaksi) into two fields
+		if len(row) > 0 {
+			tanggalTransaksi := strings.SplitN(row[0], ",", 2)
+			if len(tanggalTransaksi) == 2 {
+				row = append([]string{strings.TrimSpace(tanggalTransaksi[0]), strings.TrimSpace(tanggalTransaksi[1])}, row[1:]...)
+			}
+		}
+		data = append(data, row)
+	}
+	// Step 5: Modify header to include Credit and Debit columns
+	if len(header) > 0 {
+		header = append([]string{"Tanggal", "Transaksi", "Cabang", "Credit", "Debit", "Saldo"})
 	}
 
-	return out.String(), nil
-}
+	// Step 6: Create a new Excel file
+	f := excelize.NewFile()
+	sheetName := "Transactions"
+	f.SetSheetName("Sheet1", sheetName)
 
-// Step 2: Parse transactions from the extracted text
+	// Write header row
+	for colIndex, headerCell := range header {
+		cell, _ := excelize.CoordinatesToCellName(colIndex+1, 1)
+		f.SetCellValue(sheetName, cell, strings.TrimSpace(headerCell))
+	}
 
-func parseTransactions(text string) [][]string {
-	lines := strings.Split(text, "\n")
-	var records [][]string
-	var currentRecord []string
+	// Write transaction data rows
+	for rowIndex, record := range data {
+		credit := ""
+		debit := ""
+		saldo := ""
 
-	for lineNumber, line := range lines {
-		line = strings.TrimSpace(line)
-
-		// Skip irrelevant lines
-		if line == "" || strings.Contains(line, "CATATAN") || strings.Contains(line, "BERSAMBUNG") ||
-			strings.Contains(line, "REKENING GIRO") || strings.Contains(line, "HALAMAN") || strings.Contains(line, "MATA UANG") {
+		// Ensure record has sufficient fields to process
+		if len(record) < 3 {
+			fmt.Printf("Skipping malformed row %d: %v\n", rowIndex, record)
 			continue
 		}
 
-		// Check if the line starts with a date (e.g., "01/01")
-		if len(line) >= 5 && line[2] == '/' && line[5] == '/' {
-			// Save the current record before starting a new one
-			if len(currentRecord) > 0 {
-				records = append(records, currentRecord)
-				currentRecord = []string{}
+		// Check the "Jumlah" column (4th index) for "CR" or "DB" and extract "Saldo"
+		if len(record) > 3 {
+			jumlah := record[3]
+			if strings.Contains(jumlah, "CR") {
+				credit = strings.TrimSpace(strings.Replace(jumlah, "CR", "", -1))
+			} else if strings.Contains(jumlah, "DB") {
+				debit = strings.TrimSpace(strings.Replace(jumlah, "DB", "", -1))
 			}
 
-			// Split the line into fields
-			fields := strings.Fields(line)
-			if len(fields) > 1 {
-				currentRecord = append(currentRecord, fields[0])                     // Date
-				currentRecord = append(currentRecord, strings.Join(fields[1:], " ")) // Description
-			} else {
-				fmt.Printf("Warning: Malformed line at %d: %s\n", lineNumber, line)
+			// Preserve the original "Saldo" value
+			if len(record) > 4 {
+				saldo = record[4]
 			}
+		}
+
+		// Safely truncate record if it has more than 5 fields
+		if len(record) > 5 {
+			record = append(record[:3], record[5:]...)
 		} else {
-			// Append to the previous record's description if no new date is detected
-			if len(currentRecord) > 0 {
-				currentRecord[1] += " " + line
-			} else {
-				fmt.Printf("Warning: Orphaned line at %d: %s\n", lineNumber, line)
-			}
+			record = record[:3] // Ensure it has at least 3 fields
+		}
+
+		// Create a new row with Credit, Debit, and Saldo columns added
+		newRow := append(record[:3], credit, debit, saldo)
+
+		// Write row to the Excel sheet
+		for colIndex, cellValue := range newRow {
+			cell, _ := excelize.CoordinatesToCellName(colIndex+1, rowIndex+2)
+			f.SetCellValue(sheetName, cell, strings.Trim(cellValue, "\""))
 		}
 	}
 
-	// Add the last record if any
-	if len(currentRecord) > 0 {
-		records = append(records, currentRecord)
+	// Get the sheet index and set it as active
+	sheetIndex, err := f.GetSheetIndex(sheetName)
+	if err != nil {
+		return fmt.Errorf("error getting sheet index: %v", err)
+	}
+	f.SetActiveSheet(sheetIndex)
+
+	// Apply auto-filter
+	if err := f.AutoFilter(sheetName, "A1:F1", nil); err != nil {
+		return fmt.Errorf("error applying auto-filter: %v", err)
 	}
 
-	return records
+	// Auto-resize columns based on content
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		return fmt.Errorf("error getting rows: %v", err)
+	}
+
+	for colIdx := 0; colIdx < len(rows[0]); colIdx++ {
+		maxWidth := 10.0 // Default minimum width
+		for _, row := range rows {
+			if colIdx < len(row) {
+				cellContent := row[colIdx]
+				contentWidth := float64(len(cellContent))
+				if contentWidth > maxWidth {
+					maxWidth = contentWidth
+				}
+			}
+		}
+		colName, _ := excelize.ColumnNumberToName(colIdx + 1)
+		if err := f.SetColWidth(sheetName, colName, colName, maxWidth+2); err != nil { // Add padding
+			return fmt.Errorf("error setting column width: %v", err)
+		}
+	}
+
+	// Enable text wrapping for all cells
+	style, err := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			WrapText: true,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error creating style: %v", err)
+	}
+
+	// Apply the style to the entire sheet
+	if err := f.SetCellStyle(sheetName, "A1", "F1000", style); err != nil { // Adjust range as needed
+		return fmt.Errorf("error applying style: %v", err)
+	}
+
+	// Step 7: Save the Excel file
+	if err := f.SaveAs(outputFilePath); err != nil {
+		return fmt.Errorf("error saving Excel file: %v", err)
+	}
+
+	fmt.Printf("Transaction data successfully extracted to %s\n", outputFilePath)
+	return nil
 }
 
-// Step 3: Generate Excel file
-func generateExcel(records [][]string, outputFile string) error {
-	f := excelize.NewFile()
-	sheetName := "Sheet1"
-	f.NewSheet(sheetName)
-
-	// Add headers
-	headers := []string{"Tanggal", "Keterangan", "Debit", "Credit", "Saldo"}
-	for col, header := range headers {
-		cell := fmt.Sprintf("%c1", 'A'+col)
-		f.SetCellValue(sheetName, cell, header)
+// splitCSVLine splits a single CSV line into fields, handling quoted values
+func splitCSVLine(line string) []string {
+	line = strings.Trim(line, "\"") // Trim outer quotes
+	parts := strings.Split(line, "\",\"")
+	for i := range parts {
+		parts[i] = strings.Trim(parts[i], "\"") // Remove double quotes from individual fields
 	}
+	return parts
+}
 
-	// Add transaction data
-	for rowIndex, record := range records {
-		for colIndex, value := range record {
-			cell := fmt.Sprintf("%c%d", 'A'+colIndex, rowIndex+2)
-			f.SetCellValue(sheetName, cell, value)
-		}
+func main() {
+	inputFilePath := "input.csv"    // Path to your CSV file
+	outputFilePath := "output.xlsx" // Path to the output Excel file
+
+	if err := extractTransactionsToExcel(inputFilePath, outputFilePath); err != nil {
+		fmt.Printf("Error: %v\n", err)
 	}
-
-	// Save the file
-	return f.SaveAs(outputFile)
 }
