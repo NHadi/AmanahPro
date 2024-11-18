@@ -23,7 +23,7 @@ func NewMenuHandler(menuService *services.MenuService) *MenuHandler {
 // @Security BearerAuth
 // @Tags Menu
 // @Param roleID path int true "Role ID"
-// @Success 200 {array} models.Menu
+// @Success 200 {array} dto.MenuWithPermissionDTO
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string "Internal Server Error"
 // @Router /api/menus/{roleID} [get]
@@ -37,7 +37,7 @@ func (h *MenuHandler) GetAccessibleMenus(c *gin.Context) {
 	}
 
 	// Fetch accessible menus by roleID
-	menus, err := h.menuService.GetAccessibleMenus(roleID)
+	menus, err := h.menuService.GetMenusWithPermissions(roleID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

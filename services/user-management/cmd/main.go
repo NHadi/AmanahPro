@@ -60,7 +60,7 @@ func main() {
 	// Initialize application services
 	userService := services.NewUserService(userRepo, roleAssignmentService)
 	roleService := services.NewRoleService(roleRepo)
-	menuService := services.NewMenuService(menuRepo)
+	menuService := services.NewMenuService(menuRepo, roleMenuRepo)
 	permissionService := services.NewPermissionService(roleMenuRepo)
 
 	// Initialize handlers

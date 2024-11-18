@@ -56,33 +56,8 @@
         z-index: 1000; /* Ensure it stays below the popup */
       }
     </style>
-    <style>
-      .summary-card {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-      }
-      .summary-card .card {
-        flex: 1;
-        margin: 0 10px;
-        padding: 20px;
-        text-align: center;
-        background-color: #f8f9fa;
-        border: 1px solid #e3e3e3;
-        border-radius: 8px;
-      }
-      .chart-container {
-        margin: 20px 0;
-        display: flex;
-        justify-content: space-around;
-      }
-      .chart-card {
-        width: 45%;
-      }
-      canvas {
-        max-height: 300px;
-      }
-    </style>
+
+ 
   </head>
 
   <body class="g-sidenav-show bg-gray-100">
@@ -126,7 +101,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active bg-gradient-warning" href="breakdown.html">
+            <a class="nav-link" href="breakdown.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -177,7 +152,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="invoice.html">
+            <a class="nav-link active bg-gradient-warning" href="invoice.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -240,10 +215,10 @@
                 class="breadcrumb-item text-sm text-white active"
                 aria-current="page"
               >
-                Master Data
+                Dokumen Proyek
               </li>
             </ol>
-            <h6 class="font-weight-bolder text-white mb-0">Breakdown (BD)</h6>
+            <h6 class="font-weight-bolder text-white mb-0">Invoice</h6>
           </nav>
           <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
@@ -354,67 +329,8 @@
 
       <!-- Content -->
       <div class="container-fluid py-4">
-        <!-- Summary Cards -->
-        <div class="row mb-4">
-          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-              <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Breakdown Items</p>
-                  <h5 class="font-weight-bolder" id="totalBreakdownItems">2</h5>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-              <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cost</p>
-                  <h5 class="font-weight-bolder" id="totalCost">IDR 1,367,850</h5>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-              <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Projects</p>
-                  <h5 class="font-weight-bolder" id="totalProjects">1</h5>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-
-        <!-- Progress Overview -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4>Progress Overview</h4>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <div class="chart-card">
-                <h5>Breakdown Progress Distribution</h5>
-                <canvas id="progressPieChart"></canvas>
-              </div>
-              <div class="chart-card">
-                <h5>Progress Comparison by Breakdown</h5>
-                <canvas id="progressBarChart"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body p-3">
-            <div id="breakdown-grid"></div>
-          </div>
-        </div>
-
-      </div> 
+      </div>
       <!-- End Content -->
     </main>
 
@@ -426,131 +342,7 @@
     <script src="template/assets/js/plugins/chartjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
-    <script>
-      $(function () {
 
-        const breakdownData = [
-          {
-            project: "Proyek Gedung A",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 80,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 243000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 97050 },
-            ],
-            total: 677550,
-          },
-          {
-            project: "Proyek Gedung A",
-            no: 2,
-            description: "PERINCIAN PEMASANGAN DINDING , PER M2",
-            progress: 50,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 335750 },
-              { description: "Plester dinding mu 301 / S3 / setara ( tebal 3cm )", unitPrice: 97050 },
-            ],
-            total: 690300,
-          },
-          {
-            project: "Proyek Mall B",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 60,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 260000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 110000 },
-            ],
-            total: 820000,
-          },
-        ];
-
-          
-        // Initialize Breakdown Grid
-          $("#breakdown-grid").dxDataGrid({
-          dataSource: breakdownData,
-          columnAutoWidth: true,
-          showBorders: true,
-          grouping: { autoExpandAll: true },
-          groupPanel: { visible: true },
-          searchPanel: { visible: true, placeholder: "Search breakdown..." },
-          headerFilter: { visible: true },
-          paging: { pageSize: 10 },
-          columns: [
-            { dataField: "project", caption: "Project Name", groupIndex: 0 },
-            { dataField: "description", caption: "Breakdown Description", groupIndex: 1 },
-            { dataField: "no", caption: "No", width: 50 },
-            { dataField: "progress", caption: "Progress (%)" },
-            { dataField: "total", caption: "Total", format: { type: "currency", precision: 0 } },
-          ],
-          masterDetail: {
-            enabled: true,
-            template: function (container, options) {
-              $("<div>")
-                .dxDataGrid({
-                  dataSource: options.data.items,
-                  columns: [
-                    { dataField: "description", caption: "Item Description" },
-                    { dataField: "unitPrice", caption: "Unit Price", format: { type: "currency", precision: 0 } },
-                  ],
-                  showBorders: true,
-                })
-                .appendTo(container);
-            },
-          },
-        });
-
-        // Update Summary Cards
-        const totalCost = breakdownData.reduce((sum, b) => sum + b.total, 0);
-        $("#totalCost").text(`IDR ${totalCost.toLocaleString()}`);
-        $("#totalBreakdownItems").text(breakdownData.length);
-
-        // Pie Chart
-        new Chart(document.getElementById("progressPieChart"), {
-          type: "pie",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
-              {
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: ["#28a745", "#ffc107"],
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.label}: ${context.raw}% complete`;
-                  },
-                },
-              },
-            },
-          },
-        });
-  
-        // Bar Chart
-        new Chart(document.getElementById("progressBarChart"), {
-          type: "bar",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
-              {
-                label: "Progress (%)",
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: "#17a2b8",
-              },
-            ],
-          },
-          options: {
-            scales: {
-              y: { beginAtZero: true, max: 100 },
-            },
-          },
-        });
-      });
-    </script>
     <script>
       var win = navigator.platform.indexOf("Win") > -1;
       if (win && document.querySelector("#sidenav-scrollbar")) {

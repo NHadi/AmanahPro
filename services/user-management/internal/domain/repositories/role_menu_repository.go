@@ -10,4 +10,5 @@ type RoleMenuRepository interface {
 	RemoveMenu(roleID, menuID int) error
 	HasPermission(roleID, menuID int, permission string) (bool, error)
 	AssignPermission(roleID, menuID int, permission string) error
+	GetPermissionByRoleAndMenu(roleID, menuID int) (models.RoleMenu, error)
 }

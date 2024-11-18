@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"AmanahPro/services/user-management/internal/application/services"
@@ -8,11 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// PermissionAssignmentRequest represents the request body for assigning a permission
+// PermissionAssignmentRequest represents the request payload for assigning permissions to menus.
 type PermissionAssignmentRequest struct {
-	RoleID     int    `json:"role_id"`
-	MenuID     int    `json:"menu_id"`
-	Permission string `json:"permission"`
+	RoleID      int                 `json:"role_id" binding:"required"`
+	Permissions []MenuPermissionSet `json:"permissions" binding:"required"`
+}
+
+// MenuPermissionSet represents a menu and its combined permission string.
+type MenuPermissionSet struct {
+	MenuID     int    `json:"menu_id" binding:"required"`
+	Permission string `json:"permission" binding:"required"` // e.g., C, CR, CRU, CRUD
 }
 
 type PermissionHandler struct {
@@ -24,14 +30,14 @@ func NewPermissionHandler(permissionService *services.PermissionService) *Permis
 }
 
 // AssignPermission godoc
-// @Summary Assign permission to a role for a menu
-// @Description Assign a specific permission to a role on a given menu
+// @Summary Assign combined permissions to a role for multiple menus
+// @Description Assign specific combined permissions (e.g., C, CR, CRUD) to a role on given menus
 // @Tags Permissions
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param permission body PermissionAssignmentRequest true "Permission Assignment"
-// @Success 200 {string} string "Permission assigned successfully"
+// @Success 200 {string} string "Permissions assigned successfully"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
@@ -43,10 +49,25 @@ func (h *PermissionHandler) AssignPermission(c *gin.Context) {
 		return
 	}
 
-	if err := h.permissionService.AssignPermission(req.RoleID, req.MenuID, req.Permission); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign permission"})
-		return
+	validPermissions := map[string]bool{
+		"C": true, "R": true, "U": true, "D": true,
+		"CR": true, "CU": true, "RU": true, "CRUD": true,
+		"RD": true, "CRU": true, "CD": true, "RUD": true, "CUD": true,
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Permission assigned successfully"})
+	for _, menu := range req.Permissions {
+		if !validPermissions[menu.Permission] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid permission: %s", menu.Permission)})
+			return
+		}
+
+		if err := h.permissionService.AssignPermission(req.RoleID, menu.MenuID, menu.Permission); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to assign permission to menu %d: %s", menu.MenuID, err.Error()),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Permissions assigned successfully"})
 }

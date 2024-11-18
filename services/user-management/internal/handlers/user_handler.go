@@ -29,9 +29,10 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 // @Router /api/users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var userData struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Username       string `json:"username"`
+		Email          string `json:"email"`
+		Password       string `json:"password"`
+		OrganizationId *int   `json:"OrganizationId"`
 	}
 
 	// Bind JSON input to struct
@@ -41,7 +42,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	// Create user through service
-	user, err := h.userService.CreateUser(userData.Username, userData.Email, userData.Password)
+	user, err := h.userService.CreateUser(userData.Username, userData.Email, userData.Password, userData.OrganizationId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

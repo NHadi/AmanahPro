@@ -1,4 +1,19 @@
 definitions:
+  dto.MenuWithPermissionDTO:
+    properties:
+      menu_id:
+        description: The ID of the menu
+        type: integer
+      menu_name:
+        description: The name of the menu
+        type: string
+      path:
+        description: The path of the menu
+        type: string
+      permission:
+        description: The permission string (e.g., CRUD, R, D)
+        type: string
+    type: object
   handlers.LoginRequest:
     properties:
       password:
@@ -11,14 +26,28 @@ definitions:
       token:
         type: string
     type: object
-  handlers.PermissionAssignmentRequest:
+  handlers.MenuPermissionSet:
     properties:
       menu_id:
         type: integer
       permission:
+        description: e.g., C, CR, CRU, CRUD
         type: string
+    required:
+    - menu_id
+    - permission
+    type: object
+  handlers.PermissionAssignmentRequest:
+    properties:
+      permissions:
+        items:
+          $ref: '#/definitions/handlers.MenuPermissionSet'
+        type: array
       role_id:
         type: integer
+    required:
+    - permissions
+    - role_id
     type: object
   models.Menu:
     properties:
@@ -55,6 +84,8 @@ definitions:
         type: string
       email:
         type: string
+      organizationId:
+        type: integer
       password:
         type: string
       status:
@@ -122,7 +153,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Menu'
+              $ref: '#/definitions/dto.MenuWithPermissionDTO'
             type: array
         "401":
           description: Unauthorized
@@ -145,7 +176,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Assign a specific permission to a role on a given menu
+      description: Assign specific combined permissions (e.g., C, CR, CRUD) to a role
+        on given menus
       parameters:
       - description: Permission Assignment
         in: body
@@ -157,7 +189,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Permission assigned successfully
+          description: Permissions assigned successfully
           schema:
             type: string
         "400":
@@ -180,7 +212,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Assign permission to a role for a menu
+      summary: Assign combined permissions to a role for multiple menus
       tags:
       - Permissions
   /api/roles:

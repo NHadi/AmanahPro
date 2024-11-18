@@ -33,7 +33,10 @@ type LoginResponse struct {
 
 // JWTClaims defines the custom claims for JWT.
 type JWTClaims struct {
-	UserID int `json:"user_id"`
+	UserID         int    `json:"user_id"`
+	OrganizationId *int   `json:"organization_id"`
+	Email          string `json:"email"`
+	Username       string `json:"username"`
 	jwt.StandardClaims
 }
 
@@ -65,7 +68,10 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Create JWT token with user ID in claims
 	claims := &JWTClaims{
-		UserID: user.UserID,
+		UserID:         user.UserID,
+		OrganizationId: user.OrganizationId,
+		Username:       user.Username,
+		Email:          user.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 		},

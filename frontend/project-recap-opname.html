@@ -56,33 +56,94 @@
         z-index: 1000; /* Ensure it stays below the popup */
       }
     </style>
-    <style>
-      .summary-card {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-      }
-      .summary-card .card {
-        flex: 1;
-        margin: 0 10px;
-        padding: 20px;
-        text-align: center;
-        background-color: #f8f9fa;
-        border: 1px solid #e3e3e3;
-        border-radius: 8px;
-      }
-      .chart-container {
-        margin: 20px 0;
-        display: flex;
-        justify-content: space-around;
-      }
-      .chart-card {
-        width: 45%;
-      }
-      canvas {
-        max-height: 300px;
-      }
-    </style>
+ <style>
+  .rekap-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .project-selector {
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .project-selector label {
+    margin-right: 10px;
+    font-weight: bold;
+  }
+
+  .rekap-summary {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .summary-card {
+    flex: 1;
+    margin: 0 10px;
+    padding: 20px;
+    text-align: center;
+    background-color: #ffffff;
+    border: 1px solid #e3e3e3;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .summary-card h5 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333333;
+  }
+
+  .summary-card p {
+    font-size: 18px;
+    color: #28a745;
+    font-weight: bold;
+  }
+
+  #rekap-grid {
+    margin-top: 20px;
+  }
+
+  .financial-comparison-container {
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .card {
+      border: 1px solid #e3e3e3;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h4 {
+      font-size: 20px;
+      color: #28a745;
+      margin-top: 10px;
+    }
+
+    .chart-container {
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #e3e3e3;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-container h5 {
+      font-size: 18px;
+      color: #333333;
+      text-align: center;
+    }
+
+</style>
   </head>
 
   <body class="g-sidenav-show bg-gray-100">
@@ -126,7 +187,10 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active bg-gradient-warning" href="breakdown.html">
+            <a
+              class="nav-link"
+              href="breakdown.html"
+            >
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -209,7 +273,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="project-recap-opname.html">
+            <a class="nav-link active bg-gradient-warning" href="project-recap-opname.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -240,10 +304,10 @@
                 class="breadcrumb-item text-sm text-white active"
                 aria-current="page"
               >
-                Master Data
+                Laporan
               </li>
             </ol>
-            <h6 class="font-weight-bolder text-white mb-0">Breakdown (BD)</h6>
+            <h6 class="font-weight-bolder text-white mb-0">Berita Acara Progres</h6>
           </nav>
           <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
@@ -354,67 +418,153 @@
 
       <!-- Content -->
       <div class="container-fluid py-4">
-        <!-- Summary Cards -->
+
+
+        <!-- Summary Cards Section -->
         <div class="row mb-4">
+          <!-- Total Active Projects -->
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Breakdown Items</p>
-                  <h5 class="font-weight-bolder" id="totalBreakdownItems">2</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Active Projects</p>
+                      <h5 class="font-weight-bolder">8</h5>
+                      <p class="text-sm text-muted mb-0">Currently ongoing projects</p>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                      <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        
+          <!-- Total Invoiced Amount -->
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cost</p>
-                  <h5 class="font-weight-bolder" id="totalCost">IDR 1,367,850</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Invoiced Amount</p>
+                      <h5 class="font-weight-bolder">IDR 1,000,000,000</h5>
+                      <p class="text-sm text-muted mb-0">Value billed to clients</p>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                      <i class="ni ni-single-copy-04 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        
+          <!-- Pending Approvals -->
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Projects</p>
-                  <h5 class="font-weight-bolder" id="totalProjects">1</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Pending Approvals</p>
+                      <h5 class="font-weight-bolder">12</h5>
+                      <p class="text-sm text-muted mb-0">documents awaiting confirmation</p>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                      <i class="ni ni-bell-55 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+          <!-- Total Revenue -->
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Revenue</p>
+                      <h5 class="font-weight-bolder">IDR 850,000,000</h5>
+                      <p class="text-sm text-muted mb-0">Confirmed revenue from all projects</p>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                      <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-
-        <!-- Progress Overview -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4>Progress Overview</h4>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <div class="chart-card">
-                <h5>Breakdown Progress Distribution</h5>
-                <canvas id="progressPieChart"></canvas>
-              </div>
-              <div class="chart-card">
-                <h5>Progress Comparison by Breakdown</h5>
-                <canvas id="progressBarChart"></canvas>
-              </div>
+        
+  
+          
+          <div class="card">
+            <div class="card-body p-3">
+              <div id="rekap-grid"></div>
             </div>
           </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body p-3">
-            <div id="breakdown-grid"></div>
+  
+          <div class="financial-comparison-container">
+            <!-- Project Comparison Cards -->
+            <div class="row">
+              <div class="col-xl-3 col-sm-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="text-uppercase text-muted">Total Projects</h6>
+                    <h4 id="total-projects">5</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="text-uppercase text-muted">Average Opname Value</h6>
+                    <h4 id="average-opname">IDR 100,000,000</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="text-uppercase text-muted">Highest Spending Project</h6>
+                    <h4 id="highest-spending-project">Project B</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="text-uppercase text-muted">Best Margin Project</h6>
+                    <h4 id="best-margin-project">Project D</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          
+            <!-- Bar Chart for Project Comparison -->
+            <div class="chart-container mt-4">
+              <h5 class="text-center">Project Financial Comparison</h5>
+              <canvas id="projectComparisonChart"></canvas>
+            </div>
           </div>
+          
+  
         </div>
-
-      </div> 
       <!-- End Content -->
     </main>
 
@@ -427,130 +577,208 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script>
-      $(function () {
-
-        const breakdownData = [
-          {
-            project: "Proyek Gedung A",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 80,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 243000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 97050 },
-            ],
-            total: 677550,
-          },
-          {
-            project: "Proyek Gedung A",
-            no: 2,
-            description: "PERINCIAN PEMASANGAN DINDING , PER M2",
-            progress: 50,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 335750 },
-              { description: "Plester dinding mu 301 / S3 / setara ( tebal 3cm )", unitPrice: 97050 },
-            ],
-            total: 690300,
-          },
-          {
-            project: "Proyek Mall B",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 60,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 260000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 110000 },
-            ],
-            total: 820000,
-          },
-        ];
-
-          
-        // Initialize Breakdown Grid
-          $("#breakdown-grid").dxDataGrid({
-          dataSource: breakdownData,
-          columnAutoWidth: true,
-          showBorders: true,
-          grouping: { autoExpandAll: true },
-          groupPanel: { visible: true },
-          searchPanel: { visible: true, placeholder: "Search breakdown..." },
-          headerFilter: { visible: true },
-          paging: { pageSize: 10 },
-          columns: [
-            { dataField: "project", caption: "Project Name", groupIndex: 0 },
-            { dataField: "description", caption: "Breakdown Description", groupIndex: 1 },
-            { dataField: "no", caption: "No", width: 50 },
-            { dataField: "progress", caption: "Progress (%)" },
-            { dataField: "total", caption: "Total", format: { type: "currency", precision: 0 } },
+    
+      // Sample Project Data
+      const projects = {
+        1: {
+          opnamePekerjaan: 148427520,
+          totalPengeluaran: 102749850,
+          margin: 45677670,
+          marginPercentage: 30.77,
+          details: [
+            { type: "Opname Mandor", description: "Mandor Ipung", amount: 30017500 },
+            { type: "Opname Mandor", description: "Mandor Musholi", amount: 38326100 },
+            { type: "Opname Mandor", description: "Mandor Ruski", amount: 14000000 },
+            { type: "Bahan Bantu & OPR", description: "Material Support", amount: 20406250 },
+            { type: "Lain-lain", description: "Miscellaneous Expenses", amount: 0 },
           ],
-          masterDetail: {
-            enabled: true,
-            template: function (container, options) {
-              $("<div>")
-                .dxDataGrid({
-                  dataSource: options.data.items,
-                  columns: [
-                    { dataField: "description", caption: "Item Description" },
-                    { dataField: "unitPrice", caption: "Unit Price", format: { type: "currency", precision: 0 } },
-                  ],
-                  showBorders: true,
-                })
-                .appendTo(container);
-            },
-          },
-        });
-
-        // Update Summary Cards
-        const totalCost = breakdownData.reduce((sum, b) => sum + b.total, 0);
-        $("#totalCost").text(`IDR ${totalCost.toLocaleString()}`);
-        $("#totalBreakdownItems").text(breakdownData.length);
-
-        // Pie Chart
-        new Chart(document.getElementById("progressPieChart"), {
-          type: "pie",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
-              {
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: ["#28a745", "#ffc107"],
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.label}: ${context.raw}% complete`;
-                  },
-                },
-              },
-            },
-          },
-        });
+        },
+        2: {
+          opnamePekerjaan: 200000000,
+          totalPengeluaran: 150000000,
+          margin: 50000000,
+          marginPercentage: 25.0,
+          details: [
+            { type: "Opname Mandor", description: "Mandor Andi", amount: 50000000 },
+            { type: "Bahan Bantu & OPR", description: "Operational Support", amount: 70000000 },
+            { type: "Lain-lain", description: "Other Expenses", amount: 30000000 },
+          ],
+        },
+        3: {
+          opnamePekerjaan: 250000000,
+          totalPengeluaran: 180000000,
+          margin: 70000000,
+          marginPercentage: 28.0,
+          details: [
+            { type: "Opname Mandor", description: "Mandor Dika", amount: 80000000 },
+            { type: "Bahan Bantu & OPR", description: "Support Materials", amount: 50000000 },
+            { type: "Lain-lain", description: "Misc Expenses", amount: 50000000 },
+          ],
+        },
+      };
   
-        // Bar Chart
-        new Chart(document.getElementById("progressBarChart"), {
-          type: "bar",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
+     
+  
+      // Render Rekap Grid
+      function renderGrid(projectId) {
+        const project = projects[projectId];
+        $("#rekap-grid").dxDataGrid({
+          dataSource: project.details,
+          showBorders: true,
+          columns: [
+            { dataField: "type", caption: "Pengeluaran" },
+            { dataField: "description", caption: "Keterangan" },
+            { dataField: "amount", caption: "Jumlah", format: { type: "currency", precision: 0 } },
+          ],
+          summary: {
+            totalItems: [
               {
-                label: "Progress (%)",
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: "#17a2b8",
+                column: "amount",
+                summaryType: "sum",
+                displayFormat: "Total: {0}",
+                valueFormat: { type: "currency", precision: 0 },
               },
             ],
           },
-          options: {
-            scales: {
-              y: { beginAtZero: true, max: 100 },
-            },
-          },
         });
+      }
+  
+      // Initial Render
+      $(document).ready(() => {
+        const initialProjectId = 1; // Default to Project 1
+  
+  
+  
+        const projectRecapData = [
+    {
+      project: "Project A",
+      details: [
+        { type: "Opname Mandor", description: "Mandor Ipung", amount: 30017500 },
+        { type: "Opname Mandor", description: "Mandor Musholi", amount: 38326100 },
+        { type: "Opname Mandor", description: "Mandor Ruski", amount: 14000000 },
+        { type: "Bahan Bantu & OPR", description: "Material Support", amount: 20406250 },
+        { type: "Lain-lain", description: "Miscellaneous Expenses", amount: 0 },
+      ],
+    },
+    {
+      project: "Project B",
+      details: [
+        { type: "Opname Mandor", description: "Mandor Andi", amount: 50000000 },
+        { type: "Bahan Bantu & OPR", description: "Operational Support", amount: 70000000 },
+        { type: "Lain-lain", description: "Other Expenses", amount: 30000000 },
+      ],
+    },
+  ];
+  
+  $("#rekap-grid").dxDataGrid({
+    dataSource: projectRecapData,
+    showBorders: true,
+    keyExpr: "project", // Unique key for each project
+    columns: [
+      { dataField: "project", caption: "Project", width: 200 },
+    ],
+    masterDetail: {
+      enabled: true,
+      template: function (container, options) {
+        const details = options.data.details;
+  
+        $("<div>").dxDataGrid({
+          dataSource: details,
+          showBorders: true,
+          columns: [
+            { dataField: "type", caption: "Pengeluaran" },
+            { dataField: "description", caption: "Keterangan" },
+            { dataField: "amount", caption: "Jumlah", format: { type: "currency", precision: 0 } },
+          ],
+          summary: {
+            totalItems: [
+              {
+                column: "amount",
+                summaryType: "sum",
+                displayFormat: "Total: {0}",
+                valueFormat: { type: "currency", precision: 0 },
+              },
+            ],
+          },
+        }).appendTo(container);
+      },
+    },
+  });
+  
+        const projectData = [
+    { name: "Project A", opname: 200000000, spending: 150000000, margin: 50000000 },
+    { name: "Project B", opname: 300000000, spending: 250000000, margin: 50000000 },
+    { name: "Project C", opname: 150000000, spending: 100000000, margin: 50000000 },
+    { name: "Project D", opname: 250000000, spending: 200000000, margin: 50000000 },
+    { name: "Project E", opname: 100000000, spending: 80000000, margin: 20000000 },
+  ];
+  
+  // Update cards
+  document.getElementById("total-projects").innerText = projectData.length;
+  document.getElementById("average-opname").innerText = `IDR ${(projectData.reduce((sum, p) => sum + p.opname, 0) / projectData.length).toLocaleString()}`;
+  document.getElementById("highest-spending-project").innerText = projectData.sort((a, b) => b.spending - a.spending)[0].name;
+  document.getElementById("best-margin-project").innerText = projectData.sort((a, b) => b.margin - a.margin)[0].name;
+  
+  // Bar chart data
+  const projectNames = projectData.map(p => p.name);
+  const opnameValues = projectData.map(p => p.opname);
+  const spendingValues = projectData.map(p => p.spending);
+  const marginValues = projectData.map(p => p.margin);
+  
+  const ctx = document.getElementById("projectComparisonChart").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: projectNames,
+      datasets: [
+        {
+          label: "Opname Value",
+          data: opnameValues,
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+        },
+        {
+          label: "Spending",
+          data: spendingValues,
+          backgroundColor: "rgba(255, 99, 132, 0.7)",
+        },
+        {
+          label: "Margin",
+          data: marginValues,
+          backgroundColor: "rgba(75, 192, 192, 0.7)",
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Amount (IDR)",
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: "Projects",
+          },
+        },
+      },
+    },
+  });
+  
+  
+  
       });
-    </script>
+  
+  
+      </script>
     <script>
       var win = navigator.platform.indexOf("Win") > -1;
       if (win && document.querySelector("#sidenav-scrollbar")) {

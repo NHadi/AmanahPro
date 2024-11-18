@@ -98,7 +98,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Menu"
+                                "$ref": "#/definitions/dto.MenuWithPermissionDTO"
                             }
                         }
                     },
@@ -130,7 +130,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Assign a specific permission to a role on a given menu",
+                "description": "Assign specific combined permissions (e.g., C, CR, CRUD) to a role on given menus",
                 "consumes": [
                     "application/json"
                 ],
@@ -140,7 +140,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Assign permission to a role for a menu",
+                "summary": "Assign combined permissions to a role for multiple menus",
                 "parameters": [
                     {
                         "description": "Permission Assignment",
@@ -154,7 +154,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Permission assigned successfully",
+                        "description": "Permissions assigned successfully",
                         "schema": {
                             "type": "string"
                         }
@@ -368,6 +368,27 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.MenuWithPermissionDTO": {
+            "type": "object",
+            "properties": {
+                "menu_id": {
+                    "description": "The ID of the menu",
+                    "type": "integer"
+                },
+                "menu_name": {
+                    "description": "The name of the menu",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "The path of the menu",
+                    "type": "string"
+                },
+                "permission": {
+                    "description": "The permission string (e.g., CRUD, R, D)",
+                    "type": "string"
+                }
+            }
+        },
         "handlers.LoginRequest": {
             "type": "object",
             "properties": {
@@ -387,14 +408,34 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.PermissionAssignmentRequest": {
+        "handlers.MenuPermissionSet": {
             "type": "object",
+            "required": [
+                "menu_id",
+                "permission"
+            ],
             "properties": {
                 "menu_id": {
                     "type": "integer"
                 },
                 "permission": {
+                    "description": "e.g., C, CR, CRU, CRUD",
                     "type": "string"
+                }
+            }
+        },
+        "handlers.PermissionAssignmentRequest": {
+            "type": "object",
+            "required": [
+                "permissions",
+                "role_id"
+            ],
+            "properties": {
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.MenuPermissionSet"
+                    }
                 },
                 "role_id": {
                     "type": "integer"
@@ -453,6 +494,9 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "organizationId": {
+                    "type": "integer"
                 },
                 "password": {
                     "type": "string"

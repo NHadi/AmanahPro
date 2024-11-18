@@ -22,7 +22,7 @@ func NewUserService(userRepo repositories.UserRepository, roleAssignmentSvc *ser
 	}
 }
 
-func (s *UserService) CreateUser(username, email, password string) (*models.User, error) {
+func (s *UserService) CreateUser(username, email, password string, organization_id *int) (*models.User, error) {
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -30,10 +30,11 @@ func (s *UserService) CreateUser(username, email, password string) (*models.User
 	}
 
 	user := &models.User{
-		Username: username,
-		Email:    email,
-		Password: string(hashedPassword),
-		Status:   true,
+		Username:       username,
+		Email:          email,
+		Password:       string(hashedPassword),
+		Status:         true,
+		OrganizationId: organization_id,
 	}
 
 	err = s.userRepo.Create(user)

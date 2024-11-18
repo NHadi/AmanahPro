@@ -1,10 +1,9 @@
 package repositories
 
 import (
-	"errors"
-
 	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -35,8 +34,8 @@ func (r *roleMenuRepository) AssignMenu(roleMenu *models.RoleMenu) error {
 
 func (r *roleMenuRepository) FindMenusByRoleID(roleID int) ([]models.Menu, error) {
 	var menus []models.Menu
-	err := r.db.Joins("JOIN role_menus ON menus.menu_id = role_menus.menu_id").
-		Where("role_menus.role_id = ?", roleID).
+	err := r.db.Joins("JOIN RoleMenus ON menus.menu_id = RoleMenus.menu_id").
+		Where("RoleMenus.role_id = ?", roleID).
 		Find(&menus).Error
 	return menus, err
 }
@@ -45,22 +44,18 @@ func (r *roleMenuRepository) RemoveMenu(roleID, menuID int) error {
 	return r.db.Where("role_id = ? AND menu_id = ?", roleID, menuID).Delete(&models.RoleMenu{}).Error
 }
 
-// AssignPermission assigns a specific permission to a role for a menu item.
+// AssignPermission assigns a combined permission string (e.g., C, CR, CRUD) to a role for a menu item.
 func (r *roleMenuRepository) AssignPermission(roleID, menuID int, permission string) error {
-	// Validate permission value
-	validPermissions := map[string]bool{"view": true, "edit": true, "delete": true}
-	if !validPermissions[permission] {
-		return errors.New("invalid permission")
-	}
-
-	// Check if the permission already exists
 	var existingRoleMenu models.RoleMenu
-	err := r.db.Where("role_id = ? AND menu_id = ? AND permission = ?", roleID, menuID, permission).First(&existingRoleMenu).Error
+	err := r.db.Where("role_id = ? AND menu_id = ?", roleID, menuID).First(&existingRoleMenu).Error
+
 	if err == nil {
-		// Permission already exists, no need to add it again
-		return nil
+		// Update existing permission
+		existingRoleMenu.Permission = permission
+		existingRoleMenu.AssignedAt = time.Now() // Update timestamp
+		return r.db.Save(&existingRoleMenu).Error
 	} else if err != gorm.ErrRecordNotFound {
-		// An error occurred other than "record not found"
+		// Unexpected error
 		return err
 	}
 
@@ -69,6 +64,16 @@ func (r *roleMenuRepository) AssignPermission(roleID, menuID int, permission str
 		RoleID:     roleID,
 		MenuID:     menuID,
 		Permission: permission,
+		AssignedAt: time.Now(), // Explicitly set timestamp
 	}
 	return r.db.Create(&newRoleMenu).Error
+}
+
+// GetPermissionByRoleAndMenu fetches the permission for a given role and menu.
+func (r *roleMenuRepository) GetPermissionByRoleAndMenu(roleID, menuID int) (models.RoleMenu, error) {
+	var roleMenu models.RoleMenu
+	err := r.db.
+		Where("role_id = ? AND menu_id = ?", roleID, menuID).
+		First(&roleMenu).Error
+	return roleMenu, err
 }

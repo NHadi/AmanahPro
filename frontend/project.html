@@ -1,28 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
-  <header id="header"></header>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    .chart-container {
-      display: flex;
-      justify-content: space-around;
-      margin: 20px 0;
-    }
-    .chart-card {
-      width: 30%;
-    }
-    canvas {
-      max-height: 300px;
-    }
-  </style>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="template/assets/img/apple-icon.png"
+    />
+    <link rel="icon" type="image/png" href="template/assets/img/favicon.png" />
+    <title>AmanahPRO - Sistem Management Proyek & Keuangan</title>
+    <!--     Fonts and icons     -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <!-- Nucleo Icons -->
+    <link
+      href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome Icons -->
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- CSS Files -->
+    <link
+      id="pagestyle"
+      href="template/assets/css/argon-dashboard.css?v=2.1.0"
+      rel="stylesheet"
+    />
+    <!-- DevExtreme CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn3.devexpress.com/jslib/22.1.6/css/dx.light.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      .chart-container {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+      }
+      .chart-card {
+        width: 30%;
+      }
+      canvas {
+        max-height: 300px;
+      }
+
+      .dx-popup {
+        z-index: 1050; /* Ensure it is above other elements but not excessive */
+      }
+
+      #sidenav-main {
+        z-index: 1000; /* Ensure it stays below the popup */
+      }
+
+
+    </style>
+  </head>
+
   <body class="g-sidenav-show bg-gray-100">
     <div class="min-height-300 bg-dark position-absolute w-100"></div>
-    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
+    <aside
+      class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4"
+      id="sidenav-main"
+    >
+      <hr class="horizontal dark mt-0" />
+      <!-- Menu -->
+      <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-tv-2 text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Dashboard</span>
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <h6
+              class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6"
+            >
+              Master Data
+            </h6>
+          </li>
+
+          <!-- Project Management Section -->
+          <li class="nav-item">
+            <a class="nav-link active bg-gradient-warning" href="project.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-folder-17 text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Project</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="breakdown.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-collection text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Breakdown (BD)</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="project-recap.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-folder-17 text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Rekapitulasi Proyek</span>
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <h6
+              class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6"
+            >
+              Dokumen Proyek
+            </h6>
+          </li>
+          <!-- Document Management Section -->
+          <li class="nav-item">
+            <a class="nav-link" href="sph.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i
+                  class="ni ni-single-copy-04 text-dark text-sm opacity-10"
+                ></i>
+              </div>
+              <span class="nav-link-text ms-1">Surat Penawaran Harga</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="spk.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-paper-diploma text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Surat Perintah Kerja</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="invoice.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-credit-card text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Invoice</span>
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <h6
+              class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6"
+            >
+              Laporan
+            </h6>
+          </li>
+
+          <!-- Report Section -->
+          <li class="nav-item">
+            <a class="nav-link" href="ba.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i
+                  class="ni ni-bullet-list-67 text-dark text-sm opacity-10"
+                ></i>
+              </div>
+              <span class="nav-link-text ms-1">Berita Acara Progres</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="project-recap-opname.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-chart-bar-32 text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Rekap Opname Proyek</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </aside>
     <main class="main-content position-relative border-radius-lg">
-      <nav id="navbar"></nav>
+      <!-- Navbar -->
+      <nav
+        class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl"
+        id="navbarBlur"
+        data-scroll="false"
+      >
+        <div class="container-fluid py-1 px-3">
+          <nav aria-label="breadcrumb">
+            <ol
+              class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5"
+            >
+              <li class="breadcrumb-item text-sm">
+                <a class="opacity-5 text-white" href="javascript:;">Pages</a>
+              </li>
+              <li
+                class="breadcrumb-item text-sm text-white active"
+                aria-current="page"
+              >
+                Master Data
+              </li>
+            </ol>
+            <h6 class="font-weight-bolder text-white mb-0">Project</h6>
+          </nav>   
+          <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+            <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+              <div class="input-group">
+                <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                <input type="text" class="form-control" placeholder="Type here..." onfocus="focused(this)" onfocusout="defocused(this)" fdprocessedid="e9r3t4">
+              </div>
+            </div>
+            <ul class="navbar-nav  justify-content-end">
+              <li class="nav-item d-flex align-items-center">
+                <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
+                  <i class="fa fa-user me-sm-1" aria-hidden="true"></i>
+                  <span class="d-sm-inline d-none">Sign In</span>
+                </a>
+              </li>
+              <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+                <a href="javascript:;" class="nav-link text-white p-0" id="iconNavbarSidenav">
+                  <div class="sidenav-toggler-inner">
+                    <i class="sidenav-toggler-line bg-white"></i>
+                    <i class="sidenav-toggler-line bg-white"></i>
+                    <i class="sidenav-toggler-line bg-white"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="nav-item px-3 d-flex align-items-center">
+                <a href="javascript:;" class="nav-link text-white p-0">
+                  <i class="fa fa-cog fixed-plugin-button-nav cursor-pointer" aria-hidden="true"></i>
+                </a>
+              </li>
+              <li class="nav-item dropdown pe-2 d-flex align-items-center">
+                <a href="javascript:;" class="nav-link text-white p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa fa-bell cursor-pointer" aria-hidden="true"></i>
+                </a>
+                <ul class="dropdown-menu  dropdown-menu-end  px-2 py-3 me-sm-n4" aria-labelledby="dropdownMenuButton">
+                  <li class="mb-2">
+                    <a class="dropdown-item border-radius-md" href="javascript:;">
+                      <div class="d-flex py-1">
+                        <div class="my-auto">
+                          <img src="../assets/img/team-2.jpg" class="avatar avatar-sm  me-3 ">
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="text-sm font-weight-normal mb-1">
+                            <span class="font-weight-bold">New message</span> from Laur
+                          </h6>
+                          <p class="text-xs text-secondary mb-0">
+                            <i class="fa fa-clock me-1" aria-hidden="true"></i>
+                            13 minutes ago
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+                  <li class="mb-2">
+                    <a class="dropdown-item border-radius-md" href="javascript:;">
+                      <div class="d-flex py-1">
+                        <div class="my-auto">
+                          <img src="../assets/img/small-logos/logo-spotify.svg" class="avatar avatar-sm bg-gradient-dark  me-3 ">
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="text-sm font-weight-normal mb-1">
+                            <span class="font-weight-bold">New album</span> by Travis Scott
+                          </h6>
+                          <p class="text-xs text-secondary mb-0">
+                            <i class="fa fa-clock me-1" aria-hidden="true"></i>
+                            1 day
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item border-radius-md" href="javascript:;">
+                      <div class="d-flex py-1">
+                        <div class="avatar avatar-sm bg-gradient-secondary  me-3  my-auto">
+                          <svg width="12px" height="12px" viewBox="0 0 43 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <title>credit-card</title>
+                            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                              <g transform="translate(-2169.000000, -745.000000)" fill="#FFFFFF" fill-rule="nonzero">
+                                <g transform="translate(1716.000000, 291.000000)">
+                                  <g transform="translate(453.000000, 454.000000)">
+                                    <path class="color-background" d="M43,10.7482083 L43,3.58333333 C43,1.60354167 41.3964583,0 39.4166667,0 L3.58333333,0 C1.60354167,0 0,1.60354167 0,3.58333333 L0,10.7482083 L43,10.7482083 Z" opacity="0.593633743"></path>
+                                    <path class="color-background" d="M0,16.125 L0,32.25 C0,34.2297917 1.60354167,35.8333333 3.58333333,35.8333333 L39.4166667,35.8333333 C41.3964583,35.8333333 43,34.2297917 43,32.25 L43,16.125 L0,16.125 Z M19.7083333,26.875 L7.16666667,26.875 L7.16666667,23.2916667 L19.7083333,23.2916667 L19.7083333,26.875 Z M35.8333333,26.875 L28.6666667,26.875 L28.6666667,23.2916667 L35.8333333,23.2916667 L35.8333333,26.875 Z"></path>
+                                  </g>
+                                </g>
+                              </g>
+                            </g>
+                          </svg>
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="text-sm font-weight-normal mb-1">
+                            Payment successfully completed
+                          </h6>
+                          <p class="text-xs text-secondary mb-0">
+                            <i class="fa fa-clock me-1" aria-hidden="true"></i>
+                            2 days
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div> 
+        </div>
+      </nav>
+      <!-- End Navbar -->
+
+      <!-- Content -->
       <div class="container-fluid py-4">
-        
         <!-- Summary Cards Section -->
         <div class="row mb-4">
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
@@ -31,13 +349,22 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Active Projects</p>
-                      <h5 class="font-weight-bolder" id="active-projects-count">0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Total Active Projects
+                      </p>
+                      <h5 class="font-weight-bolder" id="active-projects-count">
+                        0
+                      </h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                      <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
+                    <div
+                      class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-folder-17 text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
                     </div>
                   </div>
                 </div>
@@ -50,13 +377,25 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Completed Projects</p>
-                      <h5 class="font-weight-bolder" id="completed-projects-count">0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Completed Projects
+                      </p>
+                      <h5
+                        class="font-weight-bolder"
+                        id="completed-projects-count"
+                      >
+                        0
+                      </h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                      <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
+                    <div
+                      class="icon icon-shape bg-gradient-success shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-check-bold text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
                     </div>
                   </div>
                 </div>
@@ -69,13 +408,25 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Pending Documents</p>
-                      <h5 class="font-weight-bolder" id="pending-documents-count">0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Pending Documents
+                      </p>
+                      <h5
+                        class="font-weight-bolder"
+                        id="pending-documents-count"
+                      >
+                        0
+                      </h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
-                      <i class="ni ni-bell-55 text-lg opacity-10" aria-hidden="true"></i>
+                    <div
+                      class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-bell-55 text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
                     </div>
                   </div>
                 </div>
@@ -88,13 +439,22 @@
                 <div class="row">
                   <div class="col-8">
                     <div class="numbers">
-                      <p class="text-sm mb-0 text-uppercase font-weight-bold">Budget Overview</p>
-                      <h5 class="font-weight-bolder" id="budget-overview">IDR 0</h5>
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Budget Overview
+                      </p>
+                      <h5 class="font-weight-bolder" id="budget-overview">
+                        IDR 0
+                      </h5>
                     </div>
                   </div>
                   <div class="col-4 text-end">
-                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
-                      <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                    <div
+                      class="icon icon-shape bg-gradient-info shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-money-coins text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
                     </div>
                   </div>
                 </div>
@@ -127,7 +487,6 @@
           </div>
         </div>
 
-
         <!-- Projects Grid with Document and Task Tracker Columns -->
         <div class="card">
           <div class="card-body p-3">
@@ -135,61 +494,118 @@
           </div>
         </div>
       </div>
+      <!-- End Content -->
     </main>
 
-    <!-- Core JS Files -->
+    <!--   Core JS Files   -->
     <script src="template/assets/js/core/popper.min.js"></script>
     <script src="template/assets/js/core/bootstrap.min.js"></script>
     <script src="template/assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="template/assets/js/plugins/chartjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DevExtreme JS -->
-    <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>    
-    <script src="template/assets/js/common.js"></script>
-
+    <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script>
       // Sample project data
       const projects = [
-        { project_id: 1, name: "Proyek Gedung A", location: "Jakarta, Indonesia", start_date: "2024-01-01", end_date: "2024-12-31", description: "Pembangunan gedung perkantoran", status: "in-progress", progress: 70, budget: 300000000 },
-        { project_id: 2, name: "Proyek Mall B", location: "Bandung, Indonesia", start_date: "2024-03-01", end_date: "2024-11-30", description: "Renovasi pusat perbelanjaan", status: "in-progress", progress: 50, budget: 200000000 }
+        {
+          project_id: 1,
+          name: "Proyek Gedung A",
+          location: "Jakarta, Indonesia",
+          start_date: "2024-01-01",
+          end_date: "2024-12-31",
+          description: "Pembangunan gedung perkantoran",
+          status: "in-progress",
+          progress: 70,
+          budget: 300000000,
+        },
+        {
+          project_id: 2,
+          name: "Proyek Mall B",
+          location: "Bandung, Indonesia",
+          start_date: "2024-03-01",
+          end_date: "2024-11-30",
+          description: "Renovasi pusat perbelanjaan",
+          status: "in-progress",
+          progress: 50,
+          budget: 200000000,
+        },
       ];
-    
+
       // Mock data fetching functions
       function getSPKData(projectId) {
-        return [{ id: 1, number: "SPK001", description: "Project Work", date: "2024-01-15" }];
+        return [
+          {
+            id: 1,
+            number: "SPK001",
+            description: "Project Work",
+            date: "2024-01-15",
+          },
+        ];
       }
-    
+
       function getBDData(projectId) {
         return [
           { id: 1, subject: "Breakdown Subject 1", date: "2024-01-15" },
-          { id: 2, subject: "Breakdown Subject 2", date: "2024-02-20" }
+          { id: 2, subject: "Breakdown Subject 2", date: "2024-02-20" },
         ];
       }
-    
+
       function getSPHData(projectId) {
         return [{ id: 1, recipient: "Recipient Name", date: "2024-01-15" }];
       }
-    
+
       function getSPKSections(spkId) {
         return [
           { sectionId: 1, name: "Female Toilet" },
           { sectionId: 2, name: "Male Toilet" },
           { sectionId: 3, name: "Difable Toilet" },
           { sectionId: 4, name: "Nursery" },
-          { sectionId: 5, name: "PRELIMINARIES" }
+          { sectionId: 5, name: "PRELIMINARIES" },
         ];
       }
-    
+
       function getSPKDetails(sectionId) {
         const details = {
           1: [
-            { id: 1, no: 1, areaPemasangan: "Jasa pasang lantai", qty: 16, unit: "m2", hargaSatuan: 170000, totalJasa: 2720000 },
-            { id: 2, no: 2, areaPemasangan: "Jasa pasang dinding", qty: 42.76, unit: "m2", hargaSatuan: 250000, totalJasa: 10690000 }
+            {
+              id: 1,
+              no: 1,
+              areaPemasangan: "Jasa pasang lantai",
+              qty: 16,
+              unit: "m2",
+              hargaSatuan: 170000,
+              totalJasa: 2720000,
+            },
+            {
+              id: 2,
+              no: 2,
+              areaPemasangan: "Jasa pasang dinding",
+              qty: 42.76,
+              unit: "m2",
+              hargaSatuan: 250000,
+              totalJasa: 10690000,
+            },
           ],
           2: [
-            { id: 1, no: 1, areaPemasangan: "Jasa pasang lantai", qty: 21.02, unit: "m2", hargaSatuan: 260000, totalJasa: 5465200 },
-            { id: 2, no: 2, areaPemasangan: "Jasa pasang dinding", qty: 61.08, unit: "m2", hargaSatuan: 330000, totalJasa: 20156400 }
+            {
+              id: 1,
+              no: 1,
+              areaPemasangan: "Jasa pasang lantai",
+              qty: 21.02,
+              unit: "m2",
+              hargaSatuan: 260000,
+              totalJasa: 5465200,
+            },
+            {
+              id: 2,
+              no: 2,
+              areaPemasangan: "Jasa pasang dinding",
+              qty: 61.08,
+              unit: "m2",
+              hargaSatuan: 330000,
+              totalJasa: 20156400,
+            },
           ],
           // Add more sections as needed
         };
@@ -200,470 +616,467 @@
       function createSPKGrid(projectId) {
         const container = $("<div>");
         container.dxDataGrid({
-            dataSource: getSPKData(projectId), // Directly fetch all SPK data for the project
-            editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
-            columns: [
-                { dataField: "number", caption: "SPK Number" },
-                { dataField: "description", caption: "Description" },
-                { dataField: "date", caption: "Date", dataType: "date" }
-            ],
-            paging: { pageSize: 5 },
-            showBorders: true,
-            masterDetail: {
-                enabled: true,
-                template: function(spkContainer, options) {
-                    const spkId = options.data.id;
+          dataSource: getSPKData(projectId), // Directly fetch all SPK data for the project
+          editing: {
+            mode: "popup",
+            allowUpdating: true,
+            allowAdding: true,
+            allowDeleting: true,
+          },
+          columns: [
+            { dataField: "number", caption: "SPK Number" },
+            { dataField: "description", caption: "Description" },
+            { dataField: "date", caption: "Date", dataType: "date" },
+          ],
+          paging: { pageSize: 5 },
+          showBorders: true,
+          masterDetail: {
+            enabled: true,
+            template: function (spkContainer, options) {
+              const spkId = options.data.id;
 
-                    // Define the main grid for sections
-                    const sectionGrid = $("<div>").dxDataGrid({
-                        dataSource: getSPKSections(spkId),
-                        columns: [{ dataField: "name", caption: "" }],
-                        showBorders: true,
-                        summary: {
-                            totalItems: [
-                                {
-                                    column: "name",
-                                    summaryType: "custom",
-                                    displayFormat: "Grand Total",
-                                    cssClass: "font-weight-bold" // Optional: Makes the label bold
-                                },
-                                {
-                                    column: "totalJasa",
-                                    summaryType: "custom",
-                                    displayFormat: "{0}",
-                                    valueFormat: "currency",
-                                    cssClass: "font-weight-bold" // Optional: Makes the grand total bold
-                                }
-                            ],
-                            calculateCustomSummary: function(options) {
-                                if (options.name === "totalJasa") {
-                                    if (options.summaryProcess === "start") {
-                                        options.totalValue = 0; // Initialize grand total
-                                    }
-                                    if (options.summaryProcess === "calculate") {
-                                        // Calculate the totalJasa for each section and accumulate it
-                                        const sectionData = getSPKDetails(options.value.sectionId);
-                                        const sectionTotal = sectionData.reduce((sum, item) => sum + item.totalJasa, 0);
-                                        options.totalValue += sectionTotal; // Add section total to grand total
-                                    }
-                                }
-                            }
-                        },
-                        masterDetail: {
-                            enabled: true,
-                            template: function(sectionContainer, sectionOptions) {
-                                const sectionId = sectionOptions.data.sectionId;
-
-                                // Define the details grid for each section with subtotal calculation
-                                $("<div>").dxDataGrid({
-                                    dataSource: getSPKDetails(sectionId),
-                                    editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
-                                    columns: [
-                                        { dataField: "no", caption: "No" },
-                                        { dataField: "areaPemasangan", caption: "Area Pemasangan" },
-                                        { dataField: "qty", caption: "Qty", dataType: "number" },
-                                        { dataField: "unit", caption: "Unit" },
-                                        { dataField: "hargaSatuan", caption: "Harga Satuan", format: { type: "currency", precision: 0 } },
-                                        { dataField: "totalJasa", caption: "Total Jasa", format: { type: "currency", precision: 0 } }
-                                    ],
-                                    summary: {
-                                        totalItems: [
-                                            {
-                                                column: "totalJasa",
-                                                summaryType: "sum",
-                                                displayFormat: "Subtotal: {0}",
-                                                showInColumn: "totalJasa"
-                                            }
-                                        ]
-                                    },
-                                    paging: { pageSize: 5 },
-                                    showBorders: true
-                                }).appendTo(sectionContainer);
-                            }
-                        }
-                    });
-
-                    sectionGrid.appendTo(spkContainer);
-                }
-            },
-            summary: {
-                totalItems: [
+              // Define the main grid for sections
+              const sectionGrid = $("<div>").dxDataGrid({
+                dataSource: getSPKSections(spkId),
+                columns: [{ dataField: "name", caption: "" }],
+                showBorders: true,
+                summary: {
+                  totalItems: [
                     {
-                        column: "totalJasa",
-                        summaryType: "custom",
-                        displayFormat: "Grand Total: {0}",
-                        valueFormat: "currency"
-                    }
-                ],
-                calculateCustomSummary: function(options) {
+                      column: "name",
+                      summaryType: "custom",
+                      displayFormat: "Grand Total",
+                      cssClass: "font-weight-bold", // Optional: Makes the label bold
+                    },
+                    {
+                      column: "totalJasa",
+                      summaryType: "custom",
+                      displayFormat: "{0}",
+                      valueFormat: "currency",
+                      cssClass: "font-weight-bold", // Optional: Makes the grand total bold
+                    },
+                  ],
+                  calculateCustomSummary: function (options) {
                     if (options.name === "totalJasa") {
-                        if (options.summaryProcess === "start") {
-                            options.totalValue = 0;
-                        }
-                        if (options.summaryProcess === "calculate") {
-                            const sections = getSPKSections(options.value.id);
-                            sections.forEach(section => {
-                                const sectionData = getSPKDetails(section.sectionId);
-                                options.totalValue += sectionData.reduce((sum, item) => sum + item.totalJasa, 0);
-                            });
-                        }
+                      if (options.summaryProcess === "start") {
+                        options.totalValue = 0; // Initialize grand total
+                      }
+                      if (options.summaryProcess === "calculate") {
+                        // Calculate the totalJasa for each section and accumulate it
+                        const sectionData = getSPKDetails(
+                          options.value.sectionId
+                        );
+                        const sectionTotal = sectionData.reduce(
+                          (sum, item) => sum + item.totalJasa,
+                          0
+                        );
+                        options.totalValue += sectionTotal; // Add section total to grand total
+                      }
                     }
+                  },
+                },
+                masterDetail: {
+                  enabled: true,
+                  template: function (sectionContainer, sectionOptions) {
+                    const sectionId = sectionOptions.data.sectionId;
+
+                    // Define the details grid for each section with subtotal calculation
+                    $("<div>")
+                      .dxDataGrid({
+                        dataSource: getSPKDetails(sectionId),
+                        editing: {
+                          mode: "popup",
+                          allowUpdating: true,
+                          allowAdding: true,
+                          allowDeleting: true,
+                        },
+                        columns: [
+                          { dataField: "no", caption: "No" },
+                          {
+                            dataField: "areaPemasangan",
+                            caption: "Area Pemasangan",
+                          },
+                          {
+                            dataField: "qty",
+                            caption: "Qty",
+                            dataType: "number",
+                          },
+                          { dataField: "unit", caption: "Unit" },
+                          {
+                            dataField: "hargaSatuan",
+                            caption: "Harga Satuan",
+                            format: { type: "currency", precision: 0 },
+                          },
+                          {
+                            dataField: "totalJasa",
+                            caption: "Total Jasa",
+                            format: { type: "currency", precision: 0 },
+                          },
+                        ],
+                        summary: {
+                          totalItems: [
+                            {
+                              column: "totalJasa",
+                              summaryType: "sum",
+                              displayFormat: "Subtotal: {0}",
+                              showInColumn: "totalJasa",
+                            },
+                          ],
+                        },
+                        paging: { pageSize: 5 },
+                        showBorders: true,
+                      })
+                      .appendTo(sectionContainer);
+                  },
+                },
+              });
+
+              sectionGrid.appendTo(spkContainer);
+            },
+          },
+          summary: {
+            totalItems: [
+              {
+                column: "totalJasa",
+                summaryType: "custom",
+                displayFormat: "Grand Total: {0}",
+                valueFormat: "currency",
+              },
+            ],
+            calculateCustomSummary: function (options) {
+              if (options.name === "totalJasa") {
+                if (options.summaryProcess === "start") {
+                  options.totalValue = 0;
                 }
-            }
+                if (options.summaryProcess === "calculate") {
+                  const sections = getSPKSections(options.value.id);
+                  sections.forEach((section) => {
+                    const sectionData = getSPKDetails(section.sectionId);
+                    options.totalValue += sectionData.reduce(
+                      (sum, item) => sum + item.totalJasa,
+                      0
+                    );
+                  });
+                }
+              }
+            },
+          },
         });
         return container;
-    }
+      }
 
       function createBDGrid(projectId) {
         const container = $("<div>");
         container.dxDataGrid({
           dataSource: getBDData(projectId),
-          editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+          editing: {
+            mode: "popup",
+            allowUpdating: true,
+            allowAdding: true,
+            allowDeleting: true,
+          },
           columns: [
             { dataField: "subject", caption: "Subject" },
-            { dataField: "date", caption: "Date", dataType: "date" }
+            { dataField: "date", caption: "Date", dataType: "date" },
           ],
           paging: { pageSize: 5 },
-          showBorders: true
+          showBorders: true,
         });
         return container;
       }
-    
+
       function createSPHGrid(projectId) {
         const container = $("<div>");
         container.dxDataGrid({
           dataSource: getSPHData(projectId),
-          editing: { mode: "popup", allowUpdating: true, allowAdding: true, allowDeleting: true },
+          editing: {
+            mode: "popup",
+            allowUpdating: true,
+            allowAdding: true,
+            allowDeleting: true,
+          },
           columns: [
             { dataField: "recipient", caption: "Recipient" },
-            { dataField: "date", caption: "Date", dataType: "date" }
+            { dataField: "date", caption: "Date", dataType: "date" },
           ],
           paging: { pageSize: 5 },
-          showBorders: true
+          showBorders: true,
         });
         return container;
       }
 
-      
       $(document).ready(function () {
-          // Set summary card values based on dummy data
-          $("#active-projects-count").text(projects.filter(p => p.status === "in-progress").length);
-          $("#completed-projects-count").text(projects.filter(p => p.status === "completed").length);
-          $("#pending-documents-count").text(2);  // Example count for pending documents
-          $("#budget-overview").text("IDR 500,000,000");  // Example budget overview
-    
-          $("#projects-grid").dxDataGrid({
-              dataSource: projects,
-              columnAutoWidth: true,
-              showBorders: true,
-              searchPanel: { visible: true, placeholder: "Search..." },
-              headerFilter: { visible: true },
-              filterRow: { visible: true, applyFilter: "auto" },
-              paging: { pageSize: 10 },
-              columns: [
-                { dataField: "name", caption: "Project Name" },
-                { dataField: "location", caption: "Location" },
-                { dataField: "start_date", caption: "Start Date", dataType: "date" },
-                { dataField: "end_date", caption: "End Date", dataType: "date" },
-                { dataField: "description", caption: "Description" },
-                { dataField: "status", caption: "Status" },
-                { 
-                  dataField: "progress", 
-                  caption: "Progress",
-                  cellTemplate: function(container, options) {
-                    const progress = options.value || 0;
-                    const progressBar = $("<div>").addClass("progress").css("height", "20px");
-                    $("<div>")
-                      .addClass("progress-bar")
-                      .attr("role", "progressbar")
-                      .css("width", progress + "%")
-                      .text(progress + "%")
-                      .appendTo(progressBar);
-                    progressBar.appendTo(container);
-                  }
-                }
-              ],
-              masterDetail: {
-                enabled: true,
-                template: function(container, options) {
-                  const projectId = options.data.project_id;
-                  $("<div>").dxTabPanel({
-                    items: [
-                      
-                      { title: "BD", template: function() { return createBDGrid(projectId); }},                      
-                      { title: "SPH", template: function() { return createSPHGrid(projectId); }},
-                      { title: "SPK", template: function() { return createSPKGrid(projectId); }},                      
-                      { title: "Rekap", template: function() { return createSPKGrid(projectId); }},                   
-                      { title: "BA", template: function() { return createSPKGrid(projectId); }},                                         
-                      { title: "Invoice", template: function() { return createSPKGrid(projectId); }},            
-                      { title: "Opname", template: function() { return createSPKGrid(projectId); }},          
-                      { title: "Rekap Opname", template: function() { return createSPKGrid(projectId); }},
-                    ],
-                    selectedIndex: 0,
-                    deferRendering: false,
-                  }).appendTo(container);
-                }
-              }
-            });
-      
-            
-          // Chart 1: Project Progress (Bar Chart)
-          const progressCtx = document.getElementById("progressBarChart").getContext("2d");
-            new Chart(progressCtx, {
-              type: "bar",
-              data: {
-                labels: projects.map(p => p.name),
-                datasets: [
-                  {
-                    label: "Progress (%)",
-                    data: projects.map(p => p.progress),
-                    backgroundColor: ["#4caf50", "#ff9800"],
-                    hoverBackgroundColor: ["#388e3c", "#fb8c00"],
-                  },
-                ],
+        // Set summary card values based on dummy data
+        $("#active-projects-count").text(
+          projects.filter((p) => p.status === "in-progress").length
+        );
+        $("#completed-projects-count").text(
+          projects.filter((p) => p.status === "completed").length
+        );
+        $("#pending-documents-count").text(2); // Example count for pending documents
+        $("#budget-overview").text("IDR 500,000,000"); // Example budget overview
+
+        $("#projects-grid").dxDataGrid({
+          dataSource: projects,
+          columnAutoWidth: true,
+          showBorders: true,
+          searchPanel: { visible: true, placeholder: "Search..." },
+          headerFilter: { visible: true },
+          filterRow: { visible: true, applyFilter: "auto" },
+          paging: { pageSize: 10 },
+          columns: [
+            { dataField: "name", caption: "Project Name" },
+            { dataField: "location", caption: "Location" },
+            {
+              dataField: "start_date",
+              caption: "Start Date",
+              dataType: "date",
+            },
+            { dataField: "end_date", caption: "End Date", dataType: "date" },
+            { dataField: "description", caption: "Description" },
+            { dataField: "status", caption: "Status" },
+            {
+              dataField: "progress",
+              caption: "Progress",
+              cellTemplate: function (container, options) {
+                const progress = options.value || 0;
+                const progressBar = $("<div>")
+                  .addClass("progress")
+                  .css("height", "20px");
+                $("<div>")
+                  .addClass("progress-bar")
+                  .attr("role", "progressbar")
+                  .css("width", progress + "%")
+                  .text(progress + "%")
+                  .appendTo(progressBar);
+                progressBar.appendTo(container);
               },
-              options: {
-                responsive: true,
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `${context.label}: ${context.raw}% complete`;
+            },
+          ],
+          masterDetail: {
+            enabled: true,
+            template: function (container, options) {
+              const projectId = options.data.project_id;
+              $("<div>")
+                .dxTabPanel({
+                  items: [
+                    {
+                      title: "BD",
+                      template: function () {
+                        return createBDGrid(projectId);
                       },
                     },
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: { display: true, text: "Progress (%)" },
-                  },
-                },
-              },
-            });
-
-            // Chart 2: Budget Distribution (Doughnut Chart)
-            const budgetCtx = document.getElementById("budgetPieChart").getContext("2d");
-            new Chart(budgetCtx, {
-              type: "doughnut",
-              data: {
-                labels: projects.map(p => p.name),
-                datasets: [
-                  {
-                    label: "Budget (IDR)",
-                    data: projects.map(p => p.budget),
-                    backgroundColor: ["#42a5f5", "#ff7043"],
-                    hoverBackgroundColor: ["#1e88e5", "#f4511e"],
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `${context.label}: IDR ${context.raw.toLocaleString()}`;
+                    {
+                      title: "SPH",
+                      template: function () {
+                        return createSPHGrid(projectId);
                       },
                     },
-                  },
-                },
-              },
-            });
-
-            // Chart 3: Status Overview (Pie Chart)
-            const statusCounts = projects.reduce((acc, p) => {
-              acc[p.status] = (acc[p.status] || 0) + 1;
-              return acc;
-            }, {});
-
-            const statusCtx = document.getElementById("statusPieChart").getContext("2d");
-            new Chart(statusCtx, {
-              type: "pie",
-              data: {
-                labels: Object.keys(statusCounts),
-                datasets: [
-                  {
-                    data: Object.values(statusCounts),
-                    backgroundColor: ["#ffca28", "#66bb6a", "#ef5350"],
-                    hoverBackgroundColor: ["#ffb300", "#43a047", "#e53935"],
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `${context.label}: ${context.raw} project(s)`;
+                    {
+                      title: "SPK",
+                      template: function () {
+                        return createSPKGrid(projectId);
                       },
                     },
-                  },
-                },
-              },
-            });
-
-
-             // Sample project data for trends
-            const historicalData = [
-              { month: "January", progress: 20, budget: 100000000 },
-              { month: "February", progress: 35, budget: 150000000 },
-              { month: "March", progress: 50, budget: 200000000 },
-              { month: "April", progress: 65, budget: 250000000 },
-              { month: "May", progress: 80, budget: 300000000 },
-              { month: "June", progress: 90, budget: 350000000 },
-            ];
-
-            // Chart: Historical Trends
-            const trendsCtx = document.getElementById("historicalTrendsChart").getContext("2d");
-            new Chart(trendsCtx, {
-              type: "line",
-              data: {
-                labels: historicalData.map(d => d.month),
-                datasets: [
-                  {
-                    label: "Cumulative Progress (%)",
-                    data: historicalData.map(d => d.progress),
-                    borderColor: "#4caf50",
-                    backgroundColor: "rgba(76, 175, 80, 0.2)",
-                    tension: 0.4,
-                    yAxisID: "yProgress",
-                  },
-                  {
-                    label: "Budget Usage (IDR)",
-                    data: historicalData.map(d => d.budget),
-                    borderColor: "#42a5f5",
-                    backgroundColor: "rgba(66, 165, 245, 0.2)",
-                    tension: 0.4,
-                    yAxisID: "yBudget",
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        const value = context.raw;
-                        if (context.dataset.label.includes("Progress")) {
-                          return `${context.dataset.label}: ${value}%`;
-                        }
-                        return `${context.dataset.label}: IDR ${value.toLocaleString()}`;
+                    {
+                      title: "Rekap",
+                      template: function () {
+                        return createSPKGrid(projectId);
                       },
                     },
-                  },
-                  legend: {
-                    display: true,
-                    position: "top",
-                    labels: {
-                      usePointStyle: true,
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "Month",
-                    },
-                  },
-                  yProgress: {
-                    type: "linear",
-                    position: "left",
-                    title: {
-                      display: true,
-                      text: "Progress (%)",
-                    },
-                    min: 0,
-                    max: 100,
-                  },
-                  yBudget: {
-                    type: "linear",
-                    position: "right",
-                    title: {
-                      display: true,
-                      text: "Budget Usage (IDR)",
-                    },
-                    ticks: {
-                      callback: function (value) {
-                        return `IDR ${value / 1000000}M`; // Convert to millions
+                    {
+                      title: "BA",
+                      template: function () {
+                        return createSPKGrid(projectId);
                       },
                     },
-                  },
-                },
+                    {
+                      title: "Invoice",
+                      template: function () {
+                        return createSPKGrid(projectId);
+                      },
+                    },
+                    {
+                      title: "Opname",
+                      template: function () {
+                        return createSPKGrid(projectId);
+                      },
+                    },
+                    {
+                      title: "Rekap Opname",
+                      template: function () {
+                        return createSPKGrid(projectId);
+                      },
+                    },
+                  ],
+                  selectedIndex: 0,
+                  deferRendering: false,
+                })
+                .appendTo(container);
+            },
+          },
+        });
+
+        // Chart 1: Project Progress (Bar Chart)
+        const progressCtx = document
+          .getElementById("progressBarChart")
+          .getContext("2d");
+        new Chart(progressCtx, {
+          type: "bar",
+          data: {
+            labels: projects.map((p) => p.name),
+            datasets: [
+              {
+                label: "Progress (%)",
+                data: projects.map((p) => p.progress),
+                backgroundColor: ["#4caf50", "#ff9800"],
+                hoverBackgroundColor: ["#388e3c", "#fb8c00"],
               },
-            });
-
-
-            // Monthly Budget Data
-          const monthlyBudgetData = {
-            months: ["January", "February", "March", "April", "May", "June"],
-            projects: [
-              { name: "Proyek Gedung A", budgets: [50000000, 60000000, 80000000, 100000000, 110000000, 120000000] },
-              { name: "Proyek Mall B", budgets: [30000000, 40000000, 60000000, 70000000, 80000000, 90000000] },
             ],
-          };
-
-          // Prepare dataset for the chart
-          const budgetDatasets = monthlyBudgetData.projects.map(project => ({
-            label: project.name,
-            data: project.budgets,
-            backgroundColor: project.name === "Proyek Gedung A" ? "#42a5f5" : "#ff7043",
-            hoverBackgroundColor: project.name === "Proyek Gedung A" ? "#1e88e5" : "#f4511e",
-          }));
-
-          // Chart: Monthly Budget Analysis
-          const budgetAnlystCtx = document.getElementById("monthlyBudgetChart").getContext("2d");
-          new Chart(budgetAnlystCtx, {
-            type: "bar",
-            data: {
-              labels: monthlyBudgetData.months,
-              datasets: budgetDatasets,
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      return `${context.dataset.label}: IDR ${context.raw.toLocaleString()}`;
-                    },
-                  },
-                },
-                legend: {
-                  display: true,
-                  position: "top",
-                  labels: {
-                    usePointStyle: true,
-                  },
-                },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Month",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "Budget (IDR)",
-                  },
-                  ticks: {
-                    callback: function (value) {
-                      return `IDR ${value / 1000000}M`; // Convert to millions
-                    },
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.label}: ${context.raw}% complete`;
                   },
                 },
               },
             },
-          });
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: { display: true, text: "Progress (%)" },
+              },
+            },
+          },
+        });
+
+        // Chart 2: Budget Distribution (Doughnut Chart)
+        const budgetCtx = document
+          .getElementById("budgetPieChart")
+          .getContext("2d");
+        new Chart(budgetCtx, {
+          type: "doughnut",
+          data: {
+            labels: projects.map((p) => p.name),
+            datasets: [
+              {
+                label: "Budget (IDR)",
+                data: projects.map((p) => p.budget),
+                backgroundColor: ["#42a5f5", "#ff7043"],
+                hoverBackgroundColor: ["#1e88e5", "#f4511e"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${
+                      context.label
+                    }: IDR ${context.raw.toLocaleString()}`;
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Chart 3: Status Overview (Pie Chart)
+        const statusCounts = projects.reduce((acc, p) => {
+          acc[p.status] = (acc[p.status] || 0) + 1;
+          return acc;
+        }, {});
+
+        const statusCtx = document
+          .getElementById("statusPieChart")
+          .getContext("2d");
+        new Chart(statusCtx, {
+          type: "pie",
+          data: {
+            labels: Object.keys(statusCounts),
+            datasets: [
+              {
+                data: Object.values(statusCounts),
+                backgroundColor: ["#ffca28", "#66bb6a", "#ef5350"],
+                hoverBackgroundColor: ["#ffb300", "#43a047", "#e53935"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.label}: ${context.raw} project(s)`;
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Sample project data for trends
+        const historicalData = [
+          { month: "January", progress: 20, budget: 100000000 },
+          { month: "February", progress: 35, budget: 150000000 },
+          { month: "March", progress: 50, budget: 200000000 },
+          { month: "April", progress: 65, budget: 250000000 },
+          { month: "May", progress: 80, budget: 300000000 },
+          { month: "June", progress: 90, budget: 350000000 },
+        ];
+
+
+        // Monthly Budget Data
+        const monthlyBudgetData = {
+          months: ["January", "February", "March", "April", "May", "June"],
+          projects: [
+            {
+              name: "Proyek Gedung A",
+              budgets: [
+                50000000, 60000000, 80000000, 100000000, 110000000, 120000000,
+              ],
+            },
+            {
+              name: "Proyek Mall B",
+              budgets: [
+                30000000, 40000000, 60000000, 70000000, 80000000, 90000000,
+              ],
+            },
+          ],
+        };
+
+        // Prepare dataset for the chart
+        const budgetDatasets = monthlyBudgetData.projects.map((project) => ({
+          label: project.name,
+          data: project.budgets,
+          backgroundColor:
+            project.name === "Proyek Gedung A" ? "#42a5f5" : "#ff7043",
+          hoverBackgroundColor:
+            project.name === "Proyek Gedung A" ? "#1e88e5" : "#f4511e",
+        }));
 
       });
-  </script>
-</body>
+    </script>
+    <script>
+      var win = navigator.platform.indexOf("Win") > -1;
+      if (win && document.querySelector("#sidenav-scrollbar")) {
+        var options = {
+          damping: "0.5",
+        };
+        Scrollbar.init(document.querySelector("#sidenav-scrollbar"), options);
+      }
+    </script>
+    <!-- Github buttons -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+    <script src="template/assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+  </body>
 </html>
