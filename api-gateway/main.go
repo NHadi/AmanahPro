@@ -1,13 +1,14 @@
 package main
 
 import (
-	"AmanahPro/api-gateway/middleware"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/NHadi/AmanahPro-common/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -20,9 +21,16 @@ type ServiceConfig struct {
 
 func main() {
 	r := gin.Default()
+
 	r.Use(middleware.CORSMiddleware())
-	// Load environment variables from the root .env file
-	err := godotenv.Load("../.env")
+	// Check if running in Docker (using an environment variable)
+	envFilePath := ".env" // Default path
+	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
+		envFilePath = "/app/.env" // Path for Docker container
+	}
+
+	// Load environment variables
+	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -39,6 +47,14 @@ func main() {
 			// Add other services here as needed
 		},
 	}
+
+	// Initialize common logger
+	logger, err := middleware.InitializeLogger("api-gateway", "http://elasticsearch:9200", "api-gateway-logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	// Attach common logging middleware
+	r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Apply JWT Authentication Middleware, with exclusion for the login route
 	r.Use(func(c *gin.Context) {

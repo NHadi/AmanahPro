@@ -1,16 +1,16 @@
 package main
 
 import (
-	"log"
-	"os"
-
-	"AmanahPro/api-gateway/middleware"
 	_ "AmanahPro/services/user-management/docs" // Swagger docs
 	"AmanahPro/services/user-management/internal/application/services"
 	domainServices "AmanahPro/services/user-management/internal/domain/services"
 	"AmanahPro/services/user-management/internal/handlers"
 	"AmanahPro/services/user-management/internal/infrastructure/persistence"
 	"AmanahPro/services/user-management/internal/infrastructure/repositories"
+	"log"
+	"os"
+
+	"github.com/NHadi/AmanahPro-common/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -31,8 +31,14 @@ const defaultPort = "8081"
 // @BasePath /
 func main() {
 
-	// Load environment variables from the root .env file
-	err := godotenv.Load("../../.env")
+	// Check if running in Docker (using an environment variable)
+	envFilePath := ".env" // Default path
+	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
+		envFilePath = "/app/.env" // Path for Docker container
+	}
+
+	// Load environment variables
+	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -72,6 +78,7 @@ func main() {
 
 	// Initialize Gin router
 	r := gin.Default()
+
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {
 		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)

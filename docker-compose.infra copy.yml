@@ -8,9 +8,8 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - mssql_data:/var/opt/mssql
+      - db_data:/var/opt/mssql
       - db_logs:/var/opt/mssql/logs
-      - docker_logs:/var/log/containers
     healthcheck:
       test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
       interval: 10s
@@ -36,7 +35,6 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
       - es_logs:/usr/share/elasticsearch/logs
-      - docker_logs:/var/log/containers
     logging:
       driver: "json-file"
       options:
@@ -44,12 +42,18 @@ services:
         max-file: "7"
     networks:
       - infras_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 10s
-      retries: 5
 
-  # Kibana
+  logstash:
+      image: docker.elastic.co/logstash/logstash:8.9.0
+      depends_on:
+        - elasticsearch
+      ports:
+        - "5044:5044" # Logstash Beats input
+      volumes:
+        - ./elk/logstash:/usr/share/logstash/pipeline
+      networks:
+        - infras_network
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.9.0
     depends_on:
@@ -69,7 +73,6 @@ services:
     volumes:
       - redis_data:/data
       - redis_logs:/var/log/redis
-      - docker_logs:/var/log/containers
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -95,7 +98,6 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - rabbitmq_logs:/var/log/rabbitmq
-      - docker_logs:/var/log/containers
     logging:
       driver: "json-file"
       options:
@@ -136,7 +138,7 @@ services:
       - infras_network
 
 volumes:
-  mssql_data:
+  db_data:
   db_logs:
   es_data:
   es_logs:
@@ -144,7 +146,6 @@ volumes:
   redis_logs:
   rabbitmq_data:
   rabbitmq_logs:
-  docker_logs: # Centralized log directory for all containers
 
 networks:
   infras_network:

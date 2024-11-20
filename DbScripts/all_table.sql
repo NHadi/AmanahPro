@@ -1,6 +1,6 @@
 USE [AmanahDb]
 GO
-/****** Object:  Table [dbo].[BA]    Script Date: 14/11/2024 23:17:15 ******/
+/****** Object:  Table [dbo].[BA]    Script Date: 19/11/2024 22:27:13 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -23,7 +23,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BADetails]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[BADetails]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -47,7 +47,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BAProgress]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[BAProgress]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -71,7 +71,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BASection]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[BASection]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -92,7 +92,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BreakdownItems]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[BreakdownItems]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -114,7 +114,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Breakdowns]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Breakdowns]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -137,7 +137,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BreakdownSections]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[BreakdownSections]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -160,7 +160,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Invoices]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Invoices]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -190,13 +190,14 @@ CREATE TABLE [dbo].[Invoices](
 	[updated_at] [datetime] NULL,
 	[deleted_by] [int] NULL,
 	[deleted_at] [datetime] NULL,
-PRIMARY KEY CLUSTERED 
+	[organization_id] [int] NOT NULL,
+ CONSTRAINT [PK__Invoices__3213E83FD92D40F1] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Menus]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Menus]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -215,7 +216,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OpnameDetail]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[OpnameDetail]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -240,7 +241,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OpnameMandor]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[OpnameMandor]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -261,7 +262,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OpnamePayment]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[OpnamePayment]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -284,7 +285,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OpnameRekap]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[OpnameRekap]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -306,7 +307,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OpnameSection]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[OpnameSection]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -327,7 +328,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectAdditionalExpenses]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[ProjectAdditionalExpenses]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -350,7 +351,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectCashFlow]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[ProjectCashFlow]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -367,13 +368,14 @@ CREATE TABLE [dbo].[ProjectCashFlow](
 	[updated_at] [datetime] NULL,
 	[deleted_by] [int] NULL,
 	[deleted_at] [datetime] NULL,
+	[spv_id] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectCashFlowDetails]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[ProjectCashFlowDetails]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -398,7 +400,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectRekap]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[ProjectRekap]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -422,7 +424,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Projects]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Projects]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -441,13 +443,14 @@ CREATE TABLE [dbo].[Projects](
 	[updated_at] [datetime] NULL,
 	[deleted_by] [int] NULL,
 	[deleted_at] [datetime] NULL,
-PRIMARY KEY CLUSTERED 
+	[organization_id] [int] NOT NULL,
+ CONSTRAINT [PK__Projects__BC799E1FBA694236] PRIMARY KEY CLUSTERED 
 (
 	[project_id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ProjectUser]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[ProjectUser]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -465,7 +468,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[RekapPengeluaranDetails]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[RekapPengeluaranDetails]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -487,7 +490,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[RekapPengeluaranSections]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[RekapPengeluaranSections]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -508,7 +511,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[RoleMenus]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[RoleMenus]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -526,7 +529,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Roles]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Roles]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -542,7 +545,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Sph]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Sph]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -566,7 +569,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SphDetails]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[SphDetails]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -592,7 +595,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SphSections]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[SphSections]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -613,7 +616,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Spk]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Spk]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -637,7 +640,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SPKDetails]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[SPKDetails]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -664,7 +667,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SPKSections]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[SPKSections]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -685,7 +688,24 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[UserRoles]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[SysOrganization]    Script Date: 19/11/2024 22:27:15 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[SysOrganization](
+	[OrganizationId] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](250) NOT NULL,
+	[Description] [nvarchar](250) NULL,
+	[Address] [text] NULL,
+	[LogoUrl] [nvarchar](50) NULL,
+ CONSTRAINT [PK_SysOrganization] PRIMARY KEY CLUSTERED 
+(
+	[OrganizationId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[UserRoles]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -701,7 +721,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Users]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Table [dbo].[Users]    Script Date: 19/11/2024 22:27:15 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -714,6 +734,7 @@ CREATE TABLE [dbo].[Users](
 	[status] [bit] NULL,
 	[created_at] [datetime] NULL,
 	[updated_at] [datetime] NULL,
+	[organization_id] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[user_id] ASC
@@ -936,21 +957,35 @@ SET IDENTITY_INSERT [dbo].[BreakdownSections] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Invoices] ON 
 GO
-INSERT [dbo].[Invoices] ([id], [invoice_no], [invoice_date], [received_from], [address], [phone], [fax], [amount], [payment_description], [project_name], [project_address], [spk_no], [contract_value], [progress_percentage], [progress_value], [bank_name], [account_no], [account_name], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at]) VALUES (1, N'Kw/II/ASA/356/2022', CAST(N'2022-04-04' AS Date), N'PT. Wijaya Kusuma Contractors', N'Jl. R.P. Soeroso No. 32, Jakarta', N'0213905658', N'', CAST(95430392.00 AS Decimal(18, 2)), N'progres 1 Pekerjaan pasang marmer toilet magran - T2', N'Indonesia Design District, Jl Rasuna Said, Distrik 11PIK - 2', N'Jl Rasuna Said, Jakarta', N'NO .../SPK-SATINO/WKC-ID/IV/2023', CAST(175650638.00 AS Decimal(18, 2)), CAST(54.33 AS Decimal(5, 2)), CAST(95430392.00 AS Decimal(18, 2)), N'BCA', N'3720501111', N'Pilar Asa Mandiri PT', 1, CAST(N'2024-11-14T15:37:29.617' AS DateTime), NULL, NULL, NULL, NULL)
+INSERT [dbo].[Invoices] ([id], [invoice_no], [invoice_date], [received_from], [address], [phone], [fax], [amount], [payment_description], [project_name], [project_address], [spk_no], [contract_value], [progress_percentage], [progress_value], [bank_name], [account_no], [account_name], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at], [organization_id]) VALUES (1, N'Kw/II/ASA/356/2022', CAST(N'2022-04-04' AS Date), N'PT. Wijaya Kusuma Contractors', N'Jl. R.P. Soeroso No. 32, Jakarta', N'0213905658', N'', CAST(95430392.00 AS Decimal(18, 2)), N'progres 1 Pekerjaan pasang marmer toilet magran - T2', N'Indonesia Design District, Jl Rasuna Said, Distrik 11PIK - 2', N'Jl Rasuna Said, Jakarta', N'NO .../SPK-SATINO/WKC-ID/IV/2023', CAST(175650638.00 AS Decimal(18, 2)), CAST(54.33 AS Decimal(5, 2)), CAST(95430392.00 AS Decimal(18, 2)), N'BCA', N'3720501111', N'Pilar Asa Mandiri PT', 1, CAST(N'2024-11-14T15:37:29.617' AS DateTime), NULL, NULL, NULL, NULL, 1)
 GO
 SET IDENTITY_INSERT [dbo].[Invoices] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Menus] ON 
 GO
-INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (1, NULL, N'Dashboard', N'/dashboard', N'dashboard_icon', 1, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (1, NULL, N'Dashboard', N'/dashboard.html', N'', 1, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
 GO
-INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (2, NULL, N'Settings', N'/settings', N'settings_icon', 2, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (2, NULL, N'Project', N'/project.html', N'', 2, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
 GO
-INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (3, NULL, N'Reports', N'/reports', N'reports_icon', 3, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (3, NULL, N'Breakdown (BD)', N'/breakdown.html', N'', 3, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
 GO
-INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (4, NULL, N'Users', N'/users', N'users_icon', 4, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (4, NULL, N'Rekapitulasi Proyek', N'/project-recap.html', N'', 4, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
 GO
-INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (5, NULL, N'Roles', N'/roles', N'roles_icon', 5, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (5, NULL, N'Surat Penawaran Harga', N'/sph.html', N'', 5, CAST(N'2024-11-12T16:39:21.110' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (6, NULL, N'Surat Perintah Kerja', N'/spk.html', NULL, 6, CAST(N'2024-11-18T14:28:43.970' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (7, NULL, N'Invoice', N'/invoice.html', NULL, 7, CAST(N'2024-11-18T14:29:01.800' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (8, NULL, N'Berita Acara Progres', N'/ba.html', NULL, 8, CAST(N'2024-11-18T14:29:28.647' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (9, NULL, N'Rekap Opname Proyek', N'/project-recap-opname.html', NULL, 9, CAST(N'2024-11-18T14:30:11.883' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (10, NULL, N'Buku Bank', N'/book-bank.html', NULL, 10, CAST(N'2024-11-18T14:30:54.160' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (11, NULL, N'User Management', N'/user-management.html', NULL, 11, CAST(N'2024-11-18T14:32:05.600' AS DateTime))
+GO
+INSERT [dbo].[Menus] ([menu_id], [parent_id], [name], [path], [icon], [order], [created_at]) VALUES (12, NULL, N'Cash Flow', N'/cash-flow.html', NULL, 12, CAST(N'2024-11-18T14:50:20.687' AS DateTime))
 GO
 SET IDENTITY_INSERT [dbo].[Menus] OFF
 GO
@@ -1002,7 +1037,7 @@ SET IDENTITY_INSERT [dbo].[ProjectAdditionalExpenses] OFF
 GO
 SET IDENTITY_INSERT [dbo].[ProjectCashFlow] ON 
 GO
-INSERT [dbo].[ProjectCashFlow] ([id], [project_id], [in_amount], [out_amount], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at]) VALUES (1, 1, CAST(30000000.00 AS Decimal(18, 2)), CAST(34660290.00 AS Decimal(18, 2)), 1, CAST(N'2024-11-14T15:58:27.140' AS DateTime), NULL, NULL, NULL, NULL)
+INSERT [dbo].[ProjectCashFlow] ([id], [project_id], [in_amount], [out_amount], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at], [spv_id]) VALUES (1, 1, CAST(30000000.00 AS Decimal(18, 2)), CAST(34660290.00 AS Decimal(18, 2)), 1, CAST(N'2024-11-14T15:58:27.140' AS DateTime), NULL, NULL, NULL, NULL, NULL)
 GO
 SET IDENTITY_INSERT [dbo].[ProjectCashFlow] OFF
 GO
@@ -1050,9 +1085,9 @@ SET IDENTITY_INSERT [dbo].[ProjectRekap] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Projects] ON 
 GO
-INSERT [dbo].[Projects] ([project_id], [project_name], [location], [start_date], [end_date], [description], [status], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at]) VALUES (1, N'Proyek Gedung A', N'Jakarta, Indonesia', CAST(N'2024-01-01' AS Date), CAST(N'2024-12-31' AS Date), N'Pembangunan gedung perkantoran', N'in-progress', 1, CAST(N'2024-11-14T14:27:00.500' AS DateTime), NULL, NULL, NULL, NULL)
+INSERT [dbo].[Projects] ([project_id], [project_name], [location], [start_date], [end_date], [description], [status], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at], [organization_id]) VALUES (1, N'Proyek Gedung A', N'Jakarta, Indonesia', CAST(N'2024-01-01' AS Date), CAST(N'2024-12-31' AS Date), N'Pembangunan gedung perkantoran', N'in-progress', 1, CAST(N'2024-11-14T14:27:00.500' AS DateTime), NULL, NULL, NULL, NULL, 1)
 GO
-INSERT [dbo].[Projects] ([project_id], [project_name], [location], [start_date], [end_date], [description], [status], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at]) VALUES (2, N'Proyek Mall B', N'Bandung, Indonesia', CAST(N'2024-03-01' AS Date), CAST(N'2024-11-30' AS Date), N'Renovasi pusat perbelanjaan', N'in-progress', 2, CAST(N'2024-11-14T14:27:00.500' AS DateTime), NULL, NULL, NULL, NULL)
+INSERT [dbo].[Projects] ([project_id], [project_name], [location], [start_date], [end_date], [description], [status], [created_by], [created_at], [updated_by], [updated_at], [deleted_by], [deleted_at], [organization_id]) VALUES (2, N'Proyek Mall B', N'Bandung, Indonesia', CAST(N'2024-03-01' AS Date), CAST(N'2024-11-30' AS Date), N'Renovasi pusat perbelanjaan', N'in-progress', 2, CAST(N'2024-11-14T14:27:00.500' AS DateTime), NULL, NULL, NULL, NULL, 2)
 GO
 SET IDENTITY_INSERT [dbo].[Projects] OFF
 GO
@@ -1080,25 +1115,65 @@ INSERT [dbo].[RekapPengeluaranSections] ([section_id], [project_id], [section_na
 GO
 SET IDENTITY_INSERT [dbo].[RekapPengeluaranSections] OFF
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 1, N'edit', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 1, N'CRUD', CAST(N'2024-11-18T22:36:46.253' AS DateTime))
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 1, N'view', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 2, N'CRUD', CAST(N'2024-11-18T22:36:46.273' AS DateTime))
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 2, N'view', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 3, N'CRUD', CAST(N'2024-11-18T22:36:46.287' AS DateTime))
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (2, 3, N'edit', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 4, N'CRUD', CAST(N'2024-11-18T22:36:46.300' AS DateTime))
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (2, 3, N'view', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 5, N'CRUD', CAST(N'2024-11-18T22:36:46.313' AS DateTime))
 GO
-INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (3, 4, N'view', CAST(N'2024-11-12T16:39:21.133' AS DateTime))
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 6, N'CRUD', CAST(N'2024-11-18T22:36:46.327' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 7, N'CRUD', CAST(N'2024-11-18T22:36:46.340' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 8, N'CRUD', CAST(N'2024-11-18T22:36:46.353' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 9, N'CRUD', CAST(N'2024-11-18T22:36:46.367' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 10, N'CRUD', CAST(N'2024-11-18T22:36:46.380' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 11, N'CRUD', CAST(N'2024-11-18T22:36:46.393' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (1, 12, N'CRUD', CAST(N'2024-11-18T22:36:46.407' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (2, 2, N'R', CAST(N'2024-11-18T22:41:08.737' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (2, 12, N'CRUD', CAST(N'2024-11-18T22:41:08.753' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 1, N'CRUD', CAST(N'2024-11-18T22:37:24.740' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 2, N'CRUD', CAST(N'2024-11-18T22:37:24.763' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 3, N'CRUD', CAST(N'2024-11-18T22:37:24.777' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 4, N'CRUD', CAST(N'2024-11-18T22:37:24.790' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 5, N'CRUD', CAST(N'2024-11-18T22:37:24.803' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 6, N'CRUD', CAST(N'2024-11-18T22:37:24.817' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 7, N'CRUD', CAST(N'2024-11-18T22:37:24.830' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 8, N'CRUD', CAST(N'2024-11-18T22:37:24.843' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 9, N'CRUD', CAST(N'2024-11-18T22:37:24.853' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 10, N'CRUD', CAST(N'2024-11-18T22:37:24.867' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 11, N'CRUD', CAST(N'2024-11-18T22:37:24.880' AS DateTime))
+GO
+INSERT [dbo].[RoleMenus] ([role_id], [menu_id], [permission], [assigned_at]) VALUES (4, 12, N'CRUD', CAST(N'2024-11-18T22:37:24.897' AS DateTime))
 GO
 SET IDENTITY_INSERT [dbo].[Roles] ON 
 GO
 INSERT [dbo].[Roles] ([role_id], [name], [description], [created_at]) VALUES (1, N'Admin', N'Administrator with full access', CAST(N'2024-11-12T16:39:21.083' AS DateTime))
 GO
-INSERT [dbo].[Roles] ([role_id], [name], [description], [created_at]) VALUES (2, N'Editor', N'User with editing rights', CAST(N'2024-11-12T16:39:21.083' AS DateTime))
+INSERT [dbo].[Roles] ([role_id], [name], [description], [created_at]) VALUES (2, N'SPV', N'SPV Manage Project', CAST(N'2024-11-12T16:39:21.083' AS DateTime))
 GO
-INSERT [dbo].[Roles] ([role_id], [name], [description], [created_at]) VALUES (3, N'Viewer', N'User with view-only access', CAST(N'2024-11-12T16:39:21.083' AS DateTime))
+INSERT [dbo].[Roles] ([role_id], [name], [description], [created_at]) VALUES (4, N'Root', N'Super Admin', CAST(N'2024-11-18T14:12:56.957' AS DateTime))
 GO
 SET IDENTITY_INSERT [dbo].[Roles] OFF
 GO
@@ -1216,27 +1291,37 @@ INSERT [dbo].[SPKSections] ([section_id], [spk_id], [section_title], [created_by
 GO
 SET IDENTITY_INSERT [dbo].[SPKSections] OFF
 GO
-INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (1, 1, CAST(N'2024-11-12T16:39:21.150' AS DateTime))
+SET IDENTITY_INSERT [dbo].[SysOrganization] ON 
 GO
-INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (2, 2, CAST(N'2024-11-12T16:39:21.150' AS DateTime))
+INSERT [dbo].[SysOrganization] ([OrganizationId], [Name], [Description], [Address], [LogoUrl]) VALUES (1, N'PT. Pilar Asa Mandiri', NULL, N'Ruko Permata Regensi Blok D No. 37, Jl. H. Kelik  RT 001/RW 006, Kel. Srengseng Kec. Kembangan, Jakarta Barat', NULL)
 GO
-INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (3, 3, CAST(N'2024-11-12T16:39:21.150' AS DateTime))
+INSERT [dbo].[SysOrganization] ([OrganizationId], [Name], [Description], [Address], [LogoUrl]) VALUES (2, N'PT. Hadi Jaya Mandiri', NULL, N'Jl J', NULL)
+GO
+SET IDENTITY_INSERT [dbo].[SysOrganization] OFF
+GO
+INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (4, 1, CAST(N'2024-11-18T14:24:23.900' AS DateTime))
+GO
+INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (6, 4, CAST(N'2024-11-18T14:24:40.270' AS DateTime))
+GO
+INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (8, 4, CAST(N'2024-11-18T14:24:40.270' AS DateTime))
+GO
+INSERT [dbo].[UserRoles] ([user_id], [role_id], [assigned_at]) VALUES (10, 2, CAST(N'2024-11-18T14:25:08.743' AS DateTime))
 GO
 SET IDENTITY_INSERT [dbo].[Users] ON 
 GO
-INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at]) VALUES (1, N'admin_user', N'admin@example.com', N'hashed_password_1', 1, CAST(N'2024-11-12T16:39:21.097' AS DateTime), NULL)
+INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at], [organization_id]) VALUES (4, N'nurulhadi', N'nurul.hadi@outlook.com', N'$2a$10$YLM17RU034Do91Cih0XRyu6.mrGQsMUc6Q1JgfJFsM/3il1HbEqNO', 1, CAST(N'2024-11-12T17:05:33.543' AS DateTime), NULL, 2)
 GO
-INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at]) VALUES (2, N'editor_user', N'editor@example.com', N'hashed_password_2', 1, CAST(N'2024-11-12T16:39:21.097' AS DateTime), NULL)
+INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at], [organization_id]) VALUES (6, N'root', N'proamanah08@gmail.com', N'$2a$10$YLM17RU034Do91Cih0XRyu6.mrGQsMUc6Q1JgfJFsM/3il1HbEqNO', 1, CAST(N'2024-11-18T14:14:55.197' AS DateTime), NULL, NULL)
 GO
-INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at]) VALUES (3, N'viewer_user', N'viewer@example.com', N'hashed_password_3', 1, CAST(N'2024-11-12T16:39:21.097' AS DateTime), NULL)
+INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at], [organization_id]) VALUES (8, N'satino', N'satino@pilarasamandiri.com', N'$2a$10$YLM17RU034Do91Cih0XRyu6.mrGQsMUc6Q1JgfJFsM/3il1HbEqNO', 1, CAST(N'2024-11-18T14:22:10.280' AS DateTime), NULL, 1)
 GO
-INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at]) VALUES (4, N'nurulhadi', N'nurul.hadi@outlook.com', N'$2a$10$YLM17RU034Do91Cih0XRyu6.mrGQsMUc6Q1JgfJFsM/3il1HbEqNO', 1, CAST(N'2024-11-12T17:05:33.543' AS DateTime), NULL)
+INSERT [dbo].[Users] ([user_id], [username], [email], [password], [status], [created_at], [updated_at], [organization_id]) VALUES (10, N'spv_1', N'spv1@pilarasamandiri.com', N'$2a$10$YLM17RU034Do91Cih0XRyu6.mrGQsMUc6Q1JgfJFsM/3il1HbEqNO', 1, CAST(N'2024-11-18T14:22:40.327' AS DateTime), NULL, 1)
 GO
 SET IDENTITY_INSERT [dbo].[Users] OFF
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Roles__72E12F1BC89F4B84]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Index [UQ__Roles__72E12F1BC89F4B84]    Script Date: 19/11/2024 22:27:18 ******/
 ALTER TABLE [dbo].[Roles] ADD UNIQUE NONCLUSTERED 
 (
 	[name] ASC
@@ -1244,7 +1329,7 @@ ALTER TABLE [dbo].[Roles] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Users__AB6E6164023B840D]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Index [UQ__Users__AB6E6164023B840D]    Script Date: 19/11/2024 22:27:18 ******/
 ALTER TABLE [dbo].[Users] ADD UNIQUE NONCLUSTERED 
 (
 	[email] ASC
@@ -1252,7 +1337,7 @@ ALTER TABLE [dbo].[Users] ADD UNIQUE NONCLUSTERED
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UQ__Users__F3DBC572AB5C95CE]    Script Date: 14/11/2024 23:17:16 ******/
+/****** Object:  Index [UQ__Users__F3DBC572AB5C95CE]    Script Date: 19/11/2024 22:27:18 ******/
 ALTER TABLE [dbo].[Users] ADD UNIQUE NONCLUSTERED 
 (
 	[username] ASC
@@ -1272,7 +1357,7 @@ ALTER TABLE [dbo].[Breakdowns] ADD  DEFAULT (getdate()) FOR [created_at]
 GO
 ALTER TABLE [dbo].[BreakdownSections] ADD  DEFAULT (getdate()) FOR [created_at]
 GO
-ALTER TABLE [dbo].[Invoices] ADD  DEFAULT (getdate()) FOR [created_at]
+ALTER TABLE [dbo].[Invoices] ADD  CONSTRAINT [DF__Invoices__create__4865BE2A]  DEFAULT (getdate()) FOR [created_at]
 GO
 ALTER TABLE [dbo].[Menus] ADD  DEFAULT (getdate()) FOR [created_at]
 GO
@@ -1290,9 +1375,9 @@ ALTER TABLE [dbo].[ProjectCashFlowDetails] ADD  DEFAULT ((0)) FOR [out_amount]
 GO
 ALTER TABLE [dbo].[ProjectCashFlowDetails] ADD  DEFAULT (getdate()) FOR [created_at]
 GO
-ALTER TABLE [dbo].[Projects] ADD  DEFAULT ('in-progress') FOR [status]
+ALTER TABLE [dbo].[Projects] ADD  CONSTRAINT [DF__Projects__status__01D345B0]  DEFAULT ('in-progress') FOR [status]
 GO
-ALTER TABLE [dbo].[Projects] ADD  DEFAULT (getdate()) FOR [created_at]
+ALTER TABLE [dbo].[Projects] ADD  CONSTRAINT [DF__Projects__create__02C769E9]  DEFAULT (getdate()) FOR [created_at]
 GO
 ALTER TABLE [dbo].[ProjectUser] ADD  DEFAULT (getdate()) FOR [created_at]
 GO
@@ -1331,9 +1416,11 @@ ALTER TABLE [dbo].[BreakdownItems]  WITH CHECK ADD FOREIGN KEY([section_id])
 REFERENCES [dbo].[BreakdownSections] ([section_id])
 ON DELETE CASCADE
 GO
-ALTER TABLE [dbo].[Breakdowns]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[Breakdowns]  WITH CHECK ADD  CONSTRAINT [FK__Breakdown__proje__0E391C95] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
 ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Breakdowns] CHECK CONSTRAINT [FK__Breakdown__proje__0E391C95]
 GO
 ALTER TABLE [dbo].[BreakdownSections]  WITH CHECK ADD FOREIGN KEY([breakdown_id])
 REFERENCES [dbo].[Breakdowns] ([breakdown_id])
@@ -1347,8 +1434,10 @@ GO
 ALTER TABLE [dbo].[OpnameDetail]  WITH CHECK ADD FOREIGN KEY([section_id])
 REFERENCES [dbo].[OpnameSection] ([id])
 GO
-ALTER TABLE [dbo].[OpnameMandor]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[OpnameMandor]  WITH CHECK ADD  CONSTRAINT [FK__OpnameMan__proje__50FB042B] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
+GO
+ALTER TABLE [dbo].[OpnameMandor] CHECK CONSTRAINT [FK__OpnameMan__proje__50FB042B]
 GO
 ALTER TABLE [dbo].[OpnamePayment]  WITH CHECK ADD FOREIGN KEY([opname_mandor_id])
 REFERENCES [dbo].[OpnameMandor] ([id])
@@ -1359,20 +1448,28 @@ GO
 ALTER TABLE [dbo].[OpnameSection]  WITH CHECK ADD FOREIGN KEY([opname_mandor_id])
 REFERENCES [dbo].[OpnameMandor] ([id])
 GO
-ALTER TABLE [dbo].[ProjectAdditionalExpenses]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[ProjectAdditionalExpenses]  WITH CHECK ADD  CONSTRAINT [FK__ProjectAd__proje__373B3228] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
 GO
-ALTER TABLE [dbo].[ProjectCashFlow]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[ProjectAdditionalExpenses] CHECK CONSTRAINT [FK__ProjectAd__proje__373B3228]
+GO
+ALTER TABLE [dbo].[ProjectCashFlow]  WITH CHECK ADD  CONSTRAINT [FK__ProjectCa__proje__73501C2F] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
+GO
+ALTER TABLE [dbo].[ProjectCashFlow] CHECK CONSTRAINT [FK__ProjectCa__proje__73501C2F]
 GO
 ALTER TABLE [dbo].[ProjectCashFlowDetails]  WITH CHECK ADD FOREIGN KEY([cashflow_id])
 REFERENCES [dbo].[ProjectCashFlow] ([id])
 GO
-ALTER TABLE [dbo].[ProjectRekap]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[ProjectRekap]  WITH CHECK ADD  CONSTRAINT [FK__ProjectRe__proje__6225902D] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
 GO
-ALTER TABLE [dbo].[ProjectUser]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[ProjectRekap] CHECK CONSTRAINT [FK__ProjectRe__proje__6225902D]
+GO
+ALTER TABLE [dbo].[ProjectUser]  WITH CHECK ADD  CONSTRAINT [FK__ProjectUs__proje__056ECC6A] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
+GO
+ALTER TABLE [dbo].[ProjectUser] CHECK CONSTRAINT [FK__ProjectUs__proje__056ECC6A]
 GO
 ALTER TABLE [dbo].[ProjectUser]  WITH CHECK ADD FOREIGN KEY([user_id])
 REFERENCES [dbo].[Users] ([user_id])
@@ -1380,8 +1477,10 @@ GO
 ALTER TABLE [dbo].[RekapPengeluaranDetails]  WITH CHECK ADD FOREIGN KEY([section_id])
 REFERENCES [dbo].[RekapPengeluaranSections] ([section_id])
 GO
-ALTER TABLE [dbo].[RekapPengeluaranSections]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[RekapPengeluaranSections]  WITH CHECK ADD  CONSTRAINT [FK__RekapPeng__proje__6501FCD8] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
+GO
+ALTER TABLE [dbo].[RekapPengeluaranSections] CHECK CONSTRAINT [FK__RekapPeng__proje__6501FCD8]
 GO
 ALTER TABLE [dbo].[RoleMenus]  WITH CHECK ADD  CONSTRAINT [FK_RoleMenus_MenuID] FOREIGN KEY([menu_id])
 REFERENCES [dbo].[Menus] ([menu_id])
@@ -1395,9 +1494,11 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[RoleMenus] CHECK CONSTRAINT [FK_RoleMenus_RoleID]
 GO
-ALTER TABLE [dbo].[Sph]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[Sph]  WITH CHECK ADD  CONSTRAINT [FK__Sph__project_id__2BC97F7C] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
 ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Sph] CHECK CONSTRAINT [FK__Sph__project_id__2BC97F7C]
 GO
 ALTER TABLE [dbo].[SphDetails]  WITH CHECK ADD FOREIGN KEY([section_id])
 REFERENCES [dbo].[SphSections] ([section_id])
@@ -1407,9 +1508,11 @@ ALTER TABLE [dbo].[SphSections]  WITH CHECK ADD FOREIGN KEY([sph_id])
 REFERENCES [dbo].[Sph] ([sph_id])
 ON DELETE CASCADE
 GO
-ALTER TABLE [dbo].[Spk]  WITH CHECK ADD FOREIGN KEY([project_id])
+ALTER TABLE [dbo].[Spk]  WITH CHECK ADD  CONSTRAINT [FK__Spk__project_id__19AACF41] FOREIGN KEY([project_id])
 REFERENCES [dbo].[Projects] ([project_id])
 ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Spk] CHECK CONSTRAINT [FK__Spk__project_id__19AACF41]
 GO
 ALTER TABLE [dbo].[SPKDetails]  WITH CHECK ADD FOREIGN KEY([section_id])
 REFERENCES [dbo].[SPKSections] ([section_id])
@@ -1431,5 +1534,7 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[UserRoles] CHECK CONSTRAINT [FK_UserRoles_UserID]
 GO
-ALTER TABLE [dbo].[RoleMenus]  WITH CHECK ADD CHECK  (([permission]='delete' OR [permission]='edit' OR [permission]='view'))
+ALTER TABLE [dbo].[RoleMenus]  WITH CHECK ADD  CONSTRAINT [CK__RoleMenus__permi__12C8C788] CHECK  (([permission]='CUD' OR [permission]='RUD' OR [permission]='CD' OR [permission]='CRU' OR [permission]='RD' OR [permission]='CRUD' OR [permission]='RU' OR [permission]='CU' OR [permission]='CR' OR [permission]='D' OR [permission]='U' OR [permission]='R' OR [permission]='C'))
+GO
+ALTER TABLE [dbo].[RoleMenus] CHECK CONSTRAINT [CK__RoleMenus__permi__12C8C788]
 GO
