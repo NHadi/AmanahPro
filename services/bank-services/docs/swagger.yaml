@@ -1,0 +1,126 @@
+info:
+  contact: {}
+  description: This is the Bank Services API for managing account transactions and
+    upload batches.
+  title: Bank Services API
+  version: "1.0"
+paths:
+  /api/transactions:
+    get:
+      description: Fetch transactions by bank ID and date range
+      parameters:
+      - description: Bank Account ID
+        in: query
+        name: bank_id
+        required: true
+        type: integer
+      - description: Start date of the period (YYYY-MM-DD)
+        in: query
+        name: periode_start
+        required: true
+        type: string
+      - description: End date of the period (YYYY-MM-DD)
+        in: query
+        name: periode_end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Transactions by Bank ID and Period
+      tags:
+      - Permissions
+  /api/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a CSV file for a specific bank account and period
+      parameters:
+      - description: Bank Account ID
+        in: formData
+        name: account_id
+        required: true
+        type: integer
+      - description: Start date of the period (YYYY-MM-DD)
+        in: formData
+        name: periode_start
+        required: true
+        type: string
+      - description: End date of the period (YYYY-MM-DD)
+        in: formData
+        name: periode_end
+        required: true
+        type: string
+      - description: Uploader's name
+        in: formData
+        name: uploaded_by
+        required: true
+        type: string
+      - description: CSV file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload CSV File for Transactions
+      tags:
+      - Permissions
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

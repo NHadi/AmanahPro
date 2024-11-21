@@ -32,7 +32,7 @@ func main() {
 	// Load environment variables
 	err := godotenv.Load(envFilePath)
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Main, Error loading .env file")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -44,17 +44,10 @@ func main() {
 	serviceConfig := ServiceConfig{
 		ServiceMap: map[string]string{
 			"/user-management": os.Getenv("SERVICES_USER_MANAGEMENT"),
+			"/bank_services":   os.Getenv("K"),
 			// Add other services here as needed
 		},
 	}
-
-	// Initialize common logger
-	logger, err := middleware.InitializeLogger("api-gateway", "http://elasticsearch:9200", "api-gateway-logs")
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	// Attach common logging middleware
-	r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Apply JWT Authentication Middleware, with exclusion for the login route
 	r.Use(func(c *gin.Context) {

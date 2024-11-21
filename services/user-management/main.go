@@ -40,7 +40,7 @@ func main() {
 	// Load environment variables
 	err := godotenv.Load(envFilePath)
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Main, Error loading .env file")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -78,6 +78,14 @@ func main() {
 
 	// Initialize Gin router
 	r := gin.Default()
+
+	// Initialize common logger
+	logger, err := middleware.InitializeLogger("user-mangement", "http://elasticsearch:9200", "user-management-logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	// Attach common logging middleware
+	r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {

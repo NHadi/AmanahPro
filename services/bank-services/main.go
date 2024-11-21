@@ -1,204 +1,140 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	_ "AmanahPro/services/bank-services/docs" // Swagger docs
+	"AmanahPro/services/bank-services/internal/application/services"
+	domainRepositories "AmanahPro/services/bank-services/internal/domain/repositories"
+	"AmanahPro/services/bank-services/internal/handlers"
+	"AmanahPro/services/bank-services/internal/infrastructure/messagebroker"
+	"AmanahPro/services/bank-services/internal/infrastructure/persistence"
+	"AmanahPro/services/bank-services/internal/infrastructure/repositories"
+	"log"
 	"os"
-	"strings"
 
-	"github.com/xuri/excelize/v2"
+	"github.com/NHadi/AmanahPro-common/middleware"
+
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/streadway/amqp"
+	swaggerFiles "github.com/swaggo/files"
+	httpSwagger "github.com/swaggo/gin-swagger"
 )
 
-func extractTransactionsToExcel(inputFilePath, outputFilePath string) error {
-	// Step 1: Open the CSV file
-	file, err := os.Open(inputFilePath)
+const defaultPort = "8082"
+
+// @title Bank Services API
+// @version 1.0
+// @description This is the Bank Services API for managing account transactions and upload batches.
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+// @host localhost:8082
+// @BasePath /
+func main() {
+	// Check if running in Docker (using an environment variable)
+	envFilePath := ".env" // Default path
+	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
+		envFilePath = "/app/.env" // Path for Docker container
+	}
+
+	// Load environment variables
+	err := godotenv.Load(envFilePath)
 	if err != nil {
-		return fmt.Errorf("error opening file: %v", err)
-	}
-	defer file.Close()
-
-	// Step 2: Read the file line by line
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error reading file: %v", err)
+		log.Fatalf("Error loading .env file")
 	}
 
-	// Step 3: Locate the starting line for the transaction data
-	startIndex := -1
-	for i, line := range lines {
-		if strings.Contains(line, "Tanggal Transaksi") {
-			startIndex = i + 1 // Data starts from the next line
-			break
-		}
-	}
-
-	if startIndex == -1 {
-		return fmt.Errorf("could not find transaction data header in the CSV")
-	}
-
-	// Step 4: Extract header and transaction data
-	headerLine := lines[startIndex-1]
-	dataLines := lines[startIndex:]
-
-	// Split header and data into columns
-	header := splitCSVLine(headerLine)
-	data := [][]string{}
-	for _, line := range dataLines {
-		if strings.TrimSpace(line) == "" || // Skip empty lines
-			strings.HasPrefix(line, "Saldo Awal") || // Skip "Saldo Awal"
-			strings.HasPrefix(line, "Mutasi Debet") || // Skip "Mutasi Debet"
-			strings.HasPrefix(line, "Mutasi Kredit") || // Skip "Mutasi Kredit"
-			strings.HasPrefix(line, "Saldo Akhir") { // Skip "Saldo Akhir"
-			continue
-		}
-		row := splitCSVLine(line)
-		// Split the first field (Tanggal Transaksi) into two fields
-		if len(row) > 0 {
-			tanggalTransaksi := strings.SplitN(row[0], ",", 2)
-			if len(tanggalTransaksi) == 2 {
-				row = append([]string{strings.TrimSpace(tanggalTransaksi[0]), strings.TrimSpace(tanggalTransaksi[1])}, row[1:]...)
-			}
-		}
-		data = append(data, row)
-	}
-	// Step 5: Modify header to include Credit and Debit columns
-	if len(header) > 0 {
-		header = append([]string{"Tanggal", "Transaksi", "Cabang", "Credit", "Debit", "Saldo"})
-	}
-
-	// Step 6: Create a new Excel file
-	f := excelize.NewFile()
-	sheetName := "Transactions"
-	f.SetSheetName("Sheet1", sheetName)
-
-	// Write header row
-	for colIndex, headerCell := range header {
-		cell, _ := excelize.CoordinatesToCellName(colIndex+1, 1)
-		f.SetCellValue(sheetName, cell, strings.TrimSpace(headerCell))
-	}
-
-	// Write transaction data rows
-	for rowIndex, record := range data {
-		credit := ""
-		debit := ""
-		saldo := ""
-
-		// Ensure record has sufficient fields to process
-		if len(record) < 3 {
-			fmt.Printf("Skipping malformed row %d: %v\n", rowIndex, record)
-			continue
-		}
-
-		// Check the "Jumlah" column (4th index) for "CR" or "DB" and extract "Saldo"
-		if len(record) > 3 {
-			jumlah := record[3]
-			if strings.Contains(jumlah, "CR") {
-				credit = strings.TrimSpace(strings.Replace(jumlah, "CR", "", -1))
-			} else if strings.Contains(jumlah, "DB") {
-				debit = strings.TrimSpace(strings.Replace(jumlah, "DB", "", -1))
-			}
-
-			// Preserve the original "Saldo" value
-			if len(record) > 4 {
-				saldo = record[4]
-			}
-		}
-
-		// Safely truncate record if it has more than 5 fields
-		if len(record) > 5 {
-			record = append(record[:3], record[5:]...)
-		} else {
-			record = record[:3] // Ensure it has at least 3 fields
-		}
-
-		// Create a new row with Credit, Debit, and Saldo columns added
-		newRow := append(record[:3], credit, debit, saldo)
-
-		// Write row to the Excel sheet
-		for colIndex, cellValue := range newRow {
-			cell, _ := excelize.CoordinatesToCellName(colIndex+1, rowIndex+2)
-			f.SetCellValue(sheetName, cell, strings.Trim(cellValue, "\""))
-		}
-	}
-
-	// Get the sheet index and set it as active
-	sheetIndex, err := f.GetSheetIndex(sheetName)
+	// Initialize DB
+	db, err := persistence.InitializeDB()
 	if err != nil {
-		return fmt.Errorf("error getting sheet index: %v", err)
-	}
-	f.SetActiveSheet(sheetIndex)
-
-	// Apply auto-filter
-	if err := f.AutoFilter(sheetName, "A1:F1", nil); err != nil {
-		return fmt.Errorf("error applying auto-filter: %v", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// Auto-resize columns based on content
-	rows, err := f.GetRows(sheetName)
+	// Initialize RabbitMQ connection
+	rabbitConn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	if err != nil {
-		return fmt.Errorf("error getting rows: %v", err)
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+	defer rabbitConn.Close()
+
+	rabbitCh, err := rabbitConn.Channel()
+	if err != nil {
+		log.Fatalf("Failed to create RabbitMQ channel: %v", err)
+	}
+	defer rabbitCh.Close()
+
+	// Initialize RabbitMQ publisher
+	rabbitQueue := "transactions_queue"
+	rabbitPublisher, err := messagebroker.NewRabbitPublisher(rabbitConn, rabbitQueue)
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ publisher: %v", err)
 	}
 
-	for colIdx := 0; colIdx < len(rows[0]); colIdx++ {
-		maxWidth := 10.0 // Default minimum width
-		for _, row := range rows {
-			if colIdx < len(row) {
-				cellContent := row[colIdx]
-				contentWidth := float64(len(cellContent))
-				if contentWidth > maxWidth {
-					maxWidth = contentWidth
-				}
-			}
-		}
-		colName, _ := excelize.ColumnNumberToName(colIdx + 1)
-		if err := f.SetColWidth(sheetName, colName, colName, maxWidth+2); err != nil { // Add padding
-			return fmt.Errorf("error setting column width: %v", err)
-		}
-	}
-
-	// Enable text wrapping for all cells
-	style, err := f.NewStyle(&excelize.Style{
-		Alignment: &excelize.Alignment{
-			WrapText: true,
-		},
+	// Initialize Elasticsearch client
+	esClient, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses: []string{"http://elasticsearch:9200"},
 	})
 	if err != nil {
-		return fmt.Errorf("error creating style: %v", err)
+		log.Fatalf("Failed to initialize Elasticsearch client: %v", err)
+	}
+	// Initialize repositories
+	var batchRepo domainRepositories.BatchRepository = repositories.NewBatchRepository(db)
+	var transactionRepo domainRepositories.BankAccountTransactionRepository = repositories.NewBankAccountTransactionRepository(db, esClient, "bank-transactions")
+
+	// Initialize application services
+	uploadService := services.NewUploadService(transactionRepo, batchRepo, rabbitPublisher)
+	transactionService := services.NewTransactionService(transactionRepo)
+	consumerService := services.NewConsumerService(esClient, "bank-transactions", rabbitCh, rabbitQueue)
+
+	// Initialize handlers
+	uploadHandler := handlers.NewUploadHandler(uploadService, transactionRepo, batchRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	// Start RabbitMQ consumer
+	go func() {
+		err := consumerService.StartConsumer()
+		if err != nil {
+			log.Fatalf("Failed to start RabbitMQ consumer: %v", err)
+		}
+	}()
+
+	// Initialize Gin router
+	r := gin.Default()
+
+	// Initialize common logger
+	logger, err := middleware.InitializeLogger("bank-services", "http://elasticsearch:9200", "bank-services-logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	// Attach common logging middleware
+	r.Use(middleware.GinLoggingMiddleware(logger))
+
+	// Middleware to log requests
+	r.Use(func(c *gin.Context) {
+		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+	})
+
+	// Group for protected routes
+	api := r.Group("/api")
+	api.Use(middleware.JWTAuthMiddleware(os.Getenv("JWT_SECRET")))
+
+	// Upload Routes
+	api.POST("/upload", uploadHandler.UploadBatch)
+
+	// Transaction Routes
+	api.GET("/transactions", transactionHandler.GetTransactionsByBankAndPeriod)
+
+	// Swagger documentation route
+	r.GET("/swagger/*any", httpSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Get port from environment or default to 8082
+	port := os.Getenv("BANK_SERVICES_PORT")
+	if port == "" {
+		port = defaultPort
 	}
 
-	// Apply the style to the entire sheet
-	if err := f.SetCellStyle(sheetName, "A1", "F1000", style); err != nil { // Adjust range as needed
-		return fmt.Errorf("error applying style: %v", err)
-	}
-
-	// Step 7: Save the Excel file
-	if err := f.SaveAs(outputFilePath); err != nil {
-		return fmt.Errorf("error saving Excel file: %v", err)
-	}
-
-	fmt.Printf("Transaction data successfully extracted to %s\n", outputFilePath)
-	return nil
-}
-
-// splitCSVLine splits a single CSV line into fields, handling quoted values
-func splitCSVLine(line string) []string {
-	line = strings.Trim(line, "\"") // Trim outer quotes
-	parts := strings.Split(line, "\",\"")
-	for i := range parts {
-		parts[i] = strings.Trim(parts[i], "\"") // Remove double quotes from individual fields
-	}
-	return parts
-}
-
-func main() {
-	inputFilePath := "input.csv"    // Path to your CSV file
-	outputFilePath := "output.xlsx" // Path to the output Excel file
-
-	if err := extractTransactionsToExcel(inputFilePath, outputFilePath); err != nil {
-		fmt.Printf("Error: %v\n", err)
-	}
+	log.Printf("Server running at http://localhost:%s", port)
+	log.Fatal(r.Run(":" + port))
 }

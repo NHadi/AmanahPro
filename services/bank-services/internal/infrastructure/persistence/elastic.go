@@ -1,0 +1,12 @@
+package persistence
+
+import (
+	"github.com/elastic/go-elasticsearch/v8"
+)
+
+func InitializeElastic() (*elasticsearch.Client, error) {
+	cfg := elasticsearch.Config{
+		Addresses: []string{"http://elasticsearch:9200"},
+	}
+	return elasticsearch.NewClient(cfg)
+}

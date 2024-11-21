@@ -12,9 +12,10 @@ services:
       - db_logs:/var/opt/mssql/logs
       - docker_logs:/var/log/containers
     healthcheck:
-      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
       interval: 10s
-      retries: 3
+      timeout: 5s
+      retries: 10
     logging:
       driver: "json-file"
       options:
@@ -45,9 +46,10 @@ services:
     networks:
       - infras_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
       interval: 10s
       retries: 5
+
 
   # Kibana
   kibana:
