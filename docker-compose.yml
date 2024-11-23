@@ -108,71 +108,71 @@ services:
     networks:
       - app_network
 
-  # Application Services
-  api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - app_network
-    volumes:
-      - ./.env:/app/.env # Reference the root .env file
-    environment:
-      - DOCKER_ENV=true # Indicate that the app is running in Docker
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
+  # # Application Services
+  # api-gateway:
+  #   build:
+  #     context: ./api-gateway
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true # Indicate that the app is running in Docker
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
 
-  user-management:
-    build:
-      context: ./services/user-management
-      dockerfile: Dockerfile
-    ports:
-      - "8081:8081"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - app_network
-    volumes:
-      - ./.env:/app/.env # Reference the root .env file
-    environment:
-      - DOCKER_ENV=true # Indicate that the app is running in Docker
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
+  # user-management:
+  #   build:
+  #     context: ./services/user-management
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8081:8081"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true # Indicate that the app is running in Docker
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
 
-  bank-services:
-    build:
-      context: ./services/bank-services
-      dockerfile: Dockerfile
-    ports:
-      - "8082:8082"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - app_network
-    volumes:
-      - ./.env:/app/.env # Reference the root .env file
-    environment:
-      - DOCKER_ENV=true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
+  # bank-services:
+  #   build:
+  #     context: ./services/bank-services
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8082:8082"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
 
 networks:
   app_network:

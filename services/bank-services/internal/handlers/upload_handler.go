@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
+
+	jwtModels "github.com/NHadi/AmanahPro-common/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,8 +38,8 @@ func NewUploadHandler(
 // @Accept multipart/form-data
 // @Produce json
 // @Param account_id formData int true "Bank Account ID"
-// @Param periode_start formData string true "Start date of the period (YYYY-MM-DD)"
-// @Param periode_end formData string true "End date of the period (YYYY-MM-DD)"
+// @Param year formData int true "Year"
+// @Param month formData int true "Month"
 // @Param uploaded_by formData string true "Uploader's name"
 // @Param file formData file true "CSV file"
 // @Success 200 {object} map[string]interface{}
@@ -47,6 +48,21 @@ func NewUploadHandler(
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/upload [post]
 func (h *UploadHandler) UploadBatch(c *gin.Context) {
+	// Extract claims from the JWT token
+	userClaims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	claims, ok := userClaims.(*jwtModels.JWTClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	// Use username or email from claims as uploaded_by
+	uploadedBy := claims.Username // or claims.Email
+
 	// Retrieve form data
 	accountIDStr := c.PostForm("account_id")
 	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
@@ -55,34 +71,29 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 		return
 	}
 
-	periodeStartStr := c.PostForm("periode_start")
-	periodeEndStr := c.PostForm("periode_end")
-	uploadedBy := c.PostForm("uploaded_by")
-	if uploadedBy == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "uploaded_by is required"})
-		return
-	}
-
-	periodeStart, err := time.Parse("2006-01-02", periodeStartStr)
+	yearStr := c.PostForm("year")
+	year, err := strconv.ParseUint(yearStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid periode_start format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid year"})
 		return
 	}
 
-	periodeEnd, err := time.Parse("2006-01-02", periodeEndStr)
+	monthStr := c.PostForm("month")
+	month, err := strconv.ParseUint(monthStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid periode_end format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid month"})
 		return
 	}
 
-	// Check for duplicate batch
-	exists, err := h.batchRepo.BatchExists(uint(accountID), periodeStart, periodeEnd)
+	// Declare exists explicitly to avoid redeclaration
+	var batchExists bool
+	batchExists, err = h.batchRepo.BatchExists(uint(accountID), uint(year), uint(month))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate batch existence"})
 		return
 	}
 
-	if exists {
+	if batchExists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "A batch for this account and period already exists"})
 		return
 	}
@@ -103,7 +114,7 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 	defer os.Remove(tempFilePath) // Clean up the file after processing
 
 	// Process the file using the UploadService
-	transactions, err := h.uploadService.ParseAndSave(tempFilePath, uint(accountID), periodeStart, periodeEnd, uploadedBy)
+	transactions, err := h.uploadService.ParseAndSave(tempFilePath, uint(accountID), uint(year), uint(month), uploadedBy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -115,7 +126,7 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 		"transactions_count": len(transactions),
 		"uploaded_by":        uploadedBy,
 		"account_id":         accountID,
-		"periode_start":      periodeStart.Format("2006-01-02"),
-		"periode_end":        periodeEnd.Format("2006-01-02"),
+		"year":               year,
+		"month":              month,
 	})
 }

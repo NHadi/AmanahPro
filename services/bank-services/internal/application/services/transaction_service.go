@@ -1,9 +1,8 @@
 package services
 
 import (
-	"AmanahPro/services/bank-services/internal/domain/models"
+	"AmanahPro/services/bank-services/internal/application/dto"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
-	"time"
 )
 
 type TransactionService struct {
@@ -16,7 +15,7 @@ func NewTransactionService(elasticsearchRepo repositories.BankAccountTransaction
 	}
 }
 
-func (s *TransactionService) GetTransactionsByBankAndPeriod(bankID uint, periodeStart, periodeEnd time.Time) ([]models.BankAccountTransactions, error) {
+func (s *TransactionService) GetTransactionsByBankAndPeriod(bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
 	// Fetch transactions from Elasticsearch
-	return s.bankAccountTransactionRepository.GetTransactionsByBankAndPeriod(bankID, periodeStart, periodeEnd)
+	return s.bankAccountTransactionRepository.GetTransactionsByBankAndPeriod(bankID, year)
 }

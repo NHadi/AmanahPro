@@ -3,7 +3,6 @@ package repositories
 import (
 	"AmanahPro/services/bank-services/internal/domain/models"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,10 +23,10 @@ func (r *BatchRepository) Create(batch *models.UploadBatch) error {
 }
 
 // BatchExists checks if a batch already exists for the given account and period
-func (r *BatchRepository) BatchExists(accountID uint, periodeStart, periodeEnd time.Time) (bool, error) {
+func (r *BatchRepository) BatchExists(accountID, year, month uint) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.UploadBatch{}).
-		Where("AccountID = ? AND PeriodeStart = ? AND PeriodeEnd = ?", accountID, periodeStart, periodeEnd).
+		Where("AccountID = ? AND Year = ? AND Month = ?", accountID, year, month).
 		Count(&count).Error
 
 	if err != nil {

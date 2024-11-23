@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"AmanahPro/services/bank-services/internal/application/dto"
 	"AmanahPro/services/bank-services/internal/domain/models"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
 	"context"
@@ -41,6 +42,11 @@ func (r *bankAccountTransactionRepository) InsertWithRollback(batch *models.Uplo
 		return fmt.Errorf("failed to save batch: %v", err)
 	}
 
+	// Assign the generated BatchID to each transaction
+	for i := range transactions {
+		transactions[i].BatchID = batch.BatchID
+	}
+
 	// Save transactions
 	for _, transaction := range transactions {
 		if err := tx.Create(&transaction).Error; err != nil {
@@ -57,29 +63,55 @@ func (r *bankAccountTransactionRepository) InsertWithRollback(batch *models.Uplo
 	return nil
 }
 
-// GetTransactionsByBankAndPeriod fetches transactions from Elasticsearch
-func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID uint, periodeStart, periodeEnd time.Time) ([]models.BankAccountTransactions, error) {
-	// Build the Elasticsearch query
+// GetTransactionsByBankAndPeriod fetches transactions for a specific bank and an optional year from Elasticsearch
+func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
+	// Build the base query for filtering by account_id
 	query := map[string]interface{}{
+		"size": 10000, // Adjust this size as needed
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": []map[string]interface{}{
 					{
 						"term": map[string]interface{}{
-							"bank_id": bankID,
-						},
-					},
-					{
-						"range": map[string]interface{}{
-							"transaction_date": map[string]interface{}{
-								"gte": periodeStart.Format(time.RFC3339),
-								"lte": periodeEnd.Format(time.RFC3339),
-							},
+							"AccountID": bankID, // Use the correct field name for account_id
 						},
 					},
 				},
 			},
 		},
+		"sort": []map[string]interface{}{ // Add sort parameters
+			{
+				"Tanggal": map[string]interface{}{
+					"order": "asc", // Sort by Tanggal in ascending order
+				},
+			},
+			{
+				"ID": map[string]interface{}{
+					"order": "asc", // Sort by ID in ascending order
+				},
+			},
+		},
+	}
+
+	// If year is provided, add a range filter for the Tanggal field
+	if year != nil {
+		periodeStart := time.Date(*year, time.January, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
+		periodeEnd := time.Date(*year, time.December, 31, 23, 59, 59, 0, time.UTC).Format(time.RFC3339)
+
+		rangeFilter := map[string]interface{}{
+			"range": map[string]interface{}{
+				"Tanggal": map[string]interface{}{
+					"gte": periodeStart,
+					"lte": periodeEnd,
+				},
+			},
+		}
+
+		// Append the range filter to the query
+		query["query"].(map[string]interface{})["bool"].(map[string]interface{})["must"] = append(
+			query["query"].(map[string]interface{})["bool"].(map[string]interface{})["must"].([]map[string]interface{}),
+			rangeFilter,
+		)
 	}
 
 	// Perform the search
@@ -100,14 +132,28 @@ func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID
 	}
 
 	// Extract hits
-	hits := result["hits"].(map[string]interface{})["hits"].([]interface{})
-	var transactions []models.BankAccountTransactions
+	hits, ok := result["hits"].(map[string]interface{})["hits"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("no transactions found in Elasticsearch response")
+	}
+
+	var transactions []dto.BankAccountTransactionDTO
 	for _, hit := range hits {
-		source := hit.(map[string]interface{})["_source"]
-		transaction := models.BankAccountTransactions{}
-		if err := mapToStruct(source, &transaction); err != nil {
-			return nil, fmt.Errorf("error converting source to transaction: %v", err)
+		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
+
+		// Map Elasticsearch fields to the DTO
+		transaction := dto.BankAccountTransactionDTO{
+			ID:         uint(source["ID"].(float64)), // Convert from JSON number to uint
+			AccountID:  uint(source["AccountID"].(float64)),
+			BatchID:    uint(source["BatchID"].(float64)),
+			Tanggal:    source["Tanggal"].(string),
+			Keterangan: source["Keterangan"].(string),
+			Cabang:     source["Cabang"].(string),
+			Credit:     source["Credit"].(float64),
+			Debit:      source["Debit"].(float64),
+			Saldo:      source["Saldo"].(float64),
 		}
+
 		transactions = append(transactions, transaction)
 	}
 
@@ -127,4 +173,13 @@ func mapToStruct(source interface{}, dest interface{}) error {
 		return err
 	}
 	return json.Unmarshal(sourceBytes, dest)
+}
+
+func (r *bankAccountTransactionRepository) GetByBatchID(batchID uint) ([]models.BankAccountTransactions, error) {
+	var transactions []models.BankAccountTransactions
+	err := r.db.Where("BatchID = ?", batchID).Find(&transactions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve transactions for batch %d: %v", batchID, err)
+	}
+	return transactions, nil
 }

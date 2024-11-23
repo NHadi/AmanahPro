@@ -1,3 +1,26 @@
+definitions:
+  dto.BankAccountTransactionDTO:
+    properties:
+      AccountID:
+        type: integer
+      BatchID:
+        type: integer
+      Cabang:
+        type: string
+      Credit:
+        type: number
+      Debit:
+        type: number
+      ID:
+        type: integer
+      Keterangan:
+        type: string
+      Saldo:
+        type: number
+      Tanggal:
+        description: Use string for ISO date format
+        type: string
+    type: object
 info:
   contact: {}
   description: This is the Bank Services API for managing account transactions and
@@ -7,23 +30,17 @@ info:
 paths:
   /api/transactions:
     get:
-      description: Fetch transactions by bank ID and date range
+      description: Fetch transactions by bank ID and optional year
       parameters:
       - description: Bank Account ID
         in: query
         name: bank_id
         required: true
         type: integer
-      - description: Start date of the period (YYYY-MM-DD)
+      - description: Year (optional)
         in: query
-        name: periode_start
-        required: true
-        type: string
-      - description: End date of the period (YYYY-MM-DD)
-        in: query
-        name: periode_end
-        required: true
-        type: string
+        name: year
+        type: integer
       produces:
       - application/json
       responses:
@@ -31,8 +48,7 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/dto.BankAccountTransactionDTO'
             type: array
         "400":
           description: Bad Request
@@ -54,9 +70,9 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Get Transactions by Bank ID and Period
+      summary: Get Transactions by Bank ID and optional Year
       tags:
-      - Permissions
+      - Transactions
   /api/upload:
     post:
       consumes:
@@ -68,16 +84,16 @@ paths:
         name: account_id
         required: true
         type: integer
-      - description: Start date of the period (YYYY-MM-DD)
+      - description: Year
         in: formData
-        name: periode_start
+        name: year
         required: true
-        type: string
-      - description: End date of the period (YYYY-MM-DD)
+        type: integer
+      - description: Month
         in: formData
-        name: periode_end
+        name: month
         required: true
-        type: string
+        type: integer
       - description: Uploader's name
         in: formData
         name: uploaded_by

@@ -7,6 +7,8 @@ import (
 
 	"AmanahPro/services/user-management/internal/application/services"
 
+	jwtModels "github.com/NHadi/AmanahPro-common/models"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )
@@ -29,15 +31,6 @@ type LoginRequest struct {
 // LoginResponse represents the response payload for a successful login.
 type LoginResponse struct {
 	Token string `json:"token"`
-}
-
-// JWTClaims defines the custom claims for JWT.
-type JWTClaims struct {
-	UserID         int    `json:"user_id"`
-	OrganizationId *int   `json:"organization_id"`
-	Email          string `json:"email"`
-	Username       string `json:"username"`
-	jwt.StandardClaims
 }
 
 // Login godoc
@@ -67,7 +60,7 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create JWT token with user ID in claims
-	claims := &JWTClaims{
+	claims := &jwtModels.JWTClaims{
 		UserID:         user.UserID,
 		OrganizationId: user.OrganizationId,
 		Username:       user.Username,

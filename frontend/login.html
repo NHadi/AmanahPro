@@ -91,7 +91,9 @@
 
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem("token", data.token); // Store the token
+          localStorage.setItem("authToken", data.token); // Store the token
+          localStorage.setItem("user", email); // Store the token
+          
           window.location.href = "dashboard.html"; // Redirect to dashboard
         } else {
           alert("Login failed: Invalid email or password.");

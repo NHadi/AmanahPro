@@ -205,6 +205,16 @@
               <span class="nav-link-text ms-1">Rekap Opname Proyek</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="bank-book.html">
+              <div
+                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="ni ni-collection text-dark text-sm opacity-10"></i>
+              </div>
+              <span class="nav-link-text ms-1">Buku Bank</span>
+            </a>
+          </li>
         </ul>
       </div>
     </aside>
@@ -243,7 +253,7 @@
               <li class="nav-item d-flex align-items-center">
                 <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
                   <i class="fa fa-user me-sm-1" aria-hidden="true"></i>
-                  <span class="d-sm-inline d-none">Sign In</span>
+                  <span id="username-display" class="d-sm-inline d-none">Sign In</span>
                 </a>
               </li>
               <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
@@ -255,12 +265,12 @@
                   </div>
                 </a>
               </li>
-              <li class="nav-item px-3 d-flex align-items-center">
+              <!-- <li class="nav-item px-3 d-flex align-items-center">
                 <a href="javascript:;" class="nav-link text-white p-0">
                   <i class="fa fa-cog fixed-plugin-button-nav cursor-pointer" aria-hidden="true"></i>
                 </a>
-              </li>
-              <li class="nav-item dropdown pe-2 d-flex align-items-center">
+              </li> -->
+              <!-- <li class="nav-item dropdown pe-2 d-flex align-items-center">
                 <a href="javascript:;" class="nav-link text-white p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="fa fa-bell cursor-pointer" aria-hidden="true"></i>
                 </a>
@@ -332,9 +342,9 @@
                     </a>
                   </li>
                 </ul>
-              </li>
+              </li> -->
             </ul>
-          </div> 
+          </div>
         </div>
       </nav>
       <!-- End Navbar -->
@@ -505,6 +515,7 @@
     <script src="template/assets/js/plugins/chartjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
+    <script src="global.js"></script>
     <script>
       // Sample project data
       const projects = [
@@ -806,6 +817,7 @@
       }
 
       $(document).ready(function () {
+        $('#username-display').html(localStorage.getItem("user"));
         // Set summary card values based on dummy data
         $("#active-projects-count").text(
           projects.filter((p) => p.status === "in-progress").length

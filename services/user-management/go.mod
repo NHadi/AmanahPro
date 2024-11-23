@@ -3,7 +3,7 @@ module AmanahPro/services/user-management
 go 1.23
 
 require (
-	github.com/NHadi/AmanahPro-common v0.1.3
+	github.com/NHadi/AmanahPro-common v0.1.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1

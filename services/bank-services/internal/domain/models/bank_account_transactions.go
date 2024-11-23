@@ -5,17 +5,18 @@ import (
 )
 
 type BankAccountTransactions struct {
-	ID         uint      `gorm:"column:ID;primaryKey;autoIncrement"`            // Maps to [ID]
-	AccountID  uint      `gorm:"column:AccountID;not null"`                     // Maps to [AccountID]
-	BatchID    uint      `gorm:"column:BatchID;not null"`                       // Maps to [BatchID]
-	Tanggal    time.Time `gorm:"column:Tanggal;not null"`                       // Maps to [Tanggal]
-	Keterangan string    `gorm:"column:Keterangan;type:text;not null"`          // Maps to [Keterangan]
-	Cabang     string    `gorm:"column:Cabang;size:50;not null"`                // Maps to [Cabang]
-	Credit     float64   `gorm:"column:Credit;type:decimal(18,2);default:0.00"` // Maps to [Credit]
-	Debit      float64   `gorm:"column:Debit;type:decimal(18,2);default:0.00"`  // Maps to [Debit]
-	Saldo      float64   `gorm:"column:Saldo;type:decimal(18,2);default:0.00"`  // Maps to [Saldo]
-	CreatedAt  time.Time `gorm:"column:CreatedAt;autoCreateTime"`               // Maps to [CreatedAt]
-	UpdatedAt  time.Time `gorm:"column:UpdatedAt;autoUpdateTime"`               // Maps to [UpdatedAt]
+	ID         uint       `gorm:"column:ID;primaryKey;autoIncrement"`            // Maps to [ID]
+	AccountID  uint       `gorm:"column:AccountID;not null"`                     // Maps to [AccountID]
+	BatchID    uint       `gorm:"column:BatchID;not null"`                       // Maps to [BatchID]
+	Tanggal    time.Time  `gorm:"column:Tanggal;not null"`                       // Maps to [Tanggal]
+	Keterangan string     `gorm:"column:Keterangan;type:text;not null"`          // Maps to [Keterangan]
+	Cabang     string     `gorm:"column:Cabang;size:50;not null"`                // Maps to [Cabang]
+	Credit     float64    `gorm:"column:Credit;type:decimal(18,2);default:0.00"` // Maps to [Credit]
+	Debit      float64    `gorm:"column:Debit;type:decimal(18,2);default:0.00"`  // Maps to [Debit]
+	Saldo      float64    `gorm:"column:Saldo;type:decimal(18,2);default:0.00"`  // Maps to [Saldo]
+	CreatedAt  time.Time  `gorm:"column:CreatedAt;autoCreateTime"`               // Maps to [CreatedAt]
+	UpdatedAt  time.Time  `gorm:"column:UpdatedAt;autoUpdateTime"`               // Maps to [UpdatedAt]
+	DeletedAt  *time.Time `gorm:"column:DeletedAt" json:"deleted_at,omitempty"`  // Replace gorm.DeletedAt
 
 	// Relationships
 	Account BankAccount `gorm:"foreignKey:AccountID;constraint:OnDelete:CASCADE"`

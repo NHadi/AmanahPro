@@ -1,6 +1,7 @@
 package services
 
 import (
+	"AmanahPro/services/bank-services/internal/application/dto"
 	"AmanahPro/services/bank-services/internal/domain/models"
 	"encoding/json"
 	"fmt"
@@ -83,18 +84,33 @@ func (c *ConsumerService) StartConsumer() error {
 
 // indexTransaction indexes a single transaction into Elasticsearch
 func (c *ConsumerService) indexTransaction(transaction models.BankAccountTransactions) error {
-	docID := fmt.Sprintf("%d", transaction.ID) // Use the transaction ID as the document ID
-	data, err := json.Marshal(transaction)
-	if err != nil {
-		return fmt.Errorf("failed to marshal transaction: %v", err)
+	// Map the model to the DTO
+	dtoTransaction := dto.BankAccountTransactionDTO{
+		ID:         transaction.ID,
+		AccountID:  transaction.AccountID,
+		BatchID:    transaction.BatchID,
+		Tanggal:    transaction.Tanggal.Format("2006-01-02"),  // Format the date as ISO string
+		Keterangan: strings.Trim(transaction.Keterangan, `"`), // Remove quotes if necessary
+		Cabang:     transaction.Cabang,
+		Credit:     transaction.Credit,
+		Debit:      transaction.Debit,
+		Saldo:      transaction.Saldo,
 	}
+
+	// Marshal the DTO to JSON
+	data, err := json.Marshal(dtoTransaction)
+	if err != nil {
+		return fmt.Errorf("failed to marshal DTO transaction: %v", err)
+	}
+
+	docID := fmt.Sprintf("%d", transaction.ID) // Use the transaction ID as the document ID
 
 	// Index the document in Elasticsearch
 	res, err := c.esClient.Index(
-		c.esIndex,                              // index name
-		strings.NewReader(string(data)),        // document body
-		c.esClient.Index.WithDocumentID(docID), // document ID
-		c.esClient.Index.WithRefresh("true"),   // refresh the index
+		c.esIndex,                              // Index name
+		strings.NewReader(string(data)),        // Document body
+		c.esClient.Index.WithDocumentID(docID), // Document ID
+		c.esClient.Index.WithRefresh("true"),   // Refresh the index
 	)
 	if err != nil {
 		return fmt.Errorf("failed to index transaction in Elasticsearch: %v", err)

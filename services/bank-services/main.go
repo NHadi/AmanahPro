@@ -34,10 +34,12 @@ const defaultPort = "8082"
 // @BasePath /
 func main() {
 	// Check if running in Docker (using an environment variable)
-	envFilePath := ".env" // Default path
+	envFilePath := "../../.env.local" // Default path
 	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
 		envFilePath = "/app/.env" // Path for Docker container
 	}
+
+	elasticSearchUrl := "http://localhost:9200"
 
 	// Load environment variables
 	err := godotenv.Load(envFilePath)
@@ -46,7 +48,7 @@ func main() {
 	}
 
 	// Initialize DB
-	db, err := persistence.InitializeDB()
+	db, err := persistence.InitializeDB(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -73,11 +75,22 @@ func main() {
 
 	// Initialize Elasticsearch client
 	esClient, err := elasticsearch.NewClient(elasticsearch.Config{
-		Addresses: []string{"http://elasticsearch:9200"},
+		Addresses:     []string{elasticSearchUrl},
+		RetryOnStatus: []int{502, 503, 504},
+		MaxRetries:    5,
 	})
 	if err != nil {
 		log.Fatalf("Failed to initialize Elasticsearch client: %v", err)
 	}
+
+	// Check Elasticsearch connection
+	res, err := esClient.Info()
+	if err != nil || res.IsError() {
+		log.Fatalf("Elasticsearch connection error: %v", err)
+	}
+	defer res.Body.Close()
+
+	log.Println("Elasticsearch connection successful")
 	// Initialize repositories
 	var batchRepo domainRepositories.BatchRepository = repositories.NewBatchRepository(db)
 	var transactionRepo domainRepositories.BankAccountTransactionRepository = repositories.NewBankAccountTransactionRepository(db, esClient, "bank-transactions")
@@ -102,13 +115,13 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
-	// Initialize common logger
-	logger, err := middleware.InitializeLogger("bank-services", "http://elasticsearch:9200", "bank-services-logs")
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	// Attach common logging middleware
-	r.Use(middleware.GinLoggingMiddleware(logger))
+	// // Initialize common logger
+	// logger, err := middleware.InitializeLogger("bank-services", "http://localhost:9200", "bank-services-logs")
+	// if err != nil {
+	// 	log.Fatalf("Failed to initialize logger: %v", err)
+	// }
+	// // Attach common logging middleware
+	// r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {

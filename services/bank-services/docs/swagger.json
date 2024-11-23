@@ -14,14 +14,14 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetch transactions by bank ID and date range",
+                "description": "Fetch transactions by bank ID and optional year",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Permissions"
+                    "Transactions"
                 ],
-                "summary": "Get Transactions by Bank ID and Period",
+                "summary": "Get Transactions by Bank ID and optional Year",
                 "parameters": [
                     {
                         "type": "integer",
@@ -31,18 +31,10 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Start date of the period (YYYY-MM-DD)",
-                        "name": "periode_start",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "End date of the period (YYYY-MM-DD)",
-                        "name": "periode_end",
-                        "in": "query",
-                        "required": true
+                        "type": "integer",
+                        "description": "Year (optional)",
+                        "name": "year",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -51,8 +43,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "$ref": "#/definitions/dto.BankAccountTransactionDTO"
                             }
                         }
                     },
@@ -113,16 +104,16 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Start date of the period (YYYY-MM-DD)",
-                        "name": "periode_start",
+                        "type": "integer",
+                        "description": "Year",
+                        "name": "year",
                         "in": "formData",
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "End date of the period (YYYY-MM-DD)",
-                        "name": "periode_end",
+                        "type": "integer",
+                        "description": "Month",
+                        "name": "month",
                         "in": "formData",
                         "required": true
                     },
@@ -172,6 +163,41 @@
                             "additionalProperties": true
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.BankAccountTransactionDTO": {
+            "type": "object",
+            "properties": {
+                "AccountID": {
+                    "type": "integer"
+                },
+                "BatchID": {
+                    "type": "integer"
+                },
+                "Cabang": {
+                    "type": "string"
+                },
+                "Credit": {
+                    "type": "number"
+                },
+                "Debit": {
+                    "type": "number"
+                },
+                "ID": {
+                    "type": "integer"
+                },
+                "Keterangan": {
+                    "type": "string"
+                },
+                "Saldo": {
+                    "type": "number"
+                },
+                "Tanggal": {
+                    "description": "Use string for ISO date format",
+                    "type": "string"
                 }
             }
         }

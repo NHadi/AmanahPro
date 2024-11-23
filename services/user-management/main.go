@@ -32,7 +32,7 @@ const defaultPort = "8081"
 func main() {
 
 	// Check if running in Docker (using an environment variable)
-	envFilePath := ".env" // Default path
+	envFilePath := "../../.env.local" // Default path
 	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
 		envFilePath = "/app/.env" // Path for Docker container
 	}
@@ -47,8 +47,11 @@ func main() {
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET environment variable not set")
 	}
+
+	// elasticSearchUrl := "http://localhost:9200"
+
 	// Initialize DB
-	db, err := persistence.InitializeDB()
+	db, err := persistence.InitializeDB(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -79,13 +82,13 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
-	// Initialize common logger
-	logger, err := middleware.InitializeLogger("user-mangement", "http://elasticsearch:9200", "user-management-logs")
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	// Attach common logging middleware
-	r.Use(middleware.GinLoggingMiddleware(logger))
+	// // Initialize common logger
+	// logger, err := middleware.InitializeLogger("user-mangement", elasticSearchUrl, "user-management-logs")
+	// if err != nil {
+	// 	log.Fatalf("Failed to initialize logger: %v", err)
+	// }
+	// // Attach common logging middleware
+	// r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {

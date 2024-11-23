@@ -1,16 +1,41 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Debug User Management Service",
-        "type": "go",
-        "request": "launch",
-        "mode": "debug",
-        "program": "${workspaceFolder}/services/user-management/cmd/main.go",
-        "envFile": "${workspaceFolder}/.env",
-        "args": [],
-        "cwd": "${workspaceFolder}/services/user-management"
-      }
-    ]
-  }
-  
+  "version": "0.2.0",
+  "configurations": [   
+    {
+      "name": "Debug Account Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/services/user-management/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/services/user-management"
+    },
+    {
+      "name": "Debug Bank Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/services/bank-services/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/services/bank-services"
+    },
+    {
+      "name": "Debug Api Gateway",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/api-gateway/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/api-gateway"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All Services",
+      "configurations": ["Debug Bank Service", "Debug Account Service", "Debug Api Gateway"]
+    }
+  ]
+}

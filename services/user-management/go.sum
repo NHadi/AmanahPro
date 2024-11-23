@@ -17,8 +17,8 @@ github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 h1:DzHpqpoJVaC
 github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1/go.mod h1:wP83P5OoQ5p6ip3ScPr0BAq0BvuPAvacpEuSzyouqAI=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
-github.com/NHadi/AmanahPro-common v0.1.3 h1:V+NWBlygCxPAZGUBSAAw+qCPiR5LczGSolSyj7wnx5w=
-github.com/NHadi/AmanahPro-common v0.1.3/go.mod h1:FFZgI27EwHkQ4Bb4l6yMAyU3IPZ0kY/nAIWzWu7tStQ=
+github.com/NHadi/AmanahPro-common v0.1.5 h1:GglvAMFRekKjraawemf8N7z2eGS+1ku6ir7gutw1sEI=
+github.com/NHadi/AmanahPro-common v0.1.5/go.mod h1:FFZgI27EwHkQ4Bb4l6yMAyU3IPZ0kY/nAIWzWu7tStQ=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=

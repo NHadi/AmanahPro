@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -47,7 +48,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
-    <style>
+    <style>  
+
       .dx-popup {
         z-index: 1050; /* Ensure it is above other elements but not excessive */
       }
@@ -55,33 +57,8 @@
       #sidenav-main {
         z-index: 1000; /* Ensure it stays below the popup */
       }
-    </style>
-    <style>
-      .summary-card {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-      }
-      .summary-card .card {
-        flex: 1;
-        margin: 0 10px;
-        padding: 20px;
-        text-align: center;
-        background-color: #f8f9fa;
-        border: 1px solid #e3e3e3;
-        border-radius: 8px;
-      }
-      .chart-container {
-        margin: 20px 0;
-        display: flex;
-        justify-content: space-around;
-      }
-      .chart-card {
-        width: 45%;
-      }
-      canvas {
-        max-height: 300px;
-      }
+
+
     </style>
   </head>
 
@@ -96,7 +73,7 @@
       <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="dashboard.html">
+            <a class="nav-link active" href="dashboard.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -122,11 +99,11 @@
               >
                 <i class="ni ni-folder-17 text-dark text-sm opacity-10"></i>
               </div>
-              <span class="nav-link-text ms-1">Project</span>
+              <span class="nav-link-text ms-1">Proyek</span>
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active bg-gradient-warning" href="breakdown.html">
+            <a class="nav-link" href="breakdown.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
               >
@@ -218,7 +195,7 @@
               <span class="nav-link-text ms-1">Rekap Opname Proyek</span>
             </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item active bg-gradient-warning">
             <a class="nav-link" href="bank-book.html">
               <div
                 class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
@@ -228,6 +205,7 @@
               <span class="nav-link-text ms-1">Buku Bank</span>
             </a>
           </li>
+          
         </ul>
       </div>
     </aside>
@@ -250,10 +228,10 @@
                 class="breadcrumb-item text-sm text-white active"
                 aria-current="page"
               >
-                Master Data
+                Laporan
               </li>
             </ol>
-            <h6 class="font-weight-bolder text-white mb-0">Breakdown (BD)</h6>
+            <h6 class="font-weight-bolder text-white mb-0">Buku Bank</h6>
           </nav>
           <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
@@ -364,14 +342,32 @@
 
       <!-- Content -->
       <div class="container-fluid py-4">
-        <!-- Summary Cards -->
+        <!-- Summary Cards Section -->
         <div class="row mb-4">
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Breakdown Items</p>
-                  <h5 class="font-weight-bolder" id="totalBreakdownItems">2</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Total Transactions
+                      </p>
+                      <h5 class="font-weight-bolder" id="total-projects-count">
+                        19
+                      </h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div
+                      class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-archive-2 text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -379,9 +375,27 @@
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cost</p>
-                  <h5 class="font-weight-bolder" id="totalCost">IDR 1,367,850</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Total Credit (Incoming)
+                      </p>
+                      <h5 class="font-weight-bolder" id="total-opname-value">
+                        IDR 348,500,000
+                      </h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div
+                      class="icon icon-shape bg-gradient-success shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-money-coins text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -389,9 +403,55 @@
           <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
             <div class="card">
               <div class="card-body p-3">
-                <div class="numbers">
-                  <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Projects</p>
-                  <h5 class="font-weight-bolder" id="totalProjects">1</h5>
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Total Debit (Outgoing)
+                      </p>
+                      <h5 class="font-weight-bolder" id="total-spending">
+                        IDR 274,850,000
+                      </h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div
+                      class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-cart text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="numbers">
+                      <p class="text-sm mb-0 text-uppercase font-weight-bold">
+                        Current Balance
+                      </p>
+                      <h5 class="font-weight-bolder" id="net-margin">
+                        IDR 186,173,581
+                      </h5>
+                    </div>
+                  </div>
+                  <div class="col-4 text-end">
+                    <div
+                      class="icon icon-shape bg-gradient-info shadow text-center border-radius-md"
+                    >
+                      <i
+                        class="ni ni-chart-pie-35 text-lg opacity-10"
+                        aria-hidden="true"
+                      ></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -399,32 +459,74 @@
         </div>
 
 
-        <!-- Progress Overview -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4>Progress Overview</h4>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <div class="chart-card">
-                <h5>Breakdown Progress Distribution</h5>
-                <canvas id="progressPieChart"></canvas>
+
+          <!-- Transactions DataGrid -->
+          <div class="card mb-4">
+            
+            <div class="card-body p-3">
+              <!-- Year Filter -->
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <div id="yearSelector"></div>
+                </div>
+                <div class="col-md-8">
+                  <button id="applyYearFilterBtn" class="btn btn-primary">Apply Filter</button>
+                  <button class="btn btn-primary" id="openModalButton">Upload Transactions</button>
+                </div>                
               </div>
-              <div class="chart-card">
-                <h5>Progress Comparison by Breakdown</h5>
-                <canvas id="progressBarChart"></canvas>
+              <div id="transactionsGrid"></div>
+    
+            </div>
+          </div>
+  
+        
+          <!-- Modal -->
+          <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="uploadModalLabel">Upload Bank Book Transactions</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="upload-form">
+                    <div class="mb-3">
+                      <label for="selectYear" class="form-label">Select Year</label>
+                      <select id="selectYear" class="form-select">
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="selectMonth" class="form-label">Select Month</label>
+                      <select id="selectMonth" class="form-select">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="fileUpload" class="form-label">Upload File</label>
+                      <input type="file" id="fileUpload" class="form-control" accept=".csv,.xlsx,.xls">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="card-body p-3">
-            <div id="breakdown-grid"></div>
-          </div>
-        </div>
-
-      </div> 
+      </div>
       <!-- End Content -->
     </main>
 
@@ -436,134 +538,277 @@
     <script src="template/assets/js/plugins/chartjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script src="global.js"></script>
     <script>
       $(function () {
-        $('#username-display').html(localStorage.getItem("user"));
+        const API_URL = `${API_BASE_URL}/bank_services/api/transactions?bank_id=1`;
+    
+        let transactions = [];
+        let filteredData = [];
+    
+        // Fetch transactions from API
+        async function fetchTransactions(selectedYear = null) {
+          try {
+            // Build the API URL with optional year parameter
+            let url = API_URL;
+            if (selectedYear) {
+              url += `&year=${selectedYear}`;
+            }
 
-        const breakdownData = [
-          {
-            project: "Proyek Gedung A",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 80,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 243000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 97050 },
-            ],
-            total: 677550,
-          },
-          {
-            project: "Proyek Gedung A",
-            no: 2,
-            description: "PERINCIAN PEMASANGAN DINDING , PER M2",
-            progress: 50,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 335750 },
-              { description: "Plester dinding mu 301 / S3 / setara ( tebal 3cm )", unitPrice: 97050 },
-            ],
-            total: 690300,
-          },
-          {
-            project: "Proyek Mall B",
-            no: 1,
-            description: "PERINCIAN PEMASANGAN LANTAI , PER M2",
-            progress: 60,
-            items: [
-              { description: "Jasa setting & Pasang Material", unitPrice: 260000 },
-              { description: "screed mu 301 / s3 / setara ( tebal 30mm )", unitPrice: 110000 },
-            ],
-            total: 820000,
-          },
-        ];
-
-          
-        // Initialize Breakdown Grid
-          $("#breakdown-grid").dxDataGrid({
-          dataSource: breakdownData,
-          columnAutoWidth: true,
-          showBorders: true,
-          grouping: { autoExpandAll: true },
-          groupPanel: { visible: true },
-          searchPanel: { visible: true, placeholder: "Search breakdown..." },
-          headerFilter: { visible: true },
-          paging: { pageSize: 10 },
-          columns: [
-            { dataField: "project", caption: "Project Name", groupIndex: 0 },
-            { dataField: "description", caption: "Breakdown Description", groupIndex: 1 },
-            { dataField: "no", caption: "No", width: 50 },
-            { dataField: "progress", caption: "Progress (%)" },
-            { dataField: "total", caption: "Total", format: { type: "currency", precision: 0 } },
-          ],
-          masterDetail: {
-            enabled: true,
-            template: function (container, options) {
-              $("<div>")
-                .dxDataGrid({
-                  dataSource: options.data.items,
-                  columns: [
-                    { dataField: "description", caption: "Item Description" },
-                    { dataField: "unitPrice", caption: "Unit Price", format: { type: "currency", precision: 0 } },
-                  ],
-                  showBorders: true,
-                })
-                .appendTo(container);
-            },
-          },
-        });
-
-        // Update Summary Cards
-        const totalCost = breakdownData.reduce((sum, b) => sum + b.total, 0);
-        $("#totalCost").text(`IDR ${totalCost.toLocaleString()}`);
-        $("#totalBreakdownItems").text(breakdownData.length);
-
-        // Pie Chart
-        new Chart(document.getElementById("progressPieChart"), {
-          type: "pie",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
-              {
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: ["#28a745", "#ffc107"],
+            const response = await fetch(url, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include JWT token
+                "Content-Type": "application/json",
               },
-            ],
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.label}: ${context.raw}% complete`;
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch transactions");
+            }
+
+            transactions = await response.json(); // Assuming API returns an array of transactions
+            filteredData = transactions;
+
+            // Extract unique years from the data
+            const uniqueYears = [
+              ...new Set(
+                transactions.map((transaction) =>
+                  new Date(transaction.Tanggal).getFullYear()
+                )
+              ),
+            ];
+
+            // Initialize Year Selector
+            $("#yearSelector").dxSelectBox({
+              dataSource: uniqueYears.sort((a, b) => b - a), // Sort years in descending order
+              placeholder: "Select Year",
+              showClearButton: true,
+              onValueChanged: function (e) {
+                // Automatically fetch data when year is changed
+                fetchTransactions(e.value);
+              },
+            });
+
+            // Render DataGrid
+            renderGrid(filteredData);
+          } catch (error) {
+            console.error("Error fetching transactions:", error);
+            alert("An error occurred while fetching transaction data.");
+          }
+        }
+
+        // Render DataGrid
+        function renderGrid(data) {
+          $("#transactionsGrid").dxDataGrid({
+            dataSource: data,
+            keyExpr: "ID",
+            showBorders: true,
+            columnAutoWidth: true, // Automatically adjusts column width
+            wordWrapEnabled: true, // Wraps text if it exceeds column width
+            allowColumnResizing: true, // Allow users to resize columns manually
+            columnResizingMode: "widget", // Resizes based on the widget's width
+            paging: {
+              pageSize: 10, // Enable pagination with 10 items per page
+            },
+            pager: {
+              showPageSizeSelector: true,
+              allowedPageSizes: [5, 10, 20],
+            },
+            searchPanel: {
+              visible: true,
+              placeholder: "Search...",
+            },
+            filterRow: {
+              visible: true, // Enable filtering for each column
+            },
+            summary: {
+              totalItems: [
+                {
+                  column: "Credit",
+                  summaryType: "sum",
+                  customizeText: function (e) {
+                    return `Total Credit: IDR ${e.value.toLocaleString()}`;
                   },
                 },
-              },
+                {
+                  column: "Debit",
+                  summaryType: "sum",
+                  customizeText: function (e) {
+                    return `Total Debit: IDR ${e.value.toLocaleString()}`;
+                  },
+                },
+              ],
             },
-          },
-        });
-  
-        // Bar Chart
-        new Chart(document.getElementById("progressBarChart"), {
-          type: "bar",
-          data: {
-            labels: breakdownData.map((b) => b.description),
-            datasets: [
+            export: {
+              enabled: true, // Enable exporting
+              allowExportSelectedData: true,
+            },
+            onExporting: function (e) {
+              if (e.format === "xlsx") {
+                // Excel export
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet("Transactions");
+
+                DevExpress.excelExporter
+                  .exportDataGrid({
+                    component: e.component,
+                    worksheet: worksheet,
+                    autoFilterEnabled: true,
+                  })
+                  .then(function () {
+                    workbook.xlsx
+                      .writeBuffer()
+                      .then(function (buffer) {
+                        saveAs(
+                          new Blob([buffer], { type: "application/octet-stream" }),
+                          "Transactions.xlsx"
+                        );
+                      });
+                  });
+                e.cancel = true; // Cancel the default exporting process
+              } else if (e.format === "pdf") {
+                // PDF export
+                const doc = new jsPDF();
+
+                DevExpress.pdfExporter
+                  .exportDataGrid({
+                    jsPDFDocument: doc,
+                    component: e.component,
+                    autoTableOptions: {
+                      styles: { fontSize: 8 },
+                      margin: { top: 20 },
+                    },
+                  })
+                  .then(() => {
+                    doc.save("Transactions.pdf");
+                  });
+                e.cancel = true; // Cancel the default exporting process
+              }
+            },
+            columns: [
+              { dataField: "Tanggal", caption: "Date", dataType: "date", width: 120 },
               {
-                label: "Progress (%)",
-                data: breakdownData.map((b) => b.progress),
-                backgroundColor: "#17a2b8",
+                dataField: "Keterangan",
+                caption: "Description",
+                width: 300,
+                cellTemplate: function (container, options) {
+                  // Enable word wrapping for long text
+                  $("<div>")
+                    .text(options.value)
+                    .css({ "white-space": "normal", "word-wrap": "break-word" })
+                    .appendTo(container);
+                },
+              },
+              {
+                dataField: "Credit",
+                caption: "Credit (IDR)",
+                format: { type: "currency", currency: "IDR" },
+                alignment: "right",
+              },
+              {
+                dataField: "Debit",
+                caption: "Debit (IDR)",
+                format: { type: "currency", currency: "IDR" },
+                alignment: "right",
+              },
+              {
+                dataField: "Saldo",
+                caption: "Balance (IDR)",
+                format: { type: "currency", currency: "IDR" },
+                alignment: "right",
               },
             ],
-          },
-          options: {
-            scales: {
-              y: { beginAtZero: true, max: 100 },
-            },
-          },
+          });
+        }
+
+    
+        // Apply Year Filter
+        $("#applyYearFilterBtn").click(function () {
+          const selectedYear = $("#yearSelector").dxSelectBox("instance").option("value");
+
+          // Fetch transactions with the selected year and refresh the grid
+          fetchTransactions(selectedYear).then(() => {
+            const gridInstance = $("#transactionsGrid").dxDataGrid("instance");
+            gridInstance.option("dataSource", filteredData); // Update the grid's dataSource
+            gridInstance.refresh(); // Refresh the grid to reflect new data
+          });
         });
+
+    
+        // Fetch and render transactions on page load
+        fetchTransactions();
+
+
+        // Initialize modal functionality
+        document.getElementById("openModalButton").addEventListener("click", () => {
+          const modal = new bootstrap.Modal(document.getElementById("uploadModal"));
+          modal.show();
+        });
+
+        // Handle form submission
+        document.getElementById("upload-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const year = document.getElementById("selectYear").value;
+          const month = document.getElementById("selectMonth").value;
+          const fileInput = document.getElementById("fileUpload");
+          const file = fileInput.files[0];
+
+          if (!file) {
+            alert("Please select a file to upload.");
+            return;
+          }
+
+
+          // Create FormData object
+          const formData = new FormData();
+          formData.append("account_id", 1);
+          formData.append("year", year);
+          formData.append("month", month);
+          formData.append("uploaded_by", "");
+          formData.append("file", file);
+
+          // Make the fetch request
+          fetch(`${API_BASE_URL}/bank_services/api/upload`, {
+            method: "POST",
+            body: formData,
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include JWT token
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                alert("File uploaded successfully!");
+                const modal = bootstrap.Modal.getInstance(
+                  document.getElementById("uploadModal")
+                );
+                modal.hide();
+                // Optionally refresh the table or display new data
+              } else {
+                alert("Error uploading file: " + data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Error uploading file:", error);
+              alert("An error occurred during upload.");
+            });
+        });
+
+        $('#username-display').html(localStorage.getItem("user"));
+
+
       });
     </script>
+    
+    
     <script>
+      
+
       var win = navigator.platform.indexOf("Win") > -1;
       if (win && document.querySelector("#sidenav-scrollbar")) {
         var options = {

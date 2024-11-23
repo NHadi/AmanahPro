@@ -4,7 +4,6 @@ import (
 	"AmanahPro/services/bank-services/internal/application/services"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,44 +19,41 @@ func NewTransactionHandler(transactionService *services.TransactionService) *Tra
 }
 
 // GetTransactionsByBankAndPeriod handles the request to fetch transactions
-// @Summary Get Transactions by Bank ID and Period
-// @Description Fetch transactions by bank ID and date range
-// @Tags Permissions
+// @Summary Get Transactions by Bank ID and optional Year
+// @Description Fetch transactions by bank ID and optional year
+// @Tags Transactions
 // @Security BearerAuth
 // @Param bank_id query int true "Bank Account ID"
-// @Param periode_start query string true "Start date of the period (YYYY-MM-DD)"
-// @Param periode_end query string true "End date of the period (YYYY-MM-DD)"
+// @Param year query int false "Year (optional)"
 // @Produce json
-// @Success 200 {object} []map[string]interface{}
+// @Success 200 {object} []dto.BankAccountTransactionDTO
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
 // @Router /api/transactions [get]
 func (h *TransactionHandler) GetTransactionsByBankAndPeriod(c *gin.Context) {
-	// Parse query parameters
+	// Parse bank_id from query parameters
 	bankIDStr := c.Query("bank_id")
 	bankID, err := strconv.ParseUint(bankIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid bank_id"})
+	if err != nil || bankID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing bank_id"})
 		return
 	}
 
-	periodeStartStr := c.Query("periode_start")
-	periodeStart, err := time.Parse("2006-01-02", periodeStartStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid periode_start format"})
-		return
-	}
-
-	periodeEndStr := c.Query("periode_end")
-	periodeEnd, err := time.Parse("2006-01-02", periodeEndStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid periode_end format"})
-		return
+	// Parse year from query parameters (optional)
+	yearStr := c.Query("year")
+	var year *int
+	if yearStr != "" {
+		yearValue, err := strconv.Atoi(yearStr)
+		if err != nil || yearValue < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid year format"})
+			return
+		}
+		year = &yearValue
 	}
 
 	// Call the service method
-	transactions, err := h.transactionService.GetTransactionsByBankAndPeriod(uint(bankID), periodeStart, periodeEnd)
+	transactions, err := h.transactionService.GetTransactionsByBankAndPeriod(uint(bankID), year)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
