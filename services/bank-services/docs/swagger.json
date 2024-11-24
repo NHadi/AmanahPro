@@ -92,7 +92,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Permissions"
+                    "Upload"
                 ],
                 "summary": "Upload CSV File for Transactions",
                 "parameters": [
@@ -191,6 +191,9 @@
                 },
                 "Keterangan": {
                     "type": "string"
+                },
+                "OrganizationId": {
+                    "type": "integer"
                 },
                 "Saldo": {
                     "type": "number"

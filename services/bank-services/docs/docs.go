@@ -100,7 +100,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Permissions"
+                    "Upload"
                 ],
                 "summary": "Upload CSV File for Transactions",
                 "parameters": [
@@ -199,6 +199,9 @@ const docTemplate = `{
                 },
                 "Keterangan": {
                     "type": "string"
+                },
+                "OrganizationId": {
+                    "type": "integer"
                 },
                 "Saldo": {
                     "type": "number"

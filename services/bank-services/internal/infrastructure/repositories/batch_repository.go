@@ -26,7 +26,7 @@ func (r *BatchRepository) Create(batch *models.UploadBatch) error {
 func (r *BatchRepository) BatchExists(accountID, year, month uint) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.UploadBatch{}).
-		Where("AccountID = ? AND Year = ? AND Month = ?", accountID, year, month).
+		Where("OrganizationId = ? AND Year = ? AND Month = ?", accountID, year, month).
 		Count(&count).Error
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	jwtModels "github.com/NHadi/AmanahPro-common/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,6 +33,26 @@ func NewTransactionHandler(transactionService *services.TransactionService) *Tra
 // @Failure 500 {object} map[string]string
 // @Router /api/transactions [get]
 func (h *TransactionHandler) GetTransactionsByBankAndPeriod(c *gin.Context) {
+
+	userClaims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	claims, ok := userClaims.(*jwtModels.JWTClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	var organizationID uint
+	if claims.OrganizationId != nil {
+		organizationID = uint(*claims.OrganizationId)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OrganizationId is missing"})
+		return
+	}
+
 	// Parse bank_id from query parameters
 	bankIDStr := c.Query("bank_id")
 	bankID, err := strconv.ParseUint(bankIDStr, 10, 64)
@@ -53,7 +74,7 @@ func (h *TransactionHandler) GetTransactionsByBankAndPeriod(c *gin.Context) {
 	}
 
 	// Call the service method
-	transactions, err := h.transactionService.GetTransactionsByBankAndPeriod(uint(bankID), year)
+	transactions, err := h.transactionService.GetTransactionsByBankAndPeriod(organizationID, uint(bankID), year)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

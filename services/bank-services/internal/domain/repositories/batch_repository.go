@@ -6,5 +6,5 @@ import (
 
 type BatchRepository interface {
 	Create(batch *models.UploadBatch) error
-	BatchExists(accountID, year, month uint) (bool, error)
+	BatchExists(organizationID, year, month uint) (bool, error)
 }

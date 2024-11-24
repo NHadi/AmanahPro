@@ -104,6 +104,41 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /api/download:
+    get:
+      description: Downloads a file from Google Drive using its file ID
+      parameters:
+      - description: File ID
+        in: query
+        name: file_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: file_content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Download File
+      tags:
+      - File
   /api/menus:
     post:
       consumes:
@@ -172,6 +207,59 @@ paths:
       summary: Get accessible menus by role ID
       tags:
       - Menu
+  /api/oauth2/authorize:
+    get:
+      description: Returns the Google OAuth2 authorization URL for the client to redirect
+        the user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: auth_url
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Google OAuth2 Authorization URL
+      tags:
+      - OAuth2
+  /api/oauth2/callback:
+    get:
+      description: Handles the Google OAuth2 callback and saves the token in the database
+      parameters:
+      - description: Authorization Code
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Handle OAuth2 Callback
+      tags:
+      - OAuth2
   /api/permissions/assign:
     post:
       consumes:
@@ -263,6 +351,43 @@ paths:
       summary: Create a new role
       tags:
       - Roles
+  /api/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a file to Google Drive under a specific folder hierarchy
+      parameters:
+      - description: File to Upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: file_id
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload File
+      tags:
+      - File
   /api/users:
     post:
       consumes:

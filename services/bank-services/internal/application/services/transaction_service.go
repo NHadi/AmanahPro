@@ -15,7 +15,7 @@ func NewTransactionService(elasticsearchRepo repositories.BankAccountTransaction
 	}
 }
 
-func (s *TransactionService) GetTransactionsByBankAndPeriod(bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
+func (s *TransactionService) GetTransactionsByBankAndPeriod(organizationID, bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
 	// Fetch transactions from Elasticsearch
-	return s.bankAccountTransactionRepository.GetTransactionsByBankAndPeriod(bankID, year)
+	return s.bankAccountTransactionRepository.GetTransactionsByBankAndPeriod(organizationID, bankID, year)
 }

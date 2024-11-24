@@ -33,7 +33,7 @@ func NewUploadHandler(
 // UploadBatch handles the CSV upload and processes transactions
 // @Summary Upload CSV File for Transactions
 // @Description Upload a CSV file for a specific bank account and period
-// @Tags Permissions
+// @Tags Upload
 // @Security BearerAuth
 // @Accept multipart/form-data
 // @Produce json
@@ -62,6 +62,13 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 
 	// Use username or email from claims as uploaded_by
 	uploadedBy := claims.Username // or claims.Email
+	var organizationID uint
+	if claims.OrganizationId != nil {
+		organizationID = uint(*claims.OrganizationId)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OrganizationId is missing"})
+		return
+	}
 
 	// Retrieve form data
 	accountIDStr := c.PostForm("account_id")
@@ -87,7 +94,7 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 
 	// Declare exists explicitly to avoid redeclaration
 	var batchExists bool
-	batchExists, err = h.batchRepo.BatchExists(uint(accountID), uint(year), uint(month))
+	batchExists, err = h.batchRepo.BatchExists(organizationID, uint(year), uint(month))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate batch existence"})
 		return
@@ -114,7 +121,7 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 	defer os.Remove(tempFilePath) // Clean up the file after processing
 
 	// Process the file using the UploadService
-	transactions, err := h.uploadService.ParseAndSave(tempFilePath, uint(accountID), uint(year), uint(month), uploadedBy)
+	transactions, err := h.uploadService.ParseAndSave(tempFilePath, organizationID, uint(accountID), uint(year), uint(month), uploadedBy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

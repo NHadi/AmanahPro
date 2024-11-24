@@ -7,6 +7,6 @@ import (
 
 type BankAccountTransactionRepository interface {
 	InsertWithRollback(batch *models.UploadBatch, transactions []models.BankAccountTransactions) error
-	GetTransactionsByBankAndPeriod(bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error)
+	GetTransactionsByBankAndPeriod(organizationID, bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error)
 	GetByBatchID(batchID uint) ([]models.BankAccountTransactions, error)
 }

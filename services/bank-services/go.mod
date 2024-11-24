@@ -3,7 +3,7 @@ module AmanahPro/services/bank-services
 go 1.23
 
 require (
-	github.com/NHadi/AmanahPro-common v0.1.5
+	github.com/NHadi/AmanahPro-common v0.1.7
 	github.com/elastic/go-elasticsearch/v8 v8.16.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1

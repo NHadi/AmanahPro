@@ -63,23 +63,27 @@ func (r *bankAccountTransactionRepository) InsertWithRollback(batch *models.Uplo
 	return nil
 }
 
-// GetTransactionsByBankAndPeriod fetches transactions for a specific bank and an optional year from Elasticsearch
-func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
-	// Build the base query for filtering by account_id
+func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(organizationID, bankID uint, year *int) ([]dto.BankAccountTransactionDTO, error) {
+	// Build the base query for filtering by AccountID and OrganizationID
 	query := map[string]interface{}{
-		"size": 10000, // Adjust this size as needed
+		"size": 10000, // Adjust this size as needed for your use case
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": []map[string]interface{}{
 					{
 						"term": map[string]interface{}{
-							"AccountID": bankID, // Use the correct field name for account_id
+							"AccountID": bankID,
+						},
+					},
+					{
+						"term": map[string]interface{}{
+							"OrganizationId": organizationID,
 						},
 					},
 				},
 			},
 		},
-		"sort": []map[string]interface{}{ // Add sort parameters
+		"sort": []map[string]interface{}{ // Add sorting parameters
 			{
 				"Tanggal": map[string]interface{}{
 					"order": "asc", // Sort by Tanggal in ascending order
@@ -107,14 +111,14 @@ func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID
 			},
 		}
 
-		// Append the range filter to the query
+		// Append the range filter to the must clause
 		query["query"].(map[string]interface{})["bool"].(map[string]interface{})["must"] = append(
 			query["query"].(map[string]interface{})["bool"].(map[string]interface{})["must"].([]map[string]interface{}),
 			rangeFilter,
 		)
 	}
 
-	// Perform the search
+	// Execute the search query
 	res, err := r.esClient.Search(
 		r.esClient.Search.WithIndex(r.esIndex),
 		r.esClient.Search.WithBody(mapToReader(query)),
@@ -125,33 +129,69 @@ func (r *bankAccountTransactionRepository) GetTransactionsByBankAndPeriod(bankID
 	}
 	defer res.Body.Close()
 
-	// Parse the response
+	// Parse the Elasticsearch response
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error parsing Elasticsearch response: %v", err)
 	}
 
 	// Extract hits
-	hits, ok := result["hits"].(map[string]interface{})["hits"].([]interface{})
+	hitsData, ok := result["hits"].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("no transactions found in Elasticsearch response")
+		// Return an empty list instead of an error
+		return []dto.BankAccountTransactionDTO{}, nil
+	}
+
+	hits, ok := hitsData["hits"].([]interface{})
+	if !ok || len(hits) == 0 {
+		// Return an empty list if no transactions are found
+		return []dto.BankAccountTransactionDTO{}, nil
 	}
 
 	var transactions []dto.BankAccountTransactionDTO
 	for _, hit := range hits {
-		source := hit.(map[string]interface{})["_source"].(map[string]interface{})
+		hitMap, ok := hit.(map[string]interface{})
+		if !ok {
+			continue // Skip invalid hits
+		}
 
-		// Map Elasticsearch fields to the DTO
-		transaction := dto.BankAccountTransactionDTO{
-			ID:         uint(source["ID"].(float64)), // Convert from JSON number to uint
-			AccountID:  uint(source["AccountID"].(float64)),
-			BatchID:    uint(source["BatchID"].(float64)),
-			Tanggal:    source["Tanggal"].(string),
-			Keterangan: source["Keterangan"].(string),
-			Cabang:     source["Cabang"].(string),
-			Credit:     source["Credit"].(float64),
-			Debit:      source["Debit"].(float64),
-			Saldo:      source["Saldo"].(float64),
+		source, ok := hitMap["_source"].(map[string]interface{})
+		if !ok {
+			continue // Skip hits without a valid _source
+		}
+
+		// Map Elasticsearch fields to DTO, with safe type assertions
+		transaction := dto.BankAccountTransactionDTO{}
+
+		if id, ok := source["ID"].(float64); ok {
+			transaction.ID = uint(id)
+		}
+		if accountID, ok := source["AccountID"].(float64); ok {
+			transaction.AccountID = uint(accountID)
+		}
+		if batchID, ok := source["BatchID"].(float64); ok {
+			transaction.BatchID = uint(batchID)
+		}
+		if orgID, ok := source["OrganizationId"].(float64); ok {
+			transaction.OrganizationId = uint(orgID)
+		}
+		if tanggal, ok := source["Tanggal"].(string); ok {
+			transaction.Tanggal = tanggal
+		}
+		if keterangan, ok := source["Keterangan"].(string); ok {
+			transaction.Keterangan = keterangan
+		}
+		if cabang, ok := source["Cabang"].(string); ok {
+			transaction.Cabang = cabang
+		}
+		if credit, ok := source["Credit"].(float64); ok {
+			transaction.Credit = credit
+		}
+		if debit, ok := source["Debit"].(float64); ok {
+			transaction.Debit = debit
+		}
+		if saldo, ok := source["Saldo"].(float64); ok {
+			transaction.Saldo = saldo
 		}
 
 		transactions = append(transactions, transaction)
