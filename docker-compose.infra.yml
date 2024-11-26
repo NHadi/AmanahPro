@@ -1,5 +1,7 @@
+version: '3.8'
+
 services:
-  # SQL Server
+  # Infrastructure Services
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
@@ -10,21 +12,14 @@ services:
     volumes:
       - mssql_data:/var/opt/mssql
       - db_logs:/var/opt/mssql/logs
-      - docker_logs:/var/log/containers
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1433"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 10
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
     networks:
-      - infras_network
+      - app_network
 
-  # Elasticsearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
     environment:
@@ -37,105 +32,54 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
       - es_logs:/usr/share/elasticsearch/logs
-      - docker_logs:/var/log/containers
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
-    networks:
-      - infras_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 10s
       retries: 5
+    networks:
+      - app_network
 
-
-  # Kibana
   kibana:
     image: docker.elastic.co/kibana/kibana:8.9.0
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601" # Kibana UI
     networks:
-      - infras_network
+      - app_network
 
-  # Redis
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - redis_logs:/var/log/redis
-      - docker_logs:/var/log/containers
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
     networks:
-      - infras_network
+      - app_network
 
-  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
-      - RABBITMQ_PROMETHEUS_PORT=9419
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      - rabbitmq_logs:/var/log/rabbitmq
-      - docker_logs:/var/log/containers
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
     networks:
-      - infras_network
+      - app_network
 
-  # Prometheus
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
-    ports:
-      - "9090:9090"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
-    networks:
-      - infras_network
-
-  # Grafana
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
-    networks:
-      - infras_network
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
   mssql_data:
@@ -143,11 +87,4 @@ volumes:
   es_data:
   es_logs:
   redis_data:
-  redis_logs:
   rabbitmq_data:
-  rabbitmq_logs:
-  docker_logs: # Centralized log directory for all containers
-
-networks:
-  infras_network:
-    driver: bridge

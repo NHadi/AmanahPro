@@ -20,15 +20,9 @@ type ServiceConfig struct {
 }
 
 func main() {
-	r := gin.Default()
 
-	r.Use(middleware.CORSMiddleware())
-
-	// Check if running in Docker (using an environment variable)
-	envFilePath := "../.env.local" // Default path
-	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
-		envFilePath = "/app/.env" // Path for Docker container
-	}
+	// Determine the runtime environment
+	envFilePath := determineEnvFilePath("../.env.local")
 
 	// Load environment variables
 	err := godotenv.Load(envFilePath)
@@ -40,6 +34,44 @@ func main() {
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET environment variable not set")
 	}
+
+	r := gin.Default()
+
+	// Handle CORS directly in the router
+	r.Use(func(c *gin.Context) {
+		// List of allowed origins
+		allowedOrigins := []string{
+			"https://amanahpro.pilarasamandiri.com",
+			"http://localhost:8090",
+		}
+
+		origin := c.Request.Header.Get("Origin")
+		isAllowed := false
+
+		// Check if the origin is in the allowed list
+		for _, o := range allowedOrigins {
+			if origin == o {
+				isAllowed = true
+				break
+			}
+		}
+
+		// Set CORS headers if the origin is allowed
+		if isAllowed {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Origin")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
+		// Handle preflight requests
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	})
 
 	// Define service configuration
 	serviceConfig := ServiceConfig{
@@ -105,9 +137,55 @@ func main() {
 		// Return 404 if no matching route is found
 		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 	})
+	// Start server
+	port := os.Getenv("GATEWAY_PORT")
+	if os.Getenv("APP_ENV") == "PRODUCTION" {
+		// Serve HTTPS
+		certFile := "/etc/letsencrypt/live/amanahpro.pilarasamandiri.com/fullchain.pem"
+		keyFile := "/etc/letsencrypt/live/amanahpro.pilarasamandiri.com/privkey.pem"
 
-	// Start the API Gateway
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		if err := r.RunTLS(":"+port, certFile, keyFile); err != nil {
+			log.Fatalf("Failed to start HTTPS server: %v", err)
+		}
+	} else {
+
+		log.Printf("Server running at http://localhost:%s", port)
+		log.Fatal(r.Run(":" + port))
 	}
+
+}
+
+// determineEnvFilePath determines the correct .env file path based on runtime environment
+func determineEnvFilePath(localEnvPath string) string {
+	// Check for Docker environment
+	if isDockerEnvironment() {
+		return "/app/.env" // Docker container path
+	}
+
+	if fileExists(localEnvPath) {
+		return localEnvPath
+	}
+
+	// Fallback to production path
+	return "/root/AmanahPro/.env" // Production path (e.g., VM)
+}
+
+// isDockerEnvironment checks if the application is running inside Docker
+func isDockerEnvironment() bool {
+	// Docker containers usually have a cgroup file
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	// Alternatively, check for specific Docker files
+	cgroupPath := "/proc/1/cgroup"
+	if fileExists(cgroupPath) {
+		return true
+	}
+	return false
+}
+
+// fileExists checks if a file or directory exists
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

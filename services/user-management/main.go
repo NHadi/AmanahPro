@@ -31,11 +31,8 @@ const defaultPort = "8081"
 // @BasePath /
 func main() {
 
-	// Check if running in Docker (using an environment variable)
-	envFilePath := "../../.env.local" // Default path
-	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
-		envFilePath = "/app/.env" // Path for Docker container
-	}
+	// Determine the runtime environment
+	envFilePath := determineEnvFilePath("../../.env.local")
 
 	// Load environment variables
 	err := godotenv.Load(envFilePath)
@@ -47,8 +44,6 @@ func main() {
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET environment variable not set")
 	}
-
-	// elasticSearchUrl := "http://localhost:9200"
 
 	// Initialize DB
 	db, err := persistence.InitializeDB(os.Getenv("DATABASE_URL"))
@@ -82,13 +77,13 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
-	// // Initialize common logger
-	// logger, err := middleware.InitializeLogger("user-mangement", elasticSearchUrl, "user-management-logs")
-	// if err != nil {
-	// 	log.Fatalf("Failed to initialize logger: %v", err)
-	// }
-	// // Attach common logging middleware
-	// r.Use(middleware.GinLoggingMiddleware(logger))
+	// Initialize common logger
+	logger, err := middleware.InitializeLogger("user-mangement", os.Getenv("ELASTICSEARCH_URL"), "user-management-logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	// Attach common logging middleware
+	r.Use(middleware.GinLoggingMiddleware(logger))
 
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {
@@ -127,4 +122,39 @@ func main() {
 
 	log.Printf("Server running at http://localhost:%s", port)
 	log.Fatal(r.Run(":" + port))
+}
+
+// determineEnvFilePath determines the correct .env file path based on runtime environment
+func determineEnvFilePath(localEnvPath string) string {
+	// Check for Docker environment
+	if isDockerEnvironment() {
+		return "/app/.env" // Docker container path
+	}
+
+	if fileExists(localEnvPath) {
+		return localEnvPath
+	}
+
+	// Fallback to production path
+	return "/root/AmanahPro/.env" // Production path (e.g., VM)
+}
+
+// isDockerEnvironment checks if the application is running inside Docker
+func isDockerEnvironment() bool {
+	// Docker containers usually have a cgroup file
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	// Alternatively, check for specific Docker files
+	cgroupPath := "/proc/1/cgroup"
+	if fileExists(cgroupPath) {
+		return true
+	}
+	return false
+}
+
+// fileExists checks if a file or directory exists
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

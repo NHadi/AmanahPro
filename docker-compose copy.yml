@@ -1,0 +1,190 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - db_logs:/var/opt/mssql/logs
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+    networks:
+      - app_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      - es_logs:/usr/share/elasticsearch/logs
+      - docker_logs:/var/log/containers
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      retries: 5
+    networks:
+      - app_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601" # Kibana UI
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - redis_logs:/var/log/redis
+      - docker_logs:/var/log/containers
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_PROMETHEUS_PORT=9419
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+      - docker_logs:/var/log/containers
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - app_network
+
+  # # Application Services
+  # api-gateway:
+  #   build:
+  #     context: ./api-gateway
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true # Indicate that the app is running in Docker
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
+
+  # user-management:
+  #   build:
+  #     context: ./services/user-management
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8081:8081"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true # Indicate that the app is running in Docker
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
+
+  # bank-services:
+  #   build:
+  #     context: ./services/bank-services
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8082:8082"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   volumes:
+  #     - ./.env:/app/.env # Reference the root .env file
+  #   environment:
+  #     - DOCKER_ENV=true
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "7"
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mssql_data:
+  db_logs:
+  es_data:
+  es_logs:
+  redis_data:
+  redis_logs:
+  rabbitmq_data:
+  rabbitmq_logs:
+  docker_logs: # Centralized log directory for all containers

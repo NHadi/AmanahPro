@@ -1,0 +1,36 @@
+heartbeat.monitors:
+  # Monitor SQL Server with TCP check
+  - type: tcp
+    schedule: '@every 10s'
+    hosts: ["db:1433"]
+    name: "SQL Server TCP Check"
+
+  # Monitor Redis with TCP check
+  - type: tcp
+    schedule: '@every 10s'
+    hosts: ["redis:6379"]
+    name: "Redis TCP Check"
+
+  # Monitor RabbitMQ HTTP Management UI
+  - type: http
+    schedule: '@every 10s'
+    urls: ["http://rabbitmq:15672"]
+    name: "RabbitMQ HTTP Check"
+
+  # Monitor Elasticsearch HTTP API
+  - type: http
+    schedule: '@every 10s'
+    urls: ["http://elasticsearch:9200"]
+    name: "Elasticsearch HTTP Check"
+
+  # Monitor Kibana HTTP API
+  - type: http
+    schedule: '@every 10s'
+    urls: ["http://kibana:5601"]
+    name: "Kibana HTTP Check"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+setup.kibana:
+  host: "http://kibana:5601"

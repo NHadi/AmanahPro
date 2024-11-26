@@ -1,0 +1,153 @@
+services:
+  # Infrastructure Services
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - db_logs:/var/opt/mssql/logs
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - app_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      - es_logs:/usr/share/elasticsearch/logs
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    healthcheck:
+      test: ["CMD", "curl", "-u", "elastic:${ELASTIC_PASSWORD}", "-f", "http://localhost:9200"]
+      interval: 10s
+      retries: 5
+    networks:
+      - app_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=0I5g77Jg0g1IZeFWrE10
+    ports:
+      - "5601:5601"
+    networks:
+      - app_network
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_network
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:8.9.0
+    user: root
+    volumes:
+      - ./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+    depends_on:
+      - elasticsearch
+      - kibana
+    networks:
+      - app_network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.9.0
+    user: root
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Added Docker socket for metadata processing
+      - /usr/share/filebeat/logs:/usr/share/filebeat/logs # Added directory for logs
+    depends_on:
+      - elasticsearch
+    environment:
+      - logging.level=info # Optional: Set logging level for better diagnostics
+    networks:
+      - app_network
+
+  heartbeat:
+    image: docker.elastic.co/beats/heartbeat:8.9.0
+    volumes:
+      - ./heartbeat.yml:/usr/share/heartbeat/heartbeat.yml
+    depends_on:
+      - elasticsearch
+    networks:
+      - app_network
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:8.9.0
+    ports:
+      - "8200:8200"
+    environment:
+      - output.elasticsearch.hosts=["http://elasticsearch:9200"]
+      - output.elasticsearch.username=elastic
+      - output.elasticsearch.password=${ELASTIC_PASSWORD}
+      - setup.kibana.host=http://kibana:5601
+      - setup.kibana.username=elastic
+      - setup.kibana.password=${ELASTIC_PASSWORD}
+    depends_on:
+      - elasticsearch
+      - kibana
+    networks:
+      - app_network  
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mssql_data:
+  db_logs:
+  es_data:
+  es_logs:
+  redis_data:
+  rabbitmq_data:

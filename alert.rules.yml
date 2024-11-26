@@ -1,14 +1,25 @@
 groups:
 - name: InstanceHealth
   rules:
+  # Alert for High CPU Usage
+  - alert: HighCPUUsage
+    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is above 90% for the last 2 minutes. Current value: {{ $value }}%."
+
+  # Alert for High Memory Usage
   - alert: HighMemoryUsage
-    expr: process_resident_memory_bytes{job="sql_server"} > 500 * 1024 * 1024
-    for: 5m
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+    for: 2m
     labels:
       severity: critical
     annotations:
-      summary: "High memory usage detected"
-      description: "Instance {{ $labels.instance }} is using more than 500 MB of memory."
+      summary: "High Memory usage on {{ $labels.instance }}"
+      description: "Memory available is less than 10% on {{ $labels.instance }}. Current value: {{ $value }}%."
 
   - alert: InstanceDown
     expr: up == 0

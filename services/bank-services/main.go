@@ -12,7 +12,6 @@ import (
 
 	"github.com/NHadi/AmanahPro-common/messagebroker"
 	"github.com/NHadi/AmanahPro-common/middleware"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -23,11 +22,9 @@ import (
 const defaultPort = "8082"
 
 func main() {
-	// Load environment variables
-	envFilePath := "../../.env.local" // Default path for development
-	if _, isInDocker := os.LookupEnv("DOCKER_ENV"); isInDocker {
-		envFilePath = "/app/.env" // Path for Docker container
-	}
+
+	// Determine the runtime environment
+	envFilePath := determineEnvFilePath("../../.env.local")
 
 	err := godotenv.Load(envFilePath)
 	if err != nil {
@@ -104,6 +101,14 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
+	// Initialize common logger
+	logger, err := middleware.InitializeLogger("bank-service", os.Getenv("ELASTICSEARCH_URL"), "bank-services-logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	// Attach common logging middleware
+	r.Use(middleware.GinLoggingMiddleware(logger))
+
 	// Middleware to log requests
 	r.Use(func(c *gin.Context) {
 		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
@@ -130,4 +135,39 @@ func main() {
 	}
 	log.Printf("Server running at http://localhost:%s", port)
 	log.Fatal(r.Run(":" + port))
+}
+
+// determineEnvFilePath determines the correct .env file path based on runtime environment
+func determineEnvFilePath(localEnvPath string) string {
+	// Check for Docker environment
+	if isDockerEnvironment() {
+		return "/app/.env" // Docker container path
+	}
+
+	if fileExists(localEnvPath) {
+		return localEnvPath
+	}
+
+	// Fallback to production path
+	return "/root/AmanahPro/.env" // Production path (e.g., VM)
+}
+
+// isDockerEnvironment checks if the application is running inside Docker
+func isDockerEnvironment() bool {
+	// Docker containers usually have a cgroup file
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	// Alternatively, check for specific Docker files
+	cgroupPath := "/proc/1/cgroup"
+	if fileExists(cgroupPath) {
+		return true
+	}
+	return false
+}
+
+// fileExists checks if a file or directory exists
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

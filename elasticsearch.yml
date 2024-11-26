@@ -1,0 +1,22 @@
+# Cluster and node configuration
+cluster.name: "docker-cluster"
+node.name: "node-1"
+network.host: 0.0.0.0
+
+# Security settings
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: false
+xpack.security.http.ssl.enabled: false
+
+# Token service for Kibana and other integrations
+xpack.security.authc.token.enabled: true
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+
+# Paths for data and logs
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+
+# Discovery for single-node cluster
+discovery.type: single-node

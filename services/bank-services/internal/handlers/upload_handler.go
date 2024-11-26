@@ -3,13 +3,16 @@ package handlers
 import (
 	"AmanahPro/services/bank-services/internal/application/services"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
+	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	jwtModels "github.com/NHadi/AmanahPro-common/models"
-
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type UploadHandler struct {
@@ -112,16 +115,39 @@ func (h *UploadHandler) UploadBatch(c *gin.Context) {
 		return
 	}
 
-	// Save the file temporarily
-	tempFilePath := "./temp.csv"
-	if err := c.SaveUploadedFile(file, tempFilePath); err != nil {
+	// Example values for organization ID, year, and month
+	now := time.Now()
+	yearUpload := strconv.Itoa(now.Year())               // Convert year to string
+	monthUpload := fmt.Sprintf("%02d", int(now.Month())) // Convert month to string with zero-padding
+
+	// Convert organizationID to string
+	organizationIDStr := strconv.FormatUint(uint64(organizationID), 10)
+
+	// Build the directory path
+	rootFolder := "./uploads"
+	dynamicPath := filepath.Join(rootFolder, organizationIDStr, yearUpload, monthUpload)
+
+	// Create the directory if it doesn't exist
+	if err := os.MkdirAll(dynamicPath, os.ModePerm); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+		return
+	}
+
+	// Generate a GUID for the filename
+	guid := uuid.New().String()
+	fileExtension := filepath.Ext(file.Filename) // Preserve the file extension
+	newFileName := guid + fileExtension          // Create the new GUID-based filename
+
+	// Full path for saving the file
+	destinationPath := filepath.Join(dynamicPath, newFileName)
+
+	// Save the uploaded file
+	if err := c.SaveUploadedFile(file, destinationPath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
-	defer os.Remove(tempFilePath) // Clean up the file after processing
-
 	// Process the file using the UploadService
-	transactions, err := h.uploadService.ParseAndSave(tempFilePath, organizationID, uint(accountID), uint(year), uint(month), uploadedBy)
+	transactions, err := h.uploadService.ParseAndSave(destinationPath, organizationID, uint(accountID), uint(year), uint(month), uploadedBy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
