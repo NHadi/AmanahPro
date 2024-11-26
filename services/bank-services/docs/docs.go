@@ -15,6 +15,61 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/reconcile": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Manually trigger the reconciliation process",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reconciliation"
+                ],
+                "summary": "Trigger Reconciliation",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/transactions": {
             "get": {
                 "security": [
@@ -209,6 +264,9 @@ const docTemplate = `{
                 "Tanggal": {
                     "description": "Use string for ISO date format",
                     "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         }
@@ -230,7 +288,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Bank Services API",
-	Description:      "This is the Bank Services API for managing account transactions and upload batches.",
+	Description:      "This is the Bank Services API documentation for managing transactions, uploads, and reconciliations.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

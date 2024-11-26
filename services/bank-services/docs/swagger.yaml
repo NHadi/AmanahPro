@@ -22,14 +22,51 @@ definitions:
       Tanggal:
         description: Use string for ISO date format
         type: string
+      updatedAt:
+        type: string
     type: object
 info:
   contact: {}
-  description: This is the Bank Services API for managing account transactions and
-    upload batches.
+  description: This is the Bank Services API documentation for managing transactions,
+    uploads, and reconciliations.
   title: Bank Services API
   version: "1.0"
 paths:
+  /api/reconcile:
+    post:
+      description: Manually trigger the reconciliation process
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Trigger Reconciliation
+      tags:
+      - Reconciliation
   /api/transactions:
     get:
       description: Fetch transactions by bank ID and optional year

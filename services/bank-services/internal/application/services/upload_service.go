@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NHadi/AmanahPro-common/messagebroker"
+	"AmanahPro/services/bank-services/common/messagebroker"
 )
 
 type UploadService struct {

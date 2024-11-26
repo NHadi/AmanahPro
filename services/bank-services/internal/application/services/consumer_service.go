@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/NHadi/AmanahPro-common/messagebroker"
+	"AmanahPro/services/bank-services/common/messagebroker"
+
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/streadway/amqp"
 )

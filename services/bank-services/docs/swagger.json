@@ -1,12 +1,67 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is the Bank Services API for managing account transactions and upload batches.",
+        "description": "This is the Bank Services API documentation for managing transactions, uploads, and reconciliations.",
         "title": "Bank Services API",
         "contact": {},
         "version": "1.0"
     },
     "paths": {
+        "/api/reconcile": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Manually trigger the reconciliation process",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reconciliation"
+                ],
+                "summary": "Trigger Reconciliation",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/transactions": {
             "get": {
                 "security": [
@@ -200,6 +255,9 @@
                 },
                 "Tanggal": {
                     "description": "Use string for ISO date format",
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }
