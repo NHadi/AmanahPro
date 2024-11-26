@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -34,13 +35,18 @@ func NewUploadService(
 }
 
 func (s *UploadService) ParseAndSave(filePath string, organizationID, accountID, year, month uint, uploadedBy string) ([]models.BankAccountTransactions, error) {
+	log.Printf("Starting ParseAndSave for file: %s, AccountID: %d", filePath, accountID)
+
 	// Step 1: Parse CSV file into transactions
 	transactions, err := s.parseCSVFile(filePath, accountID, organizationID)
 	if err != nil {
+		log.Printf("Failed to parse file: %v", err)
 		return nil, fmt.Errorf("failed to parse file: %v", err)
 	}
+	log.Printf("Parsed %d transactions from file: %s", len(transactions), filePath)
 
 	if len(transactions) == 0 {
+		log.Printf("No transactions found in the file: %s", filePath)
 		return nil, errors.New("no transactions found in the file")
 	}
 
@@ -57,28 +63,36 @@ func (s *UploadService) ParseAndSave(filePath string, organizationID, accountID,
 	// Step 3: Save transactions in the database with rollback support
 	err = s.transactionRepo.InsertWithRollback(&batch, transactions)
 	if err != nil {
+		log.Printf("Failed to save transactions: %v", err)
 		return nil, fmt.Errorf("failed to save transactions: %v", err)
 	}
+	log.Printf("Saved transactions with BatchID: %d", batch.BatchID)
 
 	// Step 4: Retrieve the saved transactions to ensure IDs are populated
 	savedTransactions, err := s.transactionRepo.GetByBatchID(batch.BatchID)
 	if err != nil {
+		log.Printf("Failed to retrieve saved transactions: %v", err)
 		return nil, fmt.Errorf("failed to retrieve saved transactions: %v", err)
 	}
 
 	// Step 5: Publish all transactions as a batch to RabbitMQ
 	err = s.publishBatchToRabbitMQ(savedTransactions)
 	if err != nil {
+		log.Printf("Failed to publish transactions to RabbitMQ: %v", err)
 		return nil, fmt.Errorf("failed to publish transactions to RabbitMQ: %v", err)
 	}
+	log.Printf("Successfully published transactions to RabbitMQ for BatchID: %d", batch.BatchID)
 
 	return savedTransactions, nil
 }
 
-func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId uint) ([]models.BankAccountTransactions, error) {
+func (s *UploadService) parseCSVFile(filePath string, accountID, organizationID uint) ([]models.BankAccountTransactions, error) {
+	log.Printf("Parsing CSV file: %s", filePath)
+
 	// Step 1: Open the CSV file
 	file, err := os.Open(filePath)
 	if err != nil {
+		log.Printf("Error opening file: %v", err)
 		return nil, fmt.Errorf("error opening file: %v", err)
 	}
 	defer file.Close()
@@ -90,6 +104,7 @@ func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId 
 		lines = append(lines, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
+		log.Printf("Error reading file: %v", err)
 		return nil, fmt.Errorf("error reading file: %v", err)
 	}
 
@@ -103,15 +118,19 @@ func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId 
 	}
 
 	if startIndex == -1 {
+		log.Printf("Could not find transaction data header in the CSV")
 		return nil, fmt.Errorf("could not find transaction data header in the CSV")
 	}
+
+	log.Printf("Found transaction data header in the CSV at line: %d", startIndex)
 
 	// Step 4: Extract header and transaction data
 	headerLine := lines[startIndex-1]
 	dataLines := lines[startIndex:]
 
-	// Split header and data into columns
 	header := splitCSVLine(headerLine)
+	log.Printf("Parsed header: %v", header)
+
 	data := [][]string{}
 	for _, line := range dataLines {
 		if strings.TrimSpace(line) == "" || // Skip empty lines
@@ -122,7 +141,6 @@ func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId 
 			continue
 		}
 		row := splitCSVLine(line)
-		// Split the first field (Tanggal Transaksi) into two fields
 		if len(row) > 0 {
 			tanggalTransaksi := strings.SplitN(row[0], ",", 2)
 			if len(tanggalTransaksi) == 2 {
@@ -131,72 +149,60 @@ func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId 
 		}
 		data = append(data, row)
 	}
-	// Step 5: Modify header to include Credit and Debit columns
-	if len(header) > 0 {
-		header = append([]string{"Tanggal", "Transaksi", "Cabang", "Credit", "Debit", "Saldo"})
-	}
+	log.Printf("Processed %d rows of data", len(data))
 
-	var transactions []models.BankAccountTransactions
+	transactions := []models.BankAccountTransactions{}
 
 	// Parse and map credit, debit, and saldo into transactions
 	for rowIndex, record := range data {
-		credit := 0.0
-		debit := 0.0
-		saldo := 0.0
-
-		// Ensure record has sufficient fields to process
 		if len(record) < 5 {
-			fmt.Printf("Skipping malformed row %d: %v\n", rowIndex, record)
+			log.Printf("Skipping malformed row %d: %v", rowIndex, record)
 			continue
 		}
 
-		// Check the "Jumlah" column (4th index) for "CR" or "DB" and extract the value
 		jumlah := strings.TrimSpace(record[3])
-		fmt.Printf("Raw jumlah: '%s'\n", jumlah) // Debugging step
+		log.Printf("Raw jumlah: '%s'", jumlah)
 
+		var credit, debit, saldo float64
 		if strings.Contains(jumlah, "CR") {
 			jumlah = strings.Replace(jumlah, "CR", "", -1)
-			jumlah = strings.Replace(jumlah, ",", "", -1) // Remove commas for parsing
-			jumlah = strings.TrimSpace(jumlah)            // Ensure no leading/trailing spaces
+			jumlah = strings.Replace(jumlah, ",", "", -1)
+			jumlah = strings.TrimSpace(jumlah)
 			credit, err = strconv.ParseFloat(jumlah, 64)
 			if err != nil {
-				fmt.Printf("Skipping malformed credit: '%s', error: %v\n", jumlah, err)
+				log.Printf("Skipping malformed credit: '%s', error: %v", jumlah, err)
 				continue
 			}
 		} else if strings.Contains(jumlah, "DB") {
 			jumlah = strings.Replace(jumlah, "DB", "", -1)
-			jumlah = strings.Replace(jumlah, ",", "", -1) // Remove commas for parsing
-			jumlah = strings.TrimSpace(jumlah)            // Ensure no leading/trailing spaces
+			jumlah = strings.Replace(jumlah, ",", "", -1)
+			jumlah = strings.TrimSpace(jumlah)
 			debit, err = strconv.ParseFloat(jumlah, 64)
 			if err != nil {
-				fmt.Printf("Skipping malformed debit: '%s', error: %v\n", jumlah, err)
+				log.Printf("Skipping malformed debit: '%s', error: %v", jumlah, err)
 				continue
 			}
 		}
 
-		// Parse saldo (5th index)
 		saldoStr := strings.TrimSpace(record[4])
-		saldoStr = strings.Replace(saldoStr, ",", "", -1) // Remove commas for parsing
+		saldoStr = strings.Replace(saldoStr, ",", "", -1)
 		saldo, err = strconv.ParseFloat(saldoStr, 64)
 		if err != nil {
-			fmt.Printf("Skipping malformed saldo: %s\n", saldoStr)
+			log.Printf("Skipping malformed saldo: %s", saldoStr)
 			continue
 		}
 
-		// Parse date
 		tanggalStr := strings.TrimSpace(record[0])
-		fullDateStr := fmt.Sprintf("%s/%d", tanggalStr, time.Now().Year()) // Append the current year
+		fullDateStr := fmt.Sprintf("%s/%d", tanggalStr, time.Now().Year())
 		tanggal, err := time.Parse("02/01/2006", fullDateStr)
 		if err != nil {
-			fmt.Printf("Skipping malformed date: %s\n", tanggalStr)
+			log.Printf("Skipping malformed date: %s", tanggalStr)
 			continue
 		}
 
-		// Parse other fields
 		keterangan := strings.TrimSpace(strings.Trim(record[1], `"`))
 		cabang := strings.TrimSpace(record[2])
 
-		// Append to transactions slice
 		transactions = append(transactions, models.BankAccountTransactions{
 			AccountID:      accountID,
 			Tanggal:        tanggal,
@@ -205,16 +211,16 @@ func (s *UploadService) parseCSVFile(filePath string, accountID, organizationId 
 			Credit:         credit,
 			Debit:          debit,
 			Saldo:          saldo,
-			OrganizationId: organizationId,
+			OrganizationId: organizationID,
 		})
 
-		fmt.Printf("Processed row %d: Credit: %.2f, Debit: %.2f, Saldo: %.2f\n", rowIndex, credit, debit, saldo)
+		log.Printf("Processed row %d: %+v", rowIndex, transactions[len(transactions)-1])
 	}
 
+	log.Printf("Successfully parsed %d transactions", len(transactions))
 	return transactions, nil
 }
 
-// splitCSVLine handles splitting of CSV lines with quoted fields
 func splitCSVLine(line string) []string {
 	line = strings.Trim(line, "\"")
 	parts := strings.Split(line, "\",\"")
@@ -224,19 +230,21 @@ func splitCSVLine(line string) []string {
 	return parts
 }
 
-// publishToRabbitMQ publishes a transaction to RabbitMQ for downstream consumers
 func (s *UploadService) publishBatchToRabbitMQ(transactions []models.BankAccountTransactions) error {
-	// Convert the batch of transactions into JSON
+	log.Printf("Publishing batch of %d transactions to RabbitMQ", len(transactions))
+
 	message, err := json.Marshal(transactions)
 	if err != nil {
+		log.Printf("Failed to marshal transactions batch: %v", err)
 		return fmt.Errorf("failed to marshal transactions batch: %v", err)
 	}
 
-	// Publish the batch message to RabbitMQ
 	err = s.rabbitPublisher.Publish("transactions_queue", message)
 	if err != nil {
+		log.Printf("Failed to publish transactions batch to RabbitMQ: %v", err)
 		return fmt.Errorf("failed to publish transactions batch to RabbitMQ: %v", err)
 	}
 
+	log.Printf("Successfully published transactions batch to RabbitMQ")
 	return nil
 }

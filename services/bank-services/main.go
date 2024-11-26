@@ -8,6 +8,8 @@ import (
 	"AmanahPro/services/bank-services/internal/domain/repositories"
 	"AmanahPro/services/bank-services/internal/handlers"
 	"AmanahPro/services/bank-services/routes"
+	"bytes"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -127,7 +129,7 @@ func initializeHandlers(services *services.Services, repos *repositories.Reposit
 
 // configureReconciliationScheduler sets up a periodic task for reconciliation.
 func configureReconciliationScheduler(deps *bootstrap.Dependencies, services *services.Services) {
-	_, err := deps.Scheduler.AddFunc("@every 10m", func() {
+	_, err := deps.Scheduler.AddFunc("@every 2m", func() {
 		log.Println("Starting periodic reconciliation...")
 		if err := services.ReconciliationService.PerformReconciliation(); err != nil {
 			log.Printf("Reconciliation failed: %v", err)
@@ -160,7 +162,32 @@ func startServer(cfg *config.Config, deps *bootstrap.Dependencies, handlerInstan
 	// Apply middleware
 	router.Use(deps.LoggerMiddleware)
 	router.Use(func(c *gin.Context) {
+		// Log request method and URL path
 		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
+
+		// Log query parameters
+		if len(c.Request.URL.RawQuery) > 0 {
+			log.Printf("Query parameters: %s", c.Request.URL.RawQuery)
+		}
+
+		// Log URL parameters
+		urlParams := c.Params
+		if len(urlParams) > 0 {
+			log.Printf("URL parameters: %v", urlParams)
+		}
+
+		// Log request body (if applicable and small enough to read)
+		if c.Request.ContentLength > 0 {
+			bodyBytes, err := io.ReadAll(c.Request.Body)
+			if err == nil {
+				log.Printf("Request body: %s", string(bodyBytes))
+				// Restore the request body for the next handler to read
+				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			} else {
+				log.Printf("Failed to read request body: %v", err)
+			}
+		}
+
 		c.Next()
 	})
 

@@ -46,24 +46,30 @@ func NewReconciliationService(
 
 // PerformReconciliation executes incremental reconciliation
 func (r *ReconciliationService) PerformReconciliation() error {
+	log.Println("Starting reconciliation process...")
 	ctx := context.Background()
 
 	// Get the last processed timestamp from Redis
 	lastProcessed, err := r.GetLastProcessedTimestamp(ctx, "last_reconciliation_timestamp")
 	if err != nil {
+		log.Printf("Error retrieving last processed timestamp: %v", err)
 		return fmt.Errorf("failed to get last processed timestamp: %w", err)
 	}
+	log.Printf("Last processed timestamp: %v", lastProcessed)
 
 	offset := 0
 	for {
 		// Fetch a batch of updated transactions
 		updatedTransactions, err := r.bankAccountTransactionRepository.FindUpdatedAfter(lastProcessed, batchSize, offset)
 		if err != nil {
+			log.Printf("Error fetching updated transactions (offset=%d): %v", offset, err)
 			return fmt.Errorf("failed to fetch updated transactions: %w", err)
 		}
+		log.Printf("Fetched %d transactions for reconciliation (offset=%d)", len(updatedTransactions), offset)
 
 		// Exit if no more transactions
 		if len(updatedTransactions) == 0 {
+			log.Println("No more transactions to process.")
 			break
 		}
 
@@ -73,6 +79,7 @@ func (r *ReconciliationService) PerformReconciliation() error {
 			log.Printf("Bulk indexing failed for batch (offset=%d): %v", offset, err)
 			return err
 		}
+		log.Printf("Successfully indexed %d transactions (offset=%d)", len(updatedTransactions), offset)
 
 		// Update offset and the last processed timestamp
 		offset += len(updatedTransactions)
@@ -84,24 +91,31 @@ func (r *ReconciliationService) PerformReconciliation() error {
 	}
 
 	// Final update of the last processed timestamp
-	return r.SetLastProcessedTimestamp(ctx, "last_reconciliation_timestamp", time.Now())
+	finalTimestamp := time.Now()
+	err = r.SetLastProcessedTimestamp(ctx, "last_reconciliation_timestamp", finalTimestamp)
+	if err != nil {
+		log.Printf("Failed to update final timestamp: %v", err)
+	} else {
+		log.Printf("Reconciliation completed. Final timestamp set to: %v", finalTimestamp)
+	}
+	return err
 }
 
 // GetLastProcessedTimestamp fetches the last processed timestamp from Redis
 func (r *ReconciliationService) GetLastProcessedTimestamp(ctx context.Context, key string) (time.Time, error) {
 	timestampStr, err := r.redisClient.Get(ctx, key).Result()
 	if err == redis.Nil {
-		// Default to time.Now if no value exists in Redis
 		now := time.Now()
 		log.Printf("No last reconciliation timestamp found. Defaulting to now: %v", now)
 		return now, nil
 	} else if err != nil {
+		log.Printf("Error retrieving last processed timestamp from Redis: %v", err)
 		return time.Time{}, err
 	}
 
-	// Parse the timestamp
 	timestamp, err := time.Parse(time.RFC3339, timestampStr)
 	if err != nil {
+		log.Printf("Invalid timestamp format in Redis: %s, error: %v", timestampStr, err)
 		return time.Time{}, fmt.Errorf("invalid timestamp format: %w", err)
 	}
 	return timestamp, nil
@@ -111,8 +125,10 @@ func (r *ReconciliationService) GetLastProcessedTimestamp(ctx context.Context, k
 func (r *ReconciliationService) SetLastProcessedTimestamp(ctx context.Context, key string, timestamp time.Time) error {
 	err := r.redisClient.Set(ctx, key, timestamp, 0).Err()
 	if err != nil {
+		log.Printf("Error setting last processed timestamp in Redis: %v", err)
 		return fmt.Errorf("failed to set last processed timestamp: %w", err)
 	}
+	log.Printf("Last processed timestamp updated in Redis: %v", timestamp)
 	return nil
 }
 
@@ -125,11 +141,13 @@ func (r *ReconciliationService) BulkIndexTransactions(transactions []models.Bank
 		}
 
 		batch := transactions[i:end]
+		log.Printf("Processing batch %d-%d", i, end)
 		err := r.processBatchWithRetry(batch)
 		if err != nil {
 			log.Printf("Failed to process batch %d-%d: %v", i, end, err)
 			return err
 		}
+		log.Printf("Batch %d-%d processed successfully", i, end)
 	}
 	return nil
 }
@@ -139,6 +157,7 @@ func (r *ReconciliationService) processBatchWithRetry(batch []models.BankAccount
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		err := r.processBatch(batch)
 		if err == nil {
+			log.Printf("Batch processed successfully on attempt %d", attempt)
 			return nil
 		}
 
@@ -182,11 +201,13 @@ func (r *ReconciliationService) processBatch(batch []models.BankAccountTransacti
 
 	res, err := r.esClient.Bulk(strings.NewReader(bulkPayload.String()), r.esClient.Bulk.WithRefresh("true"))
 	if err != nil {
+		log.Printf("Bulk request failed: %v", err)
 		return fmt.Errorf("bulk indexing failed: %w", err)
 	}
 
 	failures, err := parseBulkResponse(res.Body)
 	if err != nil {
+		log.Printf("Error parsing bulk response: %v", err)
 		return fmt.Errorf("failed to parse bulk response: %w", err)
 	}
 
@@ -195,6 +216,7 @@ func (r *ReconciliationService) processBatch(batch []models.BankAccountTransacti
 	}
 
 	if len(failures) > 0 {
+		log.Printf("Some documents failed in bulk request: %d failures", len(failures))
 		return fmt.Errorf("some documents failed in bulk request")
 	}
 	return nil
