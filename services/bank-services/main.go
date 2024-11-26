@@ -15,6 +15,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron/v3"
 	swaggerFiles "github.com/swaggo/files"
 	httpSwagger "github.com/swaggo/gin-swagger"
 )
@@ -22,10 +23,8 @@ import (
 const defaultPort = "8082"
 
 func main() {
-
-	// Determine the runtime environment
+	// Load environment variables
 	envFilePath := determineEnvFilePath("../../.env.local")
-
 	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -71,8 +70,15 @@ func main() {
 		log.Fatalf("Elasticsearch connection error: %v", err)
 	}
 	defer res.Body.Close()
-
 	log.Println("Elasticsearch connection successful")
+
+	// Initialize Redis client
+	redisClient, err := persistence.InitializeRedis(os.Getenv("REDIS_URL"), os.Getenv("REDIS_PASSWORD"), 0)
+	if err != nil {
+		log.Fatalf("Failed to initialize Redis client: %v", err)
+	}
+	defer redisClient.Close()
+	log.Println("Connected to Redis successfully")
 
 	// Initialize repositories
 	var batchRepo domainRepositories.BatchRepository = repositories.NewBatchRepository(db)
@@ -81,10 +87,11 @@ func main() {
 	// Initialize application services
 	uploadService := services.NewUploadService(transactionRepo, batchRepo, rabbitPublisher)
 	transactionService := services.NewTransactionService(transactionRepo)
-
+	// Initialize reconciliation service
+	reconciliationService := services.NewReconciliationService(esClient, "bank-transactions", redisClient, transactionRepo)
 	// Initialize RabbitMQ consumer
 	rabbitConsumer := messagebroker.NewRabbitMQConsumer(rabbitService)
-	consumerService := services.NewConsumerService(esClient, "bank-transactions", rabbitConsumer, rabbitQueue)
+	consumerService := services.NewConsumerService(esClient, "bank-transactions", rabbitConsumer, rabbitQueue, reconciliationService)
 
 	// Initialize handlers
 	uploadHandler := handlers.NewUploadHandler(uploadService, transactionRepo, batchRepo)
@@ -97,6 +104,9 @@ func main() {
 			log.Fatalf("Failed to start RabbitMQ consumer: %v", err)
 		}
 	}()
+
+	// Start periodic reconciliation scheduler
+	startReconciliationScheduler(reconciliationService)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -135,6 +145,25 @@ func main() {
 	}
 	log.Printf("Server running at http://localhost:%s", port)
 	log.Fatal(r.Run(":" + port))
+}
+
+// startReconciliationScheduler starts a periodic reconciliation process using a cron scheduler
+func startReconciliationScheduler(reconciliationService *services.ReconciliationService) {
+	c := cron.New()
+	_, err := c.AddFunc("@every 5m", func() { // Run reconciliation every 5 minutes
+		log.Println("Starting periodic reconciliation...")
+		err := reconciliationService.PerformReconciliation()
+		if err != nil {
+			log.Printf("Reconciliation failed: %v", err)
+		} else {
+			log.Println("Reconciliation completed successfully")
+		}
+	})
+	if err != nil {
+		log.Fatalf("Failed to start reconciliation scheduler: %v", err)
+	}
+	c.Start()
+	log.Println("Reconciliation scheduler started successfully")
 }
 
 // determineEnvFilePath determines the correct .env file path based on runtime environment

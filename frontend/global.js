@@ -1,5 +1,6 @@
 // 1. Base API URL
-const API_BASE_URL = "https://148.135.136.181:8080";
+// const API_BASE_URL = "https://148.135.136.181:8080";
+const API_BASE_URL = "http://localhost:8080";
 
 // 2. Utility to Get JWT Token
 function getAuthToken() {

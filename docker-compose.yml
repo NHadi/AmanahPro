@@ -58,11 +58,13 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       retries: 3
     networks:
       - app_network
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+
 
   rabbitmq:
     image: rabbitmq:3-management

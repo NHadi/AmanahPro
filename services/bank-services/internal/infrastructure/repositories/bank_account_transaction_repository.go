@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -222,4 +223,24 @@ func (r *bankAccountTransactionRepository) GetByBatchID(batchID uint) ([]models.
 		return nil, fmt.Errorf("failed to retrieve transactions for batch %d: %v", batchID, err)
 	}
 	return transactions, nil
+}
+
+func (r *bankAccountTransactionRepository) FindUpdatedAfter(lastProcessedTime time.Time, limit int, offset int) ([]models.BankAccountTransactions, error) {
+	// Format lastProcessedTime as a string in the format SQL Server understands (e.g., 'YYYY-MM-DD HH:MM:SS')
+	timeString := lastProcessedTime.Format("2006-01-02 15:04:05.000")
+
+	// Log the value for debugging
+	log.Printf("Querying transactions updated after: %s", timeString)
+
+	var transactions []models.BankAccountTransactions
+	err := r.db.Debug().
+		Where("UpdatedAt > ?", timeString).
+		Limit(limit).
+		Offset(offset).
+		Order("UpdatedAt ASC").
+		Find(&transactions).Error
+
+	// Log the results for debugging
+	log.Printf("Found %d transactions", len(transactions))
+	return transactions, err
 }
