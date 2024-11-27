@@ -1,0 +1,278 @@
+definitions:
+  dto.ProjectDTO:
+    properties:
+      CreatedAt:
+        type: string
+      KeyUsers:
+        description: Nested KeyUsers array
+        items:
+          $ref: '#/definitions/dto.ProjectUserDTO'
+        type: array
+      Location:
+        type: string
+      OrganizationID:
+        type: integer
+      ProjectID:
+        type: integer
+      ProjectName:
+        type: string
+      Recap:
+        allOf:
+        - $ref: '#/definitions/dto.ProjectRecapDTO'
+        description: Nested Recap object
+      Status:
+        type: string
+      UpdatedAt:
+        type: string
+    type: object
+  dto.ProjectRecapDTO:
+    properties:
+      Margin:
+        type: number
+      MarginPercentage:
+        type: number
+      TotalOpname:
+        type: number
+      TotalPengeluaran:
+        type: number
+    type: object
+  dto.ProjectUserDTO:
+    properties:
+      Role:
+        type: string
+      UserID:
+        type: integer
+    type: object
+  models.Project:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      description:
+        description: Description of the project
+        type: string
+      endDate:
+        description: End date of the project
+        type: string
+      location:
+        description: Project location
+        type: string
+      organizationID:
+        description: Organization ID
+        type: integer
+      projectID:
+        description: Primary key
+        type: integer
+      projectName:
+        description: Name of the project
+        type: string
+      startDate:
+        description: Start date of the project
+        type: string
+      status:
+        description: Status of the project
+        type: string
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is the Project Management Services API documentation for managing
+    project, and reconciliations.
+  title: Project Management Services API
+  version: "1.0"
+paths:
+  /api/projects:
+    post:
+      consumes:
+      - application/json
+      description: Create a new project
+      parameters:
+      - description: Project Data
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/models.Project'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Project
+      tags:
+      - Projects
+    put:
+      consumes:
+      - application/json
+      description: Update an existing project
+      parameters:
+      - description: Project Data
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/models.Project'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Project
+      tags:
+      - Projects
+  /api/projects/{id}:
+    delete:
+      description: Delete a project by ID
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Project
+      tags:
+      - Projects
+  /api/projects/search:
+    get:
+      description: Search projects by organization ID and query string
+      parameters:
+      - description: Organization ID
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      - description: Search Query
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ProjectDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search Projects
+      tags:
+      - Projects
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

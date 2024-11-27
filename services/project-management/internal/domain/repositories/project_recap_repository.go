@@ -2,12 +2,12 @@ package repositories
 
 import (
 	"AmanahPro/services/project-management/internal/domain/models"
+	"AmanahPro/services/project-management/internal/dto"
 )
 
 type ProjectRecapRepository interface {
-	Create(projectRecap *models.ProjectRecap) error
-	Update(projectRecap *models.ProjectRecap) error
+	Create(recap *models.ProjectRecap) error
+	Update(recap *models.ProjectRecap) error
 	Delete(id int) error
-	FindByID(id int) (*models.ProjectRecap, error)
-	FindAllByOrganizationID(organizationID int) ([]models.ProjectRecap, error)
+	FindByProjectID(projectID int) (*dto.ProjectRecapDTO, error)
 }

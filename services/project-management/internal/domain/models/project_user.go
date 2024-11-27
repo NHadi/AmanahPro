@@ -12,7 +12,7 @@ type ProjectUser struct {
 	CreatedBy      *int       `gorm:"null"`                     // Created by user ID
 	UpdatedBy      *int       `gorm:"null"`                     // Updated by user ID
 	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`           // Update timestamp
-	OrganizationID int        `gorm:"null"`                     // Organization ID
+	OrganizationID *int       `gorm:"null"`                     // Organization ID
 }
 
 // TableName specifies the table name for ProjectUser

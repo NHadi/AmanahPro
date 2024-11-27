@@ -6,20 +6,20 @@ import (
 
 // Project represents the Projects table in the database
 type Project struct {
-	ProjectID      int        `gorm:"primaryKey;autoIncrement"`                    // Primary key
-	ProjectName    string     `gorm:"type:varchar(255);not null"`                  // Name of the project
-	Location       *string    `gorm:"type:varchar(255);null"`                      // Project location
-	StartDate      *time.Time `gorm:"type:date;null"`                              // Start date of the project
-	EndDate        *time.Time `gorm:"type:date;null"`                              // End date of the project
-	Description    *string    `gorm:"type:text;null"`                              // Description of the project
-	Status         *string    `gorm:"type:varchar(20);default:'in-progress';null"` // Status of the project
-	CreatedBy      *int       `gorm:"null"`                                        // Created by user ID
-	CreatedAt      *time.Time `gorm:"autoCreateTime;default:CURRENT_TIMESTAMP"`    // Creation timestamp
-	UpdatedBy      *int       `gorm:"null"`                                        // Updated by user ID
-	UpdatedAt      *time.Time `gorm:"autoUpdateTime;null"`                         // Update timestamp
-	DeletedBy      *int       `gorm:"null"`                                        // Deleted by user ID
-	DeletedAt      *time.Time `gorm:"index;null"`                                  // Deletion timestamp
-	OrganizationID int        `gorm:"null"`                                        // Organization ID
+	ProjectID      int         `gorm:"column:ProjectID;primaryKey;autoIncrement"`                 // Maps to [ProjectID]
+	ProjectName    string      `gorm:"column:ProjectName;type:varchar(255);not null"`             // Maps to [ProjectName]
+	Location       *string     `gorm:"column:Location;type:varchar(255);null"`                    // Maps to [Location]
+	StartDate      *CustomDate `gorm:"column:StartDate;type:date;null"`                           // Maps to [StartDate]
+	EndDate        *CustomDate `gorm:"column:EndDate;type:date;null"`                             // Maps to [EndDate]
+	Description    *string     `gorm:"column:Description;type:text;null"`                         // Maps to [Description]
+	Status         *string     `gorm:"column:Status;type:varchar(20);default:'in-progress';null"` // Maps to [Status]
+	CreatedBy      *int        `gorm:"column:CreatedBy;null"`                                     // Maps to [CreatedBy]
+	CreatedAt      *time.Time  `gorm:"column:CreatedAt;autoCreateTime"`                           // Maps to [CreatedAt]
+	UpdatedBy      *int        `gorm:"column:UpdatedBy;null"`                                     // Maps to [UpdatedBy]
+	UpdatedAt      *time.Time  `gorm:"column:UpdatedAt;autoUpdateTime"`                           // Maps to [UpdatedAt]
+	DeletedBy      *int        `gorm:"column:DeletedBy;null"`                                     // Maps to [DeletedBy]
+	DeletedAt      *time.Time  `gorm:"column:DeletedAt;null"`                                     // Maps to [DeletedAt]
+	OrganizationID *int        `gorm:"column:OrganizationID;null"`                                // Maps to [OrganizationID]
 }
 
 // TableName specifies the table name for Project

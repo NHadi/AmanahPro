@@ -1,0 +1,60 @@
+PUT /projects
+{
+  "mappings": {
+    "properties": {
+      "ProjectID": { "type": "integer" },
+      "ProjectName": { "type": "text" },
+      "Location": { "type": "text" },
+      "Status": { "type": "keyword" },
+      "OrganizationID": { "type": "integer" },
+      "Recap": {
+        "type": "nested",
+        "properties": {
+          "TotalOpname": { "type": "double" },
+          "TotalPengeluaran": { "type": "double" },
+          "Margin": { "type": "double" },
+          "MarginPercentage": { "type": "double" }
+        }
+      },
+      "KeyUsers": {
+        "type": "nested",
+        "properties": {
+          "UserID": { "type": "integer" },
+          "Role": { "type": "keyword" }
+        }
+      },
+      "CreatedAt": { "type": "date" },
+      "UpdatedAt": { "type": "date" }
+    }
+  }
+}
+
+PUT /project_recap
+{
+  "mappings": {
+    "properties": {
+      "RecapID": { "type": "integer" },
+      "ProjectID": { "type": "integer" },
+      "OrganizationID": { "type": "integer" },
+      "TotalOpname": { "type": "double" },
+      "TotalPengeluaran": { "type": "double" },
+      "Margin": { "type": "double" },
+      "MarginPercentage": { "type": "double" },
+      "UpdatedAt": { "type": "date" }
+    }
+  }
+}
+
+PUT /project_user
+{
+  "mappings": {
+    "properties": {
+      "ProjectUserID": { "type": "integer" },
+      "ProjectID": { "type": "integer" },
+      "OrganizationID": { "type": "integer" },
+      "UserID": { "type": "integer" },
+      "Role": { "type": "keyword" },
+      "AssignedAt": { "type": "date" }
+    }
+  }
+}

@@ -17,7 +17,7 @@ type ProjectRecap struct {
 	UpdatedAt        *time.Time `gorm:"autoUpdateTime"`           // Update timestamp
 	DeletedBy        *int       `gorm:"null"`                     // Deleted by user ID
 	DeletedAt        *time.Time `gorm:"index;null"`               // Deletion timestamp
-	OrganizationID   int        `gorm:"null"`                     // Organization ID
+	OrganizationID   *int       `gorm:"null"`                     // Organization ID
 }
 
 func (ProjectRecap) TableName() string {
