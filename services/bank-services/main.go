@@ -10,10 +10,8 @@ import (
 	"AmanahPro/services/bank-services/internal/domain/repositories"
 	"AmanahPro/services/bank-services/internal/handlers"
 	"AmanahPro/services/bank-services/schedulers"
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -155,33 +153,6 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router
-}
-
-// requestLoggingMiddleware logs incoming requests, including query and URL parameters.
-func requestLoggingMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
-
-		if len(c.Request.URL.RawQuery) > 0 {
-			log.Printf("Query parameters: %s", c.Request.URL.RawQuery)
-		}
-
-		if len(c.Params) > 0 {
-			log.Printf("URL parameters: %v", c.Params)
-		}
-
-		if c.Request.ContentLength > 0 {
-			bodyBytes, err := io.ReadAll(c.Request.Body)
-			if err == nil {
-				log.Printf("Request body: %s", string(bodyBytes))
-				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			} else {
-				log.Printf("Failed to read request body: %v", err)
-			}
-		}
-
-		c.Next()
-	}
 }
 
 // startServerWithGracefulShutdown starts the Gin server and handles graceful shutdown.
