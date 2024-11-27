@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
+	"AmanahPro/services/bank-services/common/config"
 	"AmanahPro/services/bank-services/common/messagebroker"
-	"AmanahPro/services/bank-services/config"
 	"AmanahPro/services/bank-services/internal/infrastructure/persistence"
 
 	"github.com/NHadi/AmanahPro-common/middleware"

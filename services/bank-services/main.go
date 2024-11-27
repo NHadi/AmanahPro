@@ -1,14 +1,14 @@
 package main
 
 import (
-	"AmanahPro/services/bank-services/bootstrap"
+	"AmanahPro/services/bank-services/common/bootstrap"
+	"AmanahPro/services/bank-services/common/config"
+	"AmanahPro/services/bank-services/common/factories"
 	commonMiddleware "AmanahPro/services/bank-services/common/middleware"
-	"AmanahPro/services/bank-services/config"
-	"AmanahPro/services/bank-services/factories"
+	"AmanahPro/services/bank-services/common/routes"
 	"AmanahPro/services/bank-services/internal/application/services"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
 	"AmanahPro/services/bank-services/internal/handlers"
-	"AmanahPro/services/bank-services/routes"
 	"AmanahPro/services/bank-services/schedulers"
 	"bytes"
 	"context"
