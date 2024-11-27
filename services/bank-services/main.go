@@ -2,16 +2,23 @@ package main
 
 import (
 	"AmanahPro/services/bank-services/bootstrap"
+	commonMiddleware "AmanahPro/services/bank-services/common/middleware"
 	"AmanahPro/services/bank-services/config"
 	"AmanahPro/services/bank-services/factories"
 	"AmanahPro/services/bank-services/internal/application/services"
 	"AmanahPro/services/bank-services/internal/domain/repositories"
 	"AmanahPro/services/bank-services/internal/handlers"
 	"AmanahPro/services/bank-services/routes"
+	"AmanahPro/services/bank-services/schedulers"
 	"bytes"
+	"context"
+	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"runtime/debug"
 	"time"
 
 	_ "AmanahPro/services/bank-services/docs"
@@ -20,6 +27,12 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+const (
+	defaultPort       = "8082"
+	rabbitMQQueueName = "transactions_queue"
+	logDir            = "log"
 )
 
 // @title Bank Services API
@@ -32,63 +45,53 @@ import (
 // @host localhost:8082
 // @BasePath /
 func main() {
+	defer recoverFromPanic()
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Fatalf("Application panic recovered: %v", r)
-		}
-	}()
-
-	// Configure daily log file
-	configureDailyLogFile()
-
-	// Log startup message
+	configureLogging()
 	log.Println("Starting Bank Services API...")
 
-	// Load configuration
 	cfg := loadConfig()
-
-	// Initialize dependencies
 	deps := initializeDependencies(cfg)
-
-	// Declare RabbitMQ queue
 	initializeRabbitMQ(deps)
 
-	// Initialize services and handlers
 	repos := factories.CreateRepositories(deps.DB, deps.ElasticsearchClient)
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
-	handlerInstances := initializeHandlers(services, repos)
+	handlers := initializeHandlers(services, repos)
 
-	// Configure and start background tasks
-	configureReconciliationScheduler(deps, services)
+	//scheduler setup
+	schedulers.ConfigureReconciliationScheduler(deps.Scheduler, services.ReconciliationService.PerformReconciliation)
+
 	startRabbitMQConsumer(services)
 
-	// Start Gin server
-	startServer(cfg, deps, handlerInstances)
+	router := setupRouter(cfg, deps, handlers)
+	startServerWithGracefulShutdown(cfg, router)
 }
 
-// configureDailyLogFile sets up daily logging into a file.
-func configureDailyLogFile() {
-	// Ensure the log folder exists
-	logDir := "log"
+// configureLogging sets up daily logging into a file.
+func configureLogging() {
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
-		err := os.Mkdir(logDir, os.ModePerm)
-		if err != nil {
+		if err := os.Mkdir(logDir, os.ModePerm); err != nil {
 			log.Fatalf("Failed to create log directory: %v", err)
 		}
 	}
 
-	// Create log file with the current date
-	logFileName := logDir + "/Log" + time.Now().Format("20060102") + ".log"
+	logFileName := fmt.Sprintf("%s/Log%s.log", logDir, time.Now().Format("20060102"))
 	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
 
-	// Set log output to the file and also log to stdout
 	log.SetOutput(logFile)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.Println("Logging initialized to", logFileName)
+	log.Printf("Logging initialized: %s", logFileName)
+}
+
+// recoverFromPanic recovers from panics and logs the stack trace.
+func recoverFromPanic() {
+	if r := recover(); r != nil {
+		log.Printf("Application panic recovered: %v", r)
+		log.Printf("Stack trace: %s", debug.Stack())
+	}
 }
 
 // loadConfig loads the application configuration.
@@ -111,11 +114,11 @@ func initializeDependencies(cfg *config.Config) *bootstrap.Dependencies {
 
 // initializeRabbitMQ declares the RabbitMQ queue for the application.
 func initializeRabbitMQ(deps *bootstrap.Dependencies) {
-	const rabbitQueue = "transactions_queue"
-	err := deps.RabbitMQService.DeclareQueue(rabbitQueue)
+	err := deps.RabbitMQService.DeclareQueue(rabbitMQQueueName)
 	if err != nil {
-		log.Fatalf("Failed to declare RabbitMQ queue: %v", err)
+		log.Fatalf("Failed to declare RabbitMQ queue [%s]: %v", rabbitMQQueueName, err)
 	}
+	log.Printf("RabbitMQ queue [%s] declared successfully", rabbitMQQueueName)
 }
 
 // initializeHandlers initializes all handlers used by the application.
@@ -127,24 +130,6 @@ func initializeHandlers(services *services.Services, repos *repositories.Reposit
 	)
 }
 
-// configureReconciliationScheduler sets up a periodic task for reconciliation.
-func configureReconciliationScheduler(deps *bootstrap.Dependencies, services *services.Services) {
-	_, err := deps.Scheduler.AddFunc("@every 2m", func() {
-		log.Println("Starting periodic reconciliation...")
-		if err := services.ReconciliationService.PerformReconciliation(); err != nil {
-			log.Printf("Reconciliation failed: %v", err)
-		} else {
-			log.Println("Reconciliation completed successfully")
-		}
-	})
-	if err != nil {
-		log.Fatalf("Failed to configure reconciliation scheduler: %v", err)
-	}
-
-	// Start the scheduler
-	go deps.Scheduler.Start()
-}
-
 // startRabbitMQConsumer starts the RabbitMQ consumer.
 func startRabbitMQConsumer(services *services.Services) {
 	go func() {
@@ -152,36 +137,43 @@ func startRabbitMQConsumer(services *services.Services) {
 		if err != nil {
 			log.Fatalf("Failed to start RabbitMQ consumer: %v", err)
 		}
+		log.Println("RabbitMQ consumer started successfully")
 	}()
 }
 
-// startServer starts the Gin server and registers all routes.
-func startServer(cfg *config.Config, deps *bootstrap.Dependencies, handlerInstances *handlers.Handlers) {
+// setupRouter sets up the Gin router and middleware.
+func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *handlers.Handlers) *gin.Engine {
 	router := gin.Default()
 
-	// Apply middleware
 	router.Use(deps.LoggerMiddleware)
-	router.Use(func(c *gin.Context) {
-		// Log request method and URL path
+	router.Use(commonMiddleware.RequestLoggingMiddleware())
+
+	api := router.Group("/api")
+	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))
+	routes.RegisterAPIRoutes(api, handlers)
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	return router
+}
+
+// requestLoggingMiddleware logs incoming requests, including query and URL parameters.
+func requestLoggingMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
 
-		// Log query parameters
 		if len(c.Request.URL.RawQuery) > 0 {
 			log.Printf("Query parameters: %s", c.Request.URL.RawQuery)
 		}
 
-		// Log URL parameters
-		urlParams := c.Params
-		if len(urlParams) > 0 {
-			log.Printf("URL parameters: %v", urlParams)
+		if len(c.Params) > 0 {
+			log.Printf("URL parameters: %v", c.Params)
 		}
 
-		// Log request body (if applicable and small enough to read)
 		if c.Request.ContentLength > 0 {
 			bodyBytes, err := io.ReadAll(c.Request.Body)
 			if err == nil {
 				log.Printf("Request body: %s", string(bodyBytes))
-				// Restore the request body for the next handler to read
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			} else {
 				log.Printf("Failed to read request body: %v", err)
@@ -189,21 +181,36 @@ func startServer(cfg *config.Config, deps *bootstrap.Dependencies, handlerInstan
 		}
 
 		c.Next()
-	})
+	}
+}
 
-	// Register API routes
-	api := router.Group("/api")
-	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))
-	routes.RegisterAPIRoutes(api, handlerInstances)
-
-	// Register Swagger routes
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	// Start the server
+// startServerWithGracefulShutdown starts the Gin server and handles graceful shutdown.
+func startServerWithGracefulShutdown(cfg *config.Config, router *gin.Engine) {
 	port := cfg.Port
 	if port == "" {
-		port = "8082"
+		port = defaultPort
 	}
+
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
 	log.Printf("Server running at http://localhost:%s", port)
-	log.Fatal(router.Run(":" + port))
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	log.Println("Shutting down server...")
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server shutdown complete")
 }

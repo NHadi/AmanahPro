@@ -15,6 +15,7 @@ type Config struct {
 	RedisPassword    string
 	ElasticsearchURL string
 	JWTSecret        string
+	APP_ENV          string
 }
 
 func LoadConfig() (*Config, error) {
@@ -36,6 +37,7 @@ func LoadConfig() (*Config, error) {
 		RedisPassword:    getEnv("REDIS_PASSWORD", ""),
 		ElasticsearchURL: getEnv("ELASTICSEARCH_URL", ""),
 		JWTSecret:        getEnv("JWT_SECRET", ""),
+		APP_ENV:          getEnv("APP_ENV", ""),
 	}, nil
 }
 
