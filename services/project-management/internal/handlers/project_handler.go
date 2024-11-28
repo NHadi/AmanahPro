@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"AmanahPro/services/project-management/common/helpers"
 	"AmanahPro/services/project-management/internal/application/services"
 	"AmanahPro/services/project-management/internal/domain/models"
 	"net/http"
@@ -40,6 +41,16 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 		return
 	}
 
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		// Error already handled inside the helper
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+	project.CreatedBy = &claims.UserID
+	project.OrganizationID = &organizationID
+
 	if err := h.projectService.Create(&project); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -67,6 +78,16 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		// Error already handled inside the helper
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+	project.OrganizationID = &organizationID
+	project.UpdatedBy = &claims.UserID
 
 	if err := h.projectService.Update(&project); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -118,18 +139,16 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/projects/search [get]
 func (h *ProjectHandler) SearchProjectsByOrganization(c *gin.Context) {
-	organizationIDStr := c.Query("organization_id")
-	organizationID, err := strconv.Atoi(organizationIDStr)
-	if err != nil || organizationID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		// Error already handled inside the helper
 		return
 	}
 
+	organizationID := int(*claims.OrganizationId)
+
 	query := c.Query("query")
-	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query string cannot be empty"})
-		return
-	}
 
 	projects, err := h.projectService.SearchProjectsByOrganization(organizationID, query)
 	if err != nil {

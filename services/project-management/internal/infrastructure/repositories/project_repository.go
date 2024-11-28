@@ -74,7 +74,7 @@ func (r *projectRepositoryImpl) Delete(id int) error {
 // Elasticsearch Read Operations
 
 func (r *projectRepositoryImpl) SearchProjectsByOrganization(organizationID int, query string) ([]dto.ProjectDTO, error) {
-	// Build Elasticsearch query
+	// Build the base Elasticsearch query for organization filtering
 	esQuery := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
@@ -84,15 +84,21 @@ func (r *projectRepositoryImpl) SearchProjectsByOrganization(organizationID int,
 							"OrganizationID": organizationID,
 						},
 					},
-					map[string]interface{}{
-						"multi_match": map[string]interface{}{
-							"query":  query,
-							"fields": []string{"ProjectName", "Location"},
-						},
-					},
 				},
 			},
 		},
+	}
+
+	// If `query` is provided, add the multi_match query
+	if query != "" {
+		boolQuery := esQuery["query"].(map[string]interface{})["bool"].(map[string]interface{})
+		boolQuery["must"] = append(boolQuery["must"].([]interface{}),
+			map[string]interface{}{
+				"multi_match": map[string]interface{}{
+					"query":  query,
+					"fields": []string{"ProjectName", "Location"},
+				},
+			})
 	}
 
 	// Execute the search query
