@@ -7,7 +7,6 @@ import (
 	"AmanahPro/services/project-management/common/messagebroker"
 	commonMiddleware "AmanahPro/services/project-management/common/middleware"
 	"AmanahPro/services/project-management/common/routes"
-	"AmanahPro/services/project-management/internal/application/services"
 	"AmanahPro/services/project-management/internal/handlers"
 	"context"
 	"fmt"
@@ -17,7 +16,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"strconv"
 	"time"
 
 	_ "AmanahPro/services/project-management/docs"
@@ -53,10 +51,6 @@ func main() {
 
 	repos := factories.CreateRepositories(deps.DB, deps.ElasticsearchClient)
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
-	consumers := factories.CreateConsumers(deps.ElasticsearchClient, deps.RabbitMQService.Channel)
-
-	// Start RabbitMQ consumers
-	startRabbitMQConsumers(cfg, consumers, deps.RabbitMQService)
 
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
 		handlers.NewProjectHandler(services.ProjectService),
@@ -120,41 +114,6 @@ func initializeDependencies(cfg *config.Config) *bootstrap.Dependencies {
 		log.Fatalf("Failed to initialize dependencies: %v", err)
 	}
 	return deps
-}
-
-func startRabbitMQConsumers(cfg *config.Config, consumers map[string]*services.ConsumerService, rabbitService *messagebroker.RabbitMQService) {
-	concurrency, _ := strconv.Atoi(cfg.CONCURRENCY)
-
-	if concurrency == 0 {
-		concurrency = 5
-	}
-
-	// Process each consumer
-	for queueName, consumer := range consumers {
-		go func(c *services.ConsumerService, q string) {
-			log.Printf("Starting consumer for queue: %s", q)
-
-			// Ensure RabbitMQ connection is active
-			if rabbitService.Conn == nil || rabbitService.Conn.IsClosed() {
-				log.Printf("RabbitMQ connection is not open for queue: %s", q)
-				return
-			}
-
-			// Create a channel for the consumer
-			channel, err := rabbitService.Conn.Channel()
-			if err != nil {
-				log.Printf("Failed to create channel for consumer %s: %v", q, err)
-				return
-			}
-
-			// Do not close the channel here; let RabbitMQ manage it
-			if err := c.StartConsumer(channel, concurrency); err != nil {
-				log.Printf("Failed to start consumer for queue '%s': %v", q, err)
-			}
-		}(consumer, queueName)
-	}
-
-	log.Printf("RabbitMQ Consumers started with concurrency: %d", concurrency)
 }
 
 // setupRouter sets up the Gin router and middleware.

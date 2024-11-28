@@ -50,7 +50,6 @@ func main() {
 
 	cfg := loadConfig()
 	deps := initializeDependencies(cfg)
-	initializeRabbitMQ(deps)
 
 	repos := factories.CreateRepositories(deps.DB, deps.ElasticsearchClient)
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
@@ -108,15 +107,6 @@ func initializeDependencies(cfg *config.Config) *bootstrap.Dependencies {
 		log.Fatalf("Failed to initialize dependencies: %v", err)
 	}
 	return deps
-}
-
-// initializeRabbitMQ declares the RabbitMQ queue for the application.
-func initializeRabbitMQ(deps *bootstrap.Dependencies) {
-	err := deps.RabbitMQService.DeclareQueue(rabbitMQQueueName)
-	if err != nil {
-		log.Fatalf("Failed to declare RabbitMQ queue [%s]: %v", rabbitMQQueueName, err)
-	}
-	log.Printf("RabbitMQ queue [%s] declared successfully", rabbitMQQueueName)
 }
 
 // initializeHandlers initializes all handlers used by the application.

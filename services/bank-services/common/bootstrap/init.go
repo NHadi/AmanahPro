@@ -4,6 +4,7 @@ import (
 	"AmanahPro/services/bank-services/common/config"
 	"AmanahPro/services/bank-services/common/messagebroker"
 	"AmanahPro/services/bank-services/internal/infrastructure/persistence"
+	"log"
 
 	"github.com/NHadi/AmanahPro-common/middleware"
 	"github.com/elastic/go-elasticsearch/v8"
@@ -31,11 +32,17 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 		return nil, err
 	}
 
-	// Initialize RabbitMQ
-	rabbitService, err := messagebroker.NewRabbitMQService(cfg.RabbitMQURL)
-	if err != nil {
-		return nil, err
+	// List of queues to declare
+	queueNames := []string{
+		"transactions_queue",
 	}
+
+	// Initialize RabbitMQ service and declare queues
+	rabbitService, err := messagebroker.NewRabbitMQService(cfg.RabbitMQURL, queueNames)
+	if err != nil {
+		log.Fatalf("Error initializing RabbitMQ: %v", err)
+	}
+
 	rabbitPublisher := messagebroker.NewRabbitMQPublisher(rabbitService)
 	rabbitConsumer := messagebroker.NewRabbitMQConsumer(rabbitService)
 
