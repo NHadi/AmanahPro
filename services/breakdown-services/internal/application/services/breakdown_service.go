@@ -133,6 +133,19 @@ func (s *BreakdownService) DeleteBreakdown(breakdownID int) error {
 }
 
 // Section CRUD
+
+func (s *BreakdownService) GetBreakdownSectionByID(sectionID int, breakdownID int) (*models.BreakdownSection, error) {
+	log.Printf("Fetching BreakdownSection with ID: %d and BreakdownID: %d", sectionID, breakdownID)
+
+	section, err := s.sectionRepo.GetByIDAndBreakdownID(sectionID, breakdownID)
+	if err != nil {
+		log.Printf("Error fetching BreakdownSection: %v", err)
+		return nil, err
+	}
+
+	return section, nil
+}
+
 func (s *BreakdownService) CreateBreakdownSection(section *models.BreakdownSection) error {
 	log.Printf("Creating BreakdownSection: %+v", section)
 	if err := s.sectionRepo.Create(section); err != nil {
@@ -164,6 +177,15 @@ func (s *BreakdownService) DeleteBreakdownSection(sectionID int, breakdownID int
 }
 
 // Item CRUD
+// GetBreakdownItemByID retrieves a BreakdownItem by its ID
+func (s *BreakdownService) GetBreakdownItemByID(id int) (*models.BreakdownItem, error) {
+	item, err := s.itemRepo.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving breakdown item: %w", err)
+	}
+	return item, nil
+}
+
 func (s *BreakdownService) CreateBreakdownItem(item *models.BreakdownItem, breakdownId int) error {
 	log.Printf("Creating BreakdownItem: %+v", item)
 	if err := s.itemRepo.Create(item); err != nil {

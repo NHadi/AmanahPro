@@ -13,6 +13,24 @@ type breakdownItemRepositoryImpl struct {
 	db *gorm.DB
 }
 
+// GetByID retrieves a BreakdownItem by its ID
+func (r *breakdownItemRepositoryImpl) GetByID(id int) (*models.BreakdownItem, error) {
+	log.Printf("Retrieving BreakdownItem with ID: %d", id)
+
+	var item models.BreakdownItem
+	if err := r.db.First(&item, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Printf("BreakdownItem with ID %d not found", id)
+			return nil, fmt.Errorf("breakdown item not found")
+		}
+		log.Printf("Failed to retrieve BreakdownItem with ID %d: %v", id, err)
+		return nil, fmt.Errorf("failed to retrieve breakdown item: %w", err)
+	}
+
+	log.Printf("Successfully retrieved BreakdownItem: %+v", item)
+	return &item, nil
+}
+
 // NewBreakdownItemRepository creates a new instance of BreakdownItemRepository
 func NewBreakdownItemRepository(db *gorm.DB) repositories.BreakdownItemRepository {
 	return &breakdownItemRepositoryImpl{db: db}

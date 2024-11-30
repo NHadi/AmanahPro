@@ -329,7 +329,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BreakdownSection"
+                            "$ref": "#/definitions/dto.BreakdownSectionDTO"
                         }
                     }
                 ],
@@ -403,7 +403,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BreakdownSection"
+                            "$ref": "#/definitions/dto.BreakdownSectionDTO"
                         }
                     }
                 ],
@@ -564,7 +564,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BreakdownItem"
+                            "$ref": "#/definitions/dto.BreakdownItemDTO"
                         }
                     }
                 ],
@@ -638,7 +638,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.BreakdownItem"
+                            "$ref": "#/definitions/dto.BreakdownItemDTO"
                         }
                     }
                 ],
@@ -782,6 +782,29 @@
                     "type": "string"
                 },
                 "Subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BreakdownItemDTO": {
+            "type": "object",
+            "properties": {
+                "BreakdownItemId": {
+                    "description": "Optional for Create",
+                    "type": "integer"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "UnitPrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "dto.BreakdownSectionDTO": {
+            "type": "object",
+            "properties": {
+                "SectionTitle": {
                     "type": "string"
                 }
             }

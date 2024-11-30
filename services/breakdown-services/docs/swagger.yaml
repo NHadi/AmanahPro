@@ -15,6 +15,21 @@ definitions:
       Subject:
         type: string
     type: object
+  dto.BreakdownItemDTO:
+    properties:
+      BreakdownItemId:
+        description: Optional for Create
+        type: integer
+      Description:
+        type: string
+      UnitPrice:
+        type: number
+    type: object
+  dto.BreakdownSectionDTO:
+    properties:
+      SectionTitle:
+        type: string
+    type: object
   models.Breakdown:
     properties:
       breakdownId:
@@ -303,7 +318,7 @@ paths:
         name: section
         required: true
         schema:
-          $ref: '#/definitions/models.BreakdownSection'
+          $ref: '#/definitions/dto.BreakdownSectionDTO'
       produces:
       - application/json
       responses:
@@ -402,7 +417,7 @@ paths:
         name: section
         required: true
         schema:
-          $ref: '#/definitions/models.BreakdownSection'
+          $ref: '#/definitions/dto.BreakdownSectionDTO'
       produces:
       - application/json
       responses:
@@ -456,7 +471,7 @@ paths:
         name: item
         required: true
         schema:
-          $ref: '#/definitions/models.BreakdownItem'
+          $ref: '#/definitions/dto.BreakdownItemDTO'
       produces:
       - application/json
       responses:
@@ -550,7 +565,7 @@ paths:
         name: item
         required: true
         schema:
-          $ref: '#/definitions/models.BreakdownItem'
+          $ref: '#/definitions/dto.BreakdownItemDTO'
       produces:
       - application/json
       responses:

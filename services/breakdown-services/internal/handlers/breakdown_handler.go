@@ -228,19 +228,21 @@ func (h *BreakdownHandler) DeleteBreakdown(c *gin.Context) {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param section body models.BreakdownSection true "Breakdown Section Data"
+// @Param section body dto.BreakdownSectionDTO true "Breakdown Section Data"
 // @Success 201 {object} map[string]interface{} "Created Breakdown Section"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections [post]
 func (h *BreakdownHandler) CreateBreakdownSection(c *gin.Context) {
-	var section models.BreakdownSection
-	if err := c.ShouldBindJSON(&section); err != nil {
+	// Parse the request body into the DTO
+	var sectionDTO dto.BreakdownSectionDTO
+	if err := c.ShouldBindJSON(&sectionDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
+	// Parse and validate the breakdown ID from the URL
 	breakdownIDStr := c.Param("breakdown_id")
 	breakdownID, err := strconv.Atoi(breakdownIDStr)
 	if err != nil || breakdownID <= 0 {
@@ -248,20 +250,26 @@ func (h *BreakdownHandler) CreateBreakdownSection(c *gin.Context) {
 		return
 	}
 
+	// Extract claims for the user context
 	claims, err := helpers.GetClaims(c)
 	if err != nil {
 		// Error already handled in the helper
 		return
 	}
 
-	section.BreakdownId = breakdownID
-	section.CreatedBy = &claims.UserID
+	// Map the DTO to the model
+	section := sectionDTO.ToModel(breakdownID, claims.UserID)
 
-	if err := h.breakdownService.CreateBreakdownSection(&section); err != nil {
+	organizationID := int(*claims.OrganizationId)
+	section.OrganizationId = &organizationID
+
+	// Pass the model to the service layer for creation
+	if err := h.breakdownService.CreateBreakdownSection(section); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Return a successful response with the created section data
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Breakdown section created successfully",
 		"data":    section,
@@ -276,7 +284,7 @@ func (h *BreakdownHandler) CreateBreakdownSection(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Breakdown Section ID"
-// @Param section body models.BreakdownSection true "Breakdown Section Data"
+// @Param section body dto.BreakdownSectionDTO true "Breakdown Section Data"
 // @Success 200 {object} map[string]interface{} "Updated Breakdown Section"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
@@ -284,19 +292,15 @@ func (h *BreakdownHandler) CreateBreakdownSection(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections/{id} [put]
 func (h *BreakdownHandler) UpdateBreakdownSection(c *gin.Context) {
-	idStr := c.Param("id")
+	// Parse the section ID from the URL
+	idStr := c.Param("section_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid section ID"})
 		return
 	}
 
-	var section models.BreakdownSection
-	if err := c.ShouldBindJSON(&section); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
+	// Parse the breakdown ID from the URL
 	breakdownIDStr := c.Param("breakdown_id")
 	breakdownID, err := strconv.Atoi(breakdownIDStr)
 	if err != nil || breakdownID <= 0 {
@@ -304,24 +308,42 @@ func (h *BreakdownHandler) UpdateBreakdownSection(c *gin.Context) {
 		return
 	}
 
+	// Parse the request body into the DTO
+	var sectionDTO dto.BreakdownSectionDTO
+	if err := c.ShouldBindJSON(&sectionDTO); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Retrieve the user claims
 	claims, err := helpers.GetClaims(c)
 	if err != nil {
 		// Error already handled in the helper
 		return
 	}
 
-	section.BreakdownId = breakdownID
-	section.BreakdownSectionId = id
-	section.UpdatedBy = &claims.UserID
+	// Retrieve the existing section from the service
+	existingSection, err := h.breakdownService.GetBreakdownSectionByID(id, breakdownID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Breakdown section not found"})
+		return
+	}
 
-	if err := h.breakdownService.UpdateBreakdownSection(&section); err != nil {
+	// Map the DTO to the model
+	updatedSection := sectionDTO.ToModelForUpdate(existingSection, claims.UserID)
+	organizationID := int(*claims.OrganizationId)
+	updatedSection.OrganizationId = &organizationID
+
+	// Call the service to update the breakdown section
+	if err := h.breakdownService.UpdateBreakdownSection(updatedSection); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Return a success response with the updated section data
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Breakdown section updated successfully",
-		"data":    section,
+		"data":    updatedSection,
 	})
 }
 
@@ -340,7 +362,7 @@ func (h *BreakdownHandler) UpdateBreakdownSection(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections/{id} [delete]
 func (h *BreakdownHandler) DeleteBreakdownSection(c *gin.Context) {
-	idStr := c.Param("id")
+	idStr := c.Param("section_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid section ID"})
@@ -372,14 +394,14 @@ func (h *BreakdownHandler) DeleteBreakdownSection(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param section_id path int true "Breakdown Section ID"
-// @Param item body models.BreakdownItem true "Breakdown Item Data"
+// @Param item body dto.BreakdownItemDTO true "Breakdown Item Data"
 // @Success 201 {object} map[string]interface{} "Created Breakdown Item"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections/{section_id}/items [post]
 func (h *BreakdownHandler) CreateBreakdownItem(c *gin.Context) {
-	var item models.BreakdownItem
+	var item dto.BreakdownItemDTO
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
@@ -392,16 +414,25 @@ func (h *BreakdownHandler) CreateBreakdownItem(c *gin.Context) {
 		return
 	}
 
+	breakdownIDStr := c.Param("breakdown_id")
+	breakdownID, err := strconv.Atoi(breakdownIDStr)
+	if err != nil || breakdownID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid breakdown ID"})
+		return
+	}
+
 	claims, err := helpers.GetClaims(c)
 	if err != nil {
 		// Error already handled inside the helper
 		return
 	}
 
-	item.SectionId = sectionID
-	item.CreatedBy = &claims.UserID
+	// Map the DTO to the model
+	data := item.ToModel(sectionID, claims.UserID)
+	organizationID := int(*claims.OrganizationId)
+	data.OrganizationId = &organizationID
 
-	if err := h.breakdownService.CreateBreakdownItem(&item, sectionID); err != nil {
+	if err := h.breakdownService.CreateBreakdownItem(data, breakdownID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -420,7 +451,7 @@ func (h *BreakdownHandler) CreateBreakdownItem(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Breakdown Item ID"
-// @Param item body models.BreakdownItem true "Breakdown Item Data"
+// @Param item body dto.BreakdownItemDTO true "Breakdown Item Data"
 // @Success 200 {object} map[string]interface{} "Updated Breakdown Item"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
@@ -428,14 +459,14 @@ func (h *BreakdownHandler) CreateBreakdownItem(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections/{section_id}/items/{id} [put]
 func (h *BreakdownHandler) UpdateBreakdownItem(c *gin.Context) {
-	idStr := c.Param("id")
+	idStr := c.Param("item_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
 		return
 	}
 
-	var item models.BreakdownItem
+	var item dto.BreakdownItemDTO
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
@@ -448,17 +479,30 @@ func (h *BreakdownHandler) UpdateBreakdownItem(c *gin.Context) {
 		return
 	}
 
+	breakdownIDStr := c.Param("breakdown_id")
+	breakdownID, err := strconv.Atoi(breakdownIDStr)
+	if err != nil || breakdownID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid breakdown ID"})
+		return
+	}
+
 	claims, err := helpers.GetClaims(c)
 	if err != nil {
 		// Error already handled inside the helper
 		return
 	}
 
-	item.BreakdownItemId = id
-	item.SectionId = sectionID
-	item.UpdatedBy = &claims.UserID
+	// Retrieve the existing section from the service
+	existingItem, err := h.breakdownService.GetBreakdownItemByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Breakdown section not found"})
+		return
+	}
 
-	if err := h.breakdownService.UpdateBreakdownItem(&item, sectionID); err != nil {
+	// Map the DTO to the model
+	updatedItem := item.ToModelForUpdate(existingItem, claims.UserID)
+
+	if err := h.breakdownService.UpdateBreakdownItem(updatedItem, breakdownID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -483,7 +527,7 @@ func (h *BreakdownHandler) UpdateBreakdownItem(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/breakdowns/{breakdown_id}/sections/{section_id}/items/{id} [delete]
 func (h *BreakdownHandler) DeleteBreakdownItem(c *gin.Context) {
-	idStr := c.Param("id")
+	idStr := c.Param("item_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
@@ -497,7 +541,14 @@ func (h *BreakdownHandler) DeleteBreakdownItem(c *gin.Context) {
 		return
 	}
 
-	if err := h.breakdownService.DeleteBreakdownItem(id, sectionID); err != nil {
+	breakdownIDStr := c.Param("breakdown_id")
+	breakdownID, err := strconv.Atoi(breakdownIDStr)
+	if err != nil || breakdownID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid breakdown ID"})
+		return
+	}
+
+	if err := h.breakdownService.DeleteBreakdownItem(id, breakdownID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

@@ -13,4 +13,6 @@ type BreakdownItemRepository interface {
 
 	// Delete removes a BreakdownItem record from the database
 	Delete(itemID int) error
+
+	GetByID(id int) (*models.BreakdownItem, error)
 }
