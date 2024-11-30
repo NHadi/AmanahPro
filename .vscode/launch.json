@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [   
     {
+      "name": "Debug Breakdown Management Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/services/breakdown-services/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/services/breakdown-services"
+    },
+    {
       "name": "Debug Project Management Service",
       "type": "go",
       "request": "launch",

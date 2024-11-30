@@ -31,7 +31,7 @@ func LoadConfig() (*Config, error) {
 	// Initialize configuration
 	return &Config{
 		Port:             getEnv("BANK_SERVICES_PORT", "8082"),
-		DatabaseURL:      getEnv("DATABASE_URL", ""),
+		DatabaseURL:      getEnv("DATABASE_BANK_TRANSACTION_URL", ""),
 		RabbitMQURL:      getEnv("RABBITMQ_URL", ""),
 		RedisURL:         getEnv("REDIS_URL", ""),
 		RedisPassword:    getEnv("REDIS_PASSWORD", ""),

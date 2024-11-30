@@ -32,8 +32,8 @@ func LoadConfig() (*Config, error) {
 
 	// Initialize configuration
 	return &Config{
-		Port:             getEnv("PROJECT_MANAGEMNET_SERVICES_PORT", "8083"),
-		DatabaseURL:      getEnv("DATABASE_PROJECT_URL", ""),
+		Port:             getEnv("BREAKDOWN_MANAGEMNET_SERVICES_PORT", "8084"),
+		DatabaseURL:      getEnv("DATABASE_BD_URL", ""),
 		RabbitMQURL:      getEnv("RABBITMQ_URL", ""),
 		RedisURL:         getEnv("REDIS_URL", ""),
 		RedisPassword:    getEnv("REDIS_PASSWORD", ""),

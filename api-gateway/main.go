@@ -76,9 +76,10 @@ func main() {
 	// Define service configuration
 	serviceConfig := ServiceConfig{
 		ServiceMap: map[string]string{
-			"/user-management":             os.Getenv("SERVICES_USER_MANAGEMENT"),
-			"/bank_services":               os.Getenv("SERVICES_BANK"),
-			"/project_management_services": os.Getenv("PROJECT_MANAGEMNET_SERVICES"),
+			"/user-management":               os.Getenv("SERVICES_USER_MANAGEMENT"),
+			"/bank_services":                 os.Getenv("SERVICES_BANK"),
+			"/project_management_services":   os.Getenv("PROJECT_MANAGEMNET_SERVICES"),
+			"/breakdown_management_services": os.Getenv("BREAKDOWN_MANAGEMNET_SERVICES"),
 		},
 	}
 

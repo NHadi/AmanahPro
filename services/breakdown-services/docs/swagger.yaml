@@ -1,0 +1,647 @@
+definitions:
+  dto.BreakdownDTO:
+    properties:
+      BreakdownId:
+        description: Optional for Create
+        type: integer
+      Date:
+        $ref: '#/definitions/models.CustomDate'
+      Location:
+        type: string
+      ProjectId:
+        type: integer
+      ProjectName:
+        type: string
+      Subject:
+        type: string
+    type: object
+  models.Breakdown:
+    properties:
+      breakdownId:
+        description: Primary key
+        type: integer
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      date:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Breakdown date
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      location:
+        description: Optional location
+        type: string
+      organizationId:
+        description: Organization ID
+        type: integer
+      projectId:
+        description: Foreign key to Projects
+        type: integer
+      projectName:
+        description: Project name
+        type: string
+      sections:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.BreakdownSection'
+        type: array
+      subject:
+        description: Breakdown subject
+        type: string
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.BreakdownItem:
+    properties:
+      breakdownItemId:
+        description: Primary key
+        type: integer
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      description:
+        description: Description of the item
+        type: string
+      organizationId:
+        description: Organization ID
+        type: integer
+      sectionId:
+        description: Foreign key to BreakdownSections
+        type: integer
+      unitPrice:
+        description: Unit price
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.BreakdownSection:
+    properties:
+      breakdownId:
+        description: Foreign key to Breakdowns
+        type: integer
+      breakdownSectionId:
+        description: Primary key
+        type: integer
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      items:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.BreakdownItem'
+        type: array
+      organizationId:
+        description: Organization ID
+        type: integer
+      sectionTitle:
+        description: Section title
+        type: string
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.CustomDate:
+    properties:
+      time.Time:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is the Breakdown Management Services API documentation for managing
+    breakdown, and reconciliations.
+  title: Breakdown Management Services API
+  version: "1.0"
+paths:
+  /api/breakdowns:
+    post:
+      consumes:
+      - application/json
+      description: Create a new Breakdown
+      parameters:
+      - description: Breakdown Data
+        in: body
+        name: breakdown
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BreakdownDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created Breakdown
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Breakdown
+      tags:
+      - Breakdowns
+  /api/breakdowns/{breakdown_id}:
+    delete:
+      description: Delete a Breakdown by ID
+      parameters:
+      - description: Breakdown ID
+        in: path
+        name: breakdown_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Breakdown
+      tags:
+      - Breakdowns
+    put:
+      consumes:
+      - application/json
+      description: Update an existing Breakdown
+      parameters:
+      - description: Breakdown ID
+        in: path
+        name: breakdown_id
+        required: true
+        type: integer
+      - description: Breakdown Data
+        in: body
+        name: breakdown
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BreakdownDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated Breakdown
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Breakdown
+      tags:
+      - Breakdowns
+  /api/breakdowns/{breakdown_id}/sections:
+    post:
+      consumes:
+      - application/json
+      description: Create a new Breakdown Section
+      parameters:
+      - description: Breakdown Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/models.BreakdownSection'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created Breakdown Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Breakdown Section
+      tags:
+      - BreakdownSections
+  /api/breakdowns/{breakdown_id}/sections/{id}:
+    delete:
+      description: Delete a Breakdown Section by ID
+      parameters:
+      - description: Breakdown Section ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Breakdown ID
+        in: path
+        name: breakdown_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Breakdown Section
+      tags:
+      - BreakdownSections
+    put:
+      consumes:
+      - application/json
+      description: Update an existing Breakdown Section
+      parameters:
+      - description: Breakdown Section ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Breakdown Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/models.BreakdownSection'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated Breakdown Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Breakdown Section
+      tags:
+      - BreakdownSections
+  /api/breakdowns/{breakdown_id}/sections/{section_id}/items:
+    post:
+      consumes:
+      - application/json
+      description: Create a new Breakdown Item
+      parameters:
+      - description: Breakdown Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: Breakdown Item Data
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.BreakdownItem'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created Breakdown Item
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Breakdown Item
+      tags:
+      - BreakdownItems
+  /api/breakdowns/{breakdown_id}/sections/{section_id}/items/{id}:
+    delete:
+      description: Delete a Breakdown Item by ID
+      parameters:
+      - description: Breakdown Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Item Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Breakdown Item
+      tags:
+      - BreakdownItems
+    put:
+      consumes:
+      - application/json
+      description: Update an existing Breakdown Item
+      parameters:
+      - description: Breakdown Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Breakdown Item Data
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.BreakdownItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated Breakdown Item
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Breakdown Item Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Breakdown Item
+      tags:
+      - BreakdownItems
+  /api/breakdowns/filter:
+    get:
+      description: Filter breakdowns by organization ID, breakdown ID, and project
+        ID
+      parameters:
+      - description: Organization ID
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      - description: Breakdown ID
+        in: query
+        name: breakdown_id
+        type: integer
+      - description: Project ID
+        in: query
+        name: project_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Breakdown'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Filter Breakdowns
+      tags:
+      - Breakdowns
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

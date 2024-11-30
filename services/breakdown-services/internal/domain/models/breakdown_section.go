@@ -4,16 +4,19 @@ import "time"
 
 // BreakdownSection represents the BreakdownSections table in the database
 type BreakdownSection struct {
-	BreakdownSectionId int        `gorm:"primaryKey;autoIncrement"`   // Primary key
-	BreakdownId        int        `gorm:"not null"`                   // Foreign key to Breakdowns
-	SectionTitle       string     `gorm:"type:varchar(255);not null"` // Section title
-	CreatedBy          *int       `gorm:"null"`                       // Created by user ID
-	CreatedAt          *time.Time `gorm:"autoCreateTime"`             // Creation timestamp
-	UpdatedBy          *int       `gorm:"null"`                       // Updated by user ID
-	UpdatedAt          *time.Time `gorm:"autoUpdateTime"`             // Update timestamp
-	DeletedBy          *int       `gorm:"null"`                       // Deleted by user ID
-	DeletedAt          *time.Time `gorm:"index;null"`                 // Deletion timestamp
-	OrganizationId     *int       `gorm:"null"`                       // Organization ID
+	BreakdownSectionId int        `gorm:"primaryKey;column:BreakdownSectionId;autoIncrement"` // Primary key
+	BreakdownId        int        `gorm:"column:BreakdownId;not null"`                        // Foreign key to Breakdowns
+	SectionTitle       string     `gorm:"column:SectionTitle;type:varchar(255);not null"`     // Section title
+	CreatedBy          *int       `gorm:"column:CreatedBy;null"`                              // Created by user ID
+	CreatedAt          *time.Time `gorm:"column:CreatedAt;autoCreateTime"`                    // Creation timestamp
+	UpdatedBy          *int       `gorm:"column:UpdatedBy;null"`                              // Updated by user ID
+	UpdatedAt          *time.Time `gorm:"column:UpdatedAt;autoUpdateTime"`                    // Update timestamp
+	DeletedBy          *int       `gorm:"column:DeletedBy;null"`                              // Deleted by user ID
+	DeletedAt          *time.Time `gorm:"column:DeletedAt;index;null"`                        // Deletion timestamp
+	OrganizationId     *int       `gorm:"column:OrganizationId;null"`                         // Organization ID
+
+	// Relations
+	Items []BreakdownItem `gorm:"foreignKey:SectionId"` // One-to-Many relationship with BreakdownItem
 }
 
 // TableName specifies the table name for BreakdownSection

@@ -1,0 +1,975 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the Breakdown Management Services API documentation for managing breakdown, and reconciliations.",
+        "title": "Breakdown Management Services API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/breakdowns": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new Breakdown",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Breakdowns"
+                ],
+                "summary": "Create Breakdown",
+                "parameters": [
+                    {
+                        "description": "Breakdown Data",
+                        "name": "breakdown",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BreakdownDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created Breakdown",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/filter": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Filter breakdowns by organization ID, breakdown ID, and project ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Breakdowns"
+                ],
+                "summary": "Filter Breakdowns",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "organization_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Breakdown ID",
+                        "name": "breakdown_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Breakdown"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/{breakdown_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing Breakdown",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Breakdowns"
+                ],
+                "summary": "Update Breakdown",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown ID",
+                        "name": "breakdown_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Breakdown Data",
+                        "name": "breakdown",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BreakdownDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated Breakdown",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a Breakdown by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Breakdowns"
+                ],
+                "summary": "Delete Breakdown",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown ID",
+                        "name": "breakdown_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/{breakdown_id}/sections": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new Breakdown Section",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownSections"
+                ],
+                "summary": "Create Breakdown Section",
+                "parameters": [
+                    {
+                        "description": "Breakdown Section Data",
+                        "name": "section",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BreakdownSection"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created Breakdown Section",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/{breakdown_id}/sections/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing Breakdown Section",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownSections"
+                ],
+                "summary": "Update Breakdown Section",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown Section ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Breakdown Section Data",
+                        "name": "section",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BreakdownSection"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated Breakdown Section",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Section Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a Breakdown Section by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownSections"
+                ],
+                "summary": "Delete Breakdown Section",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown Section ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Breakdown ID",
+                        "name": "breakdown_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Section Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/{breakdown_id}/sections/{section_id}/items": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new Breakdown Item",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownItems"
+                ],
+                "summary": "Create Breakdown Item",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Breakdown Item Data",
+                        "name": "item",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BreakdownItem"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created Breakdown Item",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/breakdowns/{breakdown_id}/sections/{section_id}/items/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing Breakdown Item",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownItems"
+                ],
+                "summary": "Update Breakdown Item",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown Item ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Breakdown Item Data",
+                        "name": "item",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BreakdownItem"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated Breakdown Item",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Item Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a Breakdown Item by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BreakdownItems"
+                ],
+                "summary": "Delete Breakdown Item",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Breakdown Item ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Breakdown Item Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.BreakdownDTO": {
+            "type": "object",
+            "properties": {
+                "BreakdownId": {
+                    "description": "Optional for Create",
+                    "type": "integer"
+                },
+                "Date": {
+                    "$ref": "#/definitions/models.CustomDate"
+                },
+                "Location": {
+                    "type": "string"
+                },
+                "ProjectId": {
+                    "type": "integer"
+                },
+                "ProjectName": {
+                    "type": "string"
+                },
+                "Subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Breakdown": {
+            "type": "object",
+            "properties": {
+                "breakdownId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "Breakdown date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "location": {
+                    "description": "Optional location",
+                    "type": "string"
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "projectId": {
+                    "description": "Foreign key to Projects",
+                    "type": "integer"
+                },
+                "projectName": {
+                    "description": "Project name",
+                    "type": "string"
+                },
+                "sections": {
+                    "description": "Relations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BreakdownSection"
+                    }
+                },
+                "subject": {
+                    "description": "Breakdown subject",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.BreakdownItem": {
+            "type": "object",
+            "properties": {
+                "breakdownItemId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description of the item",
+                    "type": "string"
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "sectionId": {
+                    "description": "Foreign key to BreakdownSections",
+                    "type": "integer"
+                },
+                "unitPrice": {
+                    "description": "Unit price",
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.BreakdownSection": {
+            "type": "object",
+            "properties": {
+                "breakdownId": {
+                    "description": "Foreign key to Breakdowns",
+                    "type": "integer"
+                },
+                "breakdownSectionId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "items": {
+                    "description": "Relations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BreakdownItem"
+                    }
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "sectionTitle": {
+                    "description": "Section title",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.CustomDate": {
+            "type": "object",
+            "properties": {
+                "time.Time": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Provide your JWT token with \"Bearer \" prefix, e.g., \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

@@ -4,18 +4,22 @@ import "time"
 
 // Breakdown represents the Breakdowns table in the database
 type Breakdown struct {
-	BreakdownId    int        `gorm:"primaryKey;autoIncrement"`   // Primary key
-	ProjectId      int        `gorm:"not null"`                   // Foreign key to Projects
-	Subject        string     `gorm:"type:varchar(255);not null"` // Breakdown subject
-	Location       *string    `gorm:"type:varchar(255);null"`     // Optional location
-	Date           *time.Time `gorm:"type:date;null"`             // Breakdown date
-	CreatedBy      *int       `gorm:"null"`                       // Created by user ID
-	CreatedAt      *time.Time `gorm:"autoCreateTime"`             // Creation timestamp
-	UpdatedBy      *int       `gorm:"null"`                       // Updated by user ID
-	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`             // Update timestamp
-	DeletedBy      *int       `gorm:"null"`                       // Deleted by user ID
-	DeletedAt      *time.Time `gorm:"index;null"`                 // Deletion timestamp
-	OrganizationId *int       `gorm:"null"`                       // Organization ID
+	BreakdownId    int         `gorm:"primaryKey;column:BreakdownId;autoIncrement"`   // Primary key
+	ProjectId      int         `gorm:"column:ProjectId;not null"`                     // Foreign key to Projects
+	ProjectName    string      `gorm:"column:ProjectName;type:varchar(255);not null"` // Project name
+	Subject        string      `gorm:"column:Subject;type:varchar(255);not null"`     // Breakdown subject
+	Location       *string     `gorm:"column:Location;type:varchar(255);null"`        // Optional location
+	Date           *CustomDate `gorm:"column:Date;type:date;null"`                    // Breakdown date
+	CreatedBy      *int        `gorm:"column:CreatedBy;null"`                         // Created by user ID
+	CreatedAt      *time.Time  `gorm:"column:CreatedAt;autoCreateTime"`               // Creation timestamp
+	UpdatedBy      *int        `gorm:"column:UpdatedBy;null"`                         // Updated by user ID
+	UpdatedAt      *time.Time  `gorm:"column:UpdatedAt;autoUpdateTime"`               // Update timestamp
+	DeletedBy      *int        `gorm:"column:DeletedBy;null"`                         // Deleted by user ID
+	DeletedAt      *time.Time  `gorm:"column:DeletedAt;index;null"`                   // Deletion timestamp
+	OrganizationId *int        `gorm:"column:OrganizationId;null"`                    // Organization ID
+
+	// Relations
+	Sections []BreakdownSection `gorm:"foreignKey:BreakdownId"` // One-to-Many
 }
 
 // TableName specifies the table name for Breakdown
