@@ -4,7 +4,6 @@ import "AmanahPro/services/sph-services/internal/domain/models"
 
 type SphDetailDTO struct {
 	SphDetailId     int      `json:"SphDetailId,omitempty"`
-	SectionId       int      `json:"SectionId" binding:"required"`
 	ItemDescription *string  `json:"ItemDescription" binding:"required"`
 	Quantity        *float64 `json:"Quantity" binding:"required"`
 	Unit            *string  `json:"Unit" binding:"required"`

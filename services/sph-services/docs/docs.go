@@ -855,7 +855,6 @@ const docTemplate = `{
             "required": [
                 "ItemDescription",
                 "Quantity",
-                "SectionId",
                 "Unit",
                 "UnitPrice"
             ],
@@ -868,9 +867,6 @@ const docTemplate = `{
                 },
                 "Quantity": {
                     "type": "number"
-                },
-                "SectionId": {
-                    "type": "integer"
                 },
                 "SphDetailId": {
                     "type": "integer"
@@ -889,15 +885,11 @@ const docTemplate = `{
         "dto.SphSectionDTO": {
             "type": "object",
             "required": [
-                "SectionTitle",
-                "SphId"
+                "SectionTitle"
             ],
             "properties": {
                 "SectionTitle": {
                     "type": "string"
-                },
-                "SphId": {
-                    "type": "integer"
                 },
                 "SphSectionId": {
                     "type": "integer"

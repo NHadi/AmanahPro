@@ -28,8 +28,6 @@ definitions:
         type: string
       Quantity:
         type: number
-      SectionId:
-        type: integer
       SphDetailId:
         type: integer
       TotalPrice:
@@ -41,7 +39,6 @@ definitions:
     required:
     - ItemDescription
     - Quantity
-    - SectionId
     - Unit
     - UnitPrice
     type: object
@@ -49,13 +46,10 @@ definitions:
     properties:
       SectionTitle:
         type: string
-      SphId:
-        type: integer
       SphSectionId:
         type: integer
     required:
     - SectionTitle
-    - SphId
     type: object
   models.CustomDate:
     properties:

@@ -847,7 +847,6 @@
             "required": [
                 "ItemDescription",
                 "Quantity",
-                "SectionId",
                 "Unit",
                 "UnitPrice"
             ],
@@ -860,9 +859,6 @@
                 },
                 "Quantity": {
                     "type": "number"
-                },
-                "SectionId": {
-                    "type": "integer"
                 },
                 "SphDetailId": {
                     "type": "integer"
@@ -881,15 +877,11 @@
         "dto.SphSectionDTO": {
             "type": "object",
             "required": [
-                "SectionTitle",
-                "SphId"
+                "SectionTitle"
             ],
             "properties": {
                 "SectionTitle": {
                     "type": "string"
-                },
-                "SphId": {
-                    "type": "integer"
                 },
                 "SphSectionId": {
                     "type": "integer"
