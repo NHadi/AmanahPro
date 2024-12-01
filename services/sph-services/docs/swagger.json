@@ -1,0 +1,1105 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the SPH Management Services API documentation for managing SPH, and reconciliations.",
+        "title": "SPH Management Services API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/sph": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new SPH",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHs"
+                ],
+                "summary": "Create SPH",
+                "parameters": [
+                    {
+                        "description": "SPH Data",
+                        "name": "sph",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created SPH",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/filter": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Filter SPHs by organization ID, SPH ID, and project ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHs"
+                ],
+                "summary": "Filter SPHs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "organization_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Sph"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/{sph_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing SPH",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHs"
+                ],
+                "summary": "Update SPH",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SPH Data",
+                        "name": "sph",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated SPH",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an SPH by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHs"
+                ],
+                "summary": "Delete SPH",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/{sph_id}/sections": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new SPH Section",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHSections"
+                ],
+                "summary": "Create SPH Section",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SPH Section Data",
+                        "name": "section",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphSectionDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created SPH Section",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/{sph_id}/sections/{section_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing SPH Section",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHSections"
+                ],
+                "summary": "Update SPH Section",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SPH Section Data",
+                        "name": "section",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphSectionDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated SPH Section",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Section Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an SPH Section by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHSections"
+                ],
+                "summary": "Delete SPH Section",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Section Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/{sph_id}/sections/{section_id}/details": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new SPH Detail",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHDetails"
+                ],
+                "summary": "Create SPH Detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SPH Detail Data",
+                        "name": "detail",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphDetailDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created SPH Detail",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sph/{sph_id}/sections/{section_id}/details/{detail_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing SPH Detail",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHDetails"
+                ],
+                "summary": "Update SPH Detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Detail ID",
+                        "name": "detail_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SPH Detail Data",
+                        "name": "detail",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SphDetailDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated SPH Detail",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Detail Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an SPH Detail by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SPHDetails"
+                ],
+                "summary": "Delete SPH Detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SPH ID",
+                        "name": "sph_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Section ID",
+                        "name": "section_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Detail ID",
+                        "name": "detail_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "SPH Detail Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.SphDTO": {
+            "type": "object",
+            "required": [
+                "ProjectId",
+                "ProjectName",
+                "Subject"
+            ],
+            "properties": {
+                "Date": {
+                    "$ref": "#/definitions/models.CustomDate"
+                },
+                "Location": {
+                    "type": "string"
+                },
+                "ProjectId": {
+                    "type": "integer"
+                },
+                "ProjectName": {
+                    "type": "string"
+                },
+                "RecepientName": {
+                    "type": "string"
+                },
+                "SphId": {
+                    "type": "integer"
+                },
+                "Subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SphDetailDTO": {
+            "type": "object",
+            "required": [
+                "ItemDescription",
+                "Quantity",
+                "SectionId",
+                "Unit",
+                "UnitPrice"
+            ],
+            "properties": {
+                "DiscountPrice": {
+                    "type": "number"
+                },
+                "ItemDescription": {
+                    "type": "string"
+                },
+                "Quantity": {
+                    "type": "number"
+                },
+                "SectionId": {
+                    "type": "integer"
+                },
+                "SphDetailId": {
+                    "type": "integer"
+                },
+                "TotalPrice": {
+                    "type": "number"
+                },
+                "Unit": {
+                    "type": "string"
+                },
+                "UnitPrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "dto.SphSectionDTO": {
+            "type": "object",
+            "required": [
+                "SectionTitle",
+                "SphId"
+            ],
+            "properties": {
+                "SectionTitle": {
+                    "type": "string"
+                },
+                "SphId": {
+                    "type": "integer"
+                },
+                "SphSectionId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.CustomDate": {
+            "type": "object",
+            "properties": {
+                "time.Time": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Sph": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "Date of SPH",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "location": {
+                    "description": "Location of SPH",
+                    "type": "string"
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "projectId": {
+                    "description": "Foreign key to Projects",
+                    "type": "integer"
+                },
+                "projectName": {
+                    "description": "Project name",
+                    "type": "string"
+                },
+                "recepientName": {
+                    "description": "Name of the recipient",
+                    "type": "string"
+                },
+                "sections": {
+                    "description": "Relations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.SphSection"
+                    }
+                },
+                "sphId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "subject": {
+                    "description": "SPH subject",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.SphDetail": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "discountPrice": {
+                    "description": "Discounted price of the item",
+                    "type": "number"
+                },
+                "itemDescription": {
+                    "description": "Item description",
+                    "type": "string"
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "quantity": {
+                    "description": "Quantity of the item",
+                    "type": "number"
+                },
+                "sectionId": {
+                    "description": "Foreign key to SPH Section",
+                    "type": "integer"
+                },
+                "sphDetailId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "totalPrice": {
+                    "description": "Total price of the item",
+                    "type": "number"
+                },
+                "unit": {
+                    "description": "Unit of the item",
+                    "type": "string"
+                },
+                "unitPrice": {
+                    "description": "Unit price of the item",
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.SphSection": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "details": {
+                    "description": "Relations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.SphDetail"
+                    }
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "sectionTitle": {
+                    "description": "Section title",
+                    "type": "string"
+                },
+                "sphId": {
+                    "description": "Foreign key to SPH",
+                    "type": "integer"
+                },
+                "sphSectionId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Provide your JWT token with \"Bearer \" prefix, e.g., \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

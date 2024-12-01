@@ -80,6 +80,7 @@ func main() {
 			"/bank_services":                 os.Getenv("SERVICES_BANK"),
 			"/project_management_services":   os.Getenv("PROJECT_MANAGEMNET_SERVICES"),
 			"/breakdown_management_services": os.Getenv("BREAKDOWN_MANAGEMNET_SERVICES"),
+			"/sph_services":                  os.Getenv("SPH_SERVICES"),
 		},
 	}
 

@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [   
     {
+      "name": "Debug SPH Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/services/sph-services/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/services/sph-services"
+    },
+    {
       "name": "Debug Breakdown Management Service",
       "type": "go",
       "request": "launch",

@@ -1,0 +1,738 @@
+definitions:
+  dto.SphDTO:
+    properties:
+      Date:
+        $ref: '#/definitions/models.CustomDate'
+      Location:
+        type: string
+      ProjectId:
+        type: integer
+      ProjectName:
+        type: string
+      RecepientName:
+        type: string
+      SphId:
+        type: integer
+      Subject:
+        type: string
+    required:
+    - ProjectId
+    - ProjectName
+    - Subject
+    type: object
+  dto.SphDetailDTO:
+    properties:
+      DiscountPrice:
+        type: number
+      ItemDescription:
+        type: string
+      Quantity:
+        type: number
+      SectionId:
+        type: integer
+      SphDetailId:
+        type: integer
+      TotalPrice:
+        type: number
+      Unit:
+        type: string
+      UnitPrice:
+        type: number
+    required:
+    - ItemDescription
+    - Quantity
+    - SectionId
+    - Unit
+    - UnitPrice
+    type: object
+  dto.SphSectionDTO:
+    properties:
+      SectionTitle:
+        type: string
+      SphId:
+        type: integer
+      SphSectionId:
+        type: integer
+    required:
+    - SectionTitle
+    - SphId
+    type: object
+  models.CustomDate:
+    properties:
+      time.Time:
+        type: string
+    type: object
+  models.Sph:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      date:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Date of SPH
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      location:
+        description: Location of SPH
+        type: string
+      organizationId:
+        description: Organization ID
+        type: integer
+      projectId:
+        description: Foreign key to Projects
+        type: integer
+      projectName:
+        description: Project name
+        type: string
+      recepientName:
+        description: Name of the recipient
+        type: string
+      sections:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.SphSection'
+        type: array
+      sphId:
+        description: Primary key
+        type: integer
+      subject:
+        description: SPH subject
+        type: string
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.SphDetail:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      discountPrice:
+        description: Discounted price of the item
+        type: number
+      itemDescription:
+        description: Item description
+        type: string
+      organizationId:
+        description: Organization ID
+        type: integer
+      quantity:
+        description: Quantity of the item
+        type: number
+      sectionId:
+        description: Foreign key to SPH Section
+        type: integer
+      sphDetailId:
+        description: Primary key
+        type: integer
+      totalPrice:
+        description: Total price of the item
+        type: number
+      unit:
+        description: Unit of the item
+        type: string
+      unitPrice:
+        description: Unit price of the item
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.SphSection:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      details:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.SphDetail'
+        type: array
+      organizationId:
+        description: Organization ID
+        type: integer
+      sectionTitle:
+        description: Section title
+        type: string
+      sphId:
+        description: Foreign key to SPH
+        type: integer
+      sphSectionId:
+        description: Primary key
+        type: integer
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is the SPH Management Services API documentation for managing
+    SPH, and reconciliations.
+  title: SPH Management Services API
+  version: "1.0"
+paths:
+  /api/sph:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPH
+      parameters:
+      - description: SPH Data
+        in: body
+        name: sph
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPH
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPH
+      tags:
+      - SPHs
+  /api/sph/{sph_id}:
+    delete:
+      description: Delete an SPH by ID
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPH
+      tags:
+      - SPHs
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPH
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: SPH Data
+        in: body
+        name: sph
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPH
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPH
+      tags:
+      - SPHs
+  /api/sph/{sph_id}/sections:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPH Section
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: SPH Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphSectionDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPH Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPH Section
+      tags:
+      - SPHSections
+  /api/sph/{sph_id}/sections/{section_id}:
+    delete:
+      description: Delete an SPH Section by ID
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPH Section
+      tags:
+      - SPHSections
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPH Section
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: SPH Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphSectionDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPH Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPH Section
+      tags:
+      - SPHSections
+  /api/sph/{sph_id}/sections/{section_id}/details:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPH Detail
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: SPH Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphDetailDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPH Detail
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPH Detail
+      tags:
+      - SPHDetails
+  /api/sph/{sph_id}/sections/{section_id}/details/{detail_id}:
+    delete:
+      description: Delete an SPH Detail by ID
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Detail Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPH Detail
+      tags:
+      - SPHDetails
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPH Detail
+      parameters:
+      - description: SPH ID
+        in: path
+        name: sph_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: SPH Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SphDetailDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPH Detail
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPH Detail Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPH Detail
+      tags:
+      - SPHDetails
+  /api/sph/filter:
+    get:
+      description: Filter SPHs by organization ID, SPH ID, and project ID
+      parameters:
+      - description: Organization ID
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      - description: SPH ID
+        in: query
+        name: sph_id
+        type: integer
+      - description: Project ID
+        in: query
+        name: project_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Sph'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Filter SPHs
+      tags:
+      - SPHs
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
