@@ -7,11 +7,14 @@ import (
 	"AmanahPro/services/sph-services/common/messagebroker"
 	commonMiddleware "AmanahPro/services/sph-services/common/middleware"
 	"AmanahPro/services/sph-services/common/routes"
+	"AmanahPro/services/sph-services/internal/application/services"
 	"AmanahPro/services/sph-services/internal/handlers"
+	pb "AmanahPro/services/sph-services/protos" // Import the generated gRPC package
 	"context"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"google.golang.org/grpc"
 )
 
 // @title SPH Management Services API
@@ -36,8 +40,9 @@ import (
 // @host localhost:8084
 // @BasePath /
 const (
-	defaultPort = "8085"
-	logDir      = "log"
+	defaultPort     = "8085"
+	defaultGrpcPort = "50051" // gRPC default port
+	logDir          = "log"
 )
 
 func main() {
@@ -51,6 +56,9 @@ func main() {
 
 	repos := factories.CreateRepositories(deps.DB, deps.ElasticsearchClient)
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
+
+	grpcServer := setupGrpcServer(services)
+	go startGrpcServerWithGracefulShutdown(grpcServer)
 
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
 		handlers.NewSphHandler(services.SphService),
@@ -130,6 +138,39 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router
+}
+
+// setupGrpcServer initializes the gRPC server and registers the gRPC services.
+func setupGrpcServer(services *services.Services) *grpc.Server {
+	grpcServer := grpc.NewServer()
+
+	// Register the gRPC service
+	pb.RegisterSphServiceServer(grpcServer, services.GrpcSphService)
+	return grpcServer
+}
+
+// startGrpcServerWithGracefulShutdown starts the gRPC server and handles graceful shutdown.
+func startGrpcServerWithGracefulShutdown(grpcServer *grpc.Server) {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", defaultGrpcPort))
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port: %v", err)
+	}
+
+	go func() {
+		log.Printf("Starting gRPC server on port %s...", defaultGrpcPort)
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatalf("gRPC server failed: %v", err)
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	log.Println("Shutting down gRPC server...")
+	grpcServer.GracefulStop()
+	log.Println("gRPC server shutdown complete.")
 }
 
 // startServerWithGracefulShutdown starts the Gin server and handles graceful shutdown.

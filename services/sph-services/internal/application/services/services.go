@@ -1,5 +1,6 @@
 package services
 
 type Services struct {
-	SphService *SphService
+	SphService     *SphService
+	GrpcSphService *GrpcSphService
 }

@@ -17,7 +17,21 @@ func CreateServices(
 	esClient *elasticsearch.Client,
 	redisClient *redis.Client,
 ) *services.Services {
+	// Create the SphService instance
+	sphService := services.NewSphService(
+		repos.SphRepository,
+		repos.SphSectionRepository,
+		repos.SphDetailRepository,
+		rabbitPublisher,
+		"sph_events",
+	)
+
+	// Create the gRPC wrapper for SphService
+	grpcSphService := services.NewGrpcSphService(sphService)
+
+	// Return the services including the gRPC service
 	return &services.Services{
-		SphService: services.NewSphService(repos.SphRepository, repos.SphSectionRepository, repos.SphDetailRepository, rabbitPublisher, "sph_events"),
+		SphService:     sphService,
+		GrpcSphService: grpcSphService,
 	}
 }
