@@ -1,10 +1,11 @@
 package services
 
 import (
-	pb "AmanahPro/services/sph-services/protos"
 	"context"
 	"fmt"
 	"log"
+
+	pb "github.com/NHadi/AmanahPro-common/protos"
 )
 
 // GrpcSphService implements the gRPC service for SPH

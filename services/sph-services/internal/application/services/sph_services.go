@@ -1,11 +1,12 @@
 package services
 
 import (
-	"AmanahPro/services/sph-services/common/messagebroker"
 	"AmanahPro/services/sph-services/internal/domain/models"
 	"AmanahPro/services/sph-services/internal/domain/repositories"
 	"fmt"
 	"log"
+
+	"github.com/NHadi/AmanahPro-common/messagebroker"
 )
 
 type SphService struct {

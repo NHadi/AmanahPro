@@ -1,57 +1,50 @@
 package main
 
 import (
-	"AmanahPro/services/sph-services/common/bootstrap"
-	"AmanahPro/services/sph-services/common/config"
-	"AmanahPro/services/sph-services/common/factories"
-	"AmanahPro/services/sph-services/common/routes"
-	"AmanahPro/services/sph-services/internal/application/services"
-	"AmanahPro/services/sph-services/internal/handlers"
+	"AmanahPro/services/spk-services/common/bootstrap"
+	"AmanahPro/services/spk-services/common/config"
+	"AmanahPro/services/spk-services/common/factories"
+	"AmanahPro/services/spk-services/common/routes"
+	"AmanahPro/services/spk-services/internal/handlers" // Import the generated gRPC package
 	"context"
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"syscall"
 	"time"
-
-	pb "github.com/NHadi/AmanahPro-common/protos" // Import the generated gRPC package
 
 	"github.com/NHadi/AmanahPro-common/messagebroker"
 
-	_ "AmanahPro/services/sph-services/docs"
+	_ "AmanahPro/services/spk-services/docs"
 
 	"github.com/NHadi/AmanahPro-common/middleware"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"google.golang.org/grpc"
 )
 
-// @title SPH Management Services API
+// @title SPK Management Services API
 // @version 1.0
-// @description This is the SPH Management Services API documentation for managing SPH, and reconciliations.
+// @description This is the SPH Management Services API documentation for managing SPK, and reconciliations.
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 // @description Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
-// @host localhost:8084
+// @host localhost:8086
 // @BasePath /
 const (
-	defaultPort     = "8085"
-	defaultGrpcPort = "50051" // gRPC default port
-	logDir          = "log"
+	defaultPort = "8086"
+	logDir      = "log"
 )
 
 func main() {
 	defer recoverFromPanic()
 
 	configureLogging()
-	log.Println("Starting SPH Management Services API...")
+	log.Println("Starting SPK Management Services API...")
 
 	cfg := loadConfig()
 	deps := initializeDependencies(cfg)
@@ -59,17 +52,10 @@ func main() {
 	repos := factories.CreateRepositories(deps.DB, deps.ElasticsearchClient)
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
 
-	// Initialize HTTP router
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
-		handlers.NewSphHandler(services.SphService),
+		handlers.NewSpkHandler(services.SPKService),
 	))
-
-	// Start both HTTP and gRPC servers concurrently
-	go startServerWithGracefulShutdown(deps, cfg, router)
-	go startGrpcServerWithGracefulShutdown(":50051", services)
-
-	// Wait for termination signals
-	waitForShutdown()
+	startServerWithGracefulShutdown(deps, cfg, router)
 }
 
 // configureLogging sets up daily logging into a file.
@@ -146,40 +132,6 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 	return router
 }
 
-func setupGrpcServer(services *services.Services) *grpc.Server {
-	grpcServer := grpc.NewServer()
-
-	// Register the gRPC service
-	pb.RegisterSphServiceServer(grpcServer, services.GrpcSphService)
-
-	return grpcServer
-}
-
-func startGrpcServerWithGracefulShutdown(address string, grpcServices *services.Services) {
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("Failed to listen on %s: %v", address, err)
-	}
-
-	grpcServer := setupGrpcServer(grpcServices)
-
-	go func() {
-		log.Printf("Starting gRPC server on %s", address)
-		if err := grpcServer.Serve(listener); err != nil {
-			log.Printf("gRPC server stopped with error: %v", err)
-		}
-	}()
-
-	// Wait for termination signals
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-
-	log.Println("Shutting down gRPC server gracefully...")
-	grpcServer.GracefulStop()
-	log.Println("gRPC server stopped")
-}
-
 // startServerWithGracefulShutdown starts the Gin server and handles graceful shutdown.
 func startServerWithGracefulShutdown(deps *bootstrap.Dependencies, cfg *config.Config, router *gin.Engine) {
 	port := cfg.Port
@@ -218,13 +170,4 @@ func shutdownRabbitMQ(rabbitService *messagebroker.RabbitMQService) {
 		rabbitService.Close()
 		log.Println("RabbitMQ connection closed.")
 	}
-}
-
-// waitForShutdown blocks until termination signals are received and shuts down the application gracefully.
-func waitForShutdown() {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Received termination signal, shutting down...")
 }

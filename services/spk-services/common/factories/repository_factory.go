@@ -11,7 +11,7 @@ import (
 // CreateRepositories initializes and returns the repositories for Spk
 func CreateRepositories(db *gorm.DB, esClient *elasticsearch.Client) *domainRepo.Repositories {
 	return &domainRepo.Repositories{
-		SpkRepository:        repositories.NewSPKRepository(db, esClient, "Spks"),
+		SpkRepository:        repositories.NewSPKRepository(db, esClient, "spks"),
 		SpkSectionRepository: repositories.NewSPKSectionRepository(db),
 		SpkDetailRepository:  repositories.NewSPKDetailRepository(db),
 	}

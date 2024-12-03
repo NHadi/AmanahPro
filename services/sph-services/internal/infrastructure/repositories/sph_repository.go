@@ -1,12 +1,13 @@
 package repositories
 
 import (
-	"AmanahPro/services/sph-services/common/helpers"
 	"AmanahPro/services/sph-services/internal/domain/models"
 	"AmanahPro/services/sph-services/internal/domain/repositories"
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/NHadi/AmanahPro-common/helpers"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/gorm"

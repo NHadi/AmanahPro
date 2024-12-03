@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"AmanahPro/services/sph-services/internal/application/services"
-	"AmanahPro/services/sph-services/internal/domain/models"
-	"AmanahPro/services/sph-services/internal/dto"
+	"AmanahPro/services/spk-services/internal/application/services"
+	"AmanahPro/services/spk-services/internal/domain/models"
+	"AmanahPro/services/spk-services/internal/dto"
 	"net/http"
 	"strconv"
 
@@ -12,52 +12,51 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type SphHandler struct {
-	sphService *services.SphService
+type SpkHandler struct {
+	spkService *services.SpkService
 }
 
-// NewSphHandler creates a new SphHandler instance
-func NewSphHandler(sphService *services.SphService) *SphHandler {
-	return &SphHandler{
-		sphService: sphService,
+// NewSpkHandler creates a new SpkHandler instance
+func NewSpkHandler(spkService *services.SpkService) *SpkHandler {
+	return &SpkHandler{
+		spkService: spkService,
 	}
 }
 
-// SPH CRUD
+// SPK CRUD
 
-// FilterSphs
-// @Summary Filter SPHs
-// @Description Filter SPHs by organization ID, SPH ID, and project ID
-// @Tags SPHs
+// FilterSpks
+// @Summary Filter SPKs
+// @Description Filter SPKs by organization ID, SPK ID, and project ID
+// @Tags SPKs
 // @Security BearerAuth
 // @Param organization_id query int true "Organization ID"
-// @Param sph_id query int false "SPH ID"
+// @Param spk_id query int false "SPK ID"
 // @Param project_id query int false "Project ID"
 // @Produce json
-// @Success 200 {array} models.Sph
+// @Success 200 {array} models.SPK
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/filter [get]
-func (h *SphHandler) FilterSphs(c *gin.Context) {
+// @Router /api/spk/filter [get]
+func (h *SpkHandler) FilterSpks(c *gin.Context) {
 	claims, err := helpers.GetClaims(c)
 	if err != nil {
-		// Error already handled in the helper
 		return
 	}
 
 	organizationID := int(*claims.OrganizationId)
 
 	// Parse optional query parameters
-	sphIDStr := c.Query("sph_id")
-	var sphID *int
-	if sphIDStr != "" {
-		id, err := strconv.Atoi(sphIDStr)
+	spkIDStr := c.Query("spk_id")
+	var spkID *int
+	if spkIDStr != "" {
+		id, err := strconv.Atoi(spkIDStr)
 		if err != nil || id <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 			return
 		}
-		sphID = &id
+		spkID = &id
 	}
 
 	projectIDStr := c.Query("project_id")
@@ -71,32 +70,32 @@ func (h *SphHandler) FilterSphs(c *gin.Context) {
 		projectID = &id
 	}
 
-	// Call the service to filter SPHs
-	sphs, err := h.sphService.Filter(organizationID, sphID, projectID)
+	// Call the service to filter SPKs
+	spks, err := h.spkService.Filter(organizationID, spkID, projectID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, sphs)
+	c.JSON(http.StatusOK, spks)
 }
 
-// CreateSph
-// @Summary Create SPH
-// @Description Create a new SPH
-// @Tags SPHs
+// CreateSpk
+// @Summary Create SPK
+// @Description Create a new SPK
+// @Tags SPKs
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph body dto.SphDTO true "SPH Data"
-// @Success 201 {object} map[string]interface{} "Created SPH"
+// @Param spk body dto.SpkDTO true "SPK Data"
+// @Success 201 {object} map[string]interface{} "Created SPK"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph [post]
-func (h *SphHandler) CreateSph(c *gin.Context) {
-	var sphDTO dto.SphDTO
-	if err := c.ShouldBindJSON(&sphDTO); err != nil {
+// @Router /api/spk [post]
+func (h *SpkHandler) CreateSpk(c *gin.Context) {
+	var spkDTO dto.SpkDTO
+	if err := c.ShouldBindJSON(&spkDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
@@ -107,56 +106,55 @@ func (h *SphHandler) CreateSph(c *gin.Context) {
 	}
 
 	// Map DTO to Model
-	sph := models.Sph{
-		ProjectId:      sphDTO.ProjectId,
-		ProjectName:    sphDTO.ProjectName,
-		Subject:        sphDTO.Subject,
-		Location:       sphDTO.Location,
-		Date:           sphDTO.Date,
+	spk := models.SPK{
+		ProjectId:      spkDTO.ProjectId,
+		ProjectName:    spkDTO.ProjectName,
+		Subject:        spkDTO.Subject,
+		Date:           spkDTO.Date,
 		OrganizationId: claims.OrganizationId,
 		CreatedBy:      &claims.UserID,
-		RecepientName:  sphDTO.RecepientName,
 	}
 
-	if err := h.sphService.CreateSph(&sph); err != nil {
+	// Call the service to create SPK
+	if err := h.spkService.CreateSpk(&spk, int32(spkDTO.SphId)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Map back to DTO for response
-	sphDTO.SphId = sph.SphId
+	spkDTO.SpkId = spk.SpkId
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "SPH created successfully",
-		"data":    sphDTO,
+		"message": "SPK created successfully",
+		"data":    spkDTO,
 	})
 }
 
-// UpdateSph
-// @Summary Update SPH
-// @Description Update an existing SPH
-// @Tags SPHs
+// UpdateSpk
+// @Summary Update SPK
+// @Description Update an existing SPK
+// @Tags SPKs
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph_id path int true "SPH ID"
-// @Param sph body dto.SphDTO true "SPH Data"
-// @Success 200 {object} map[string]interface{} "Updated SPH"
+// @Param spk_id path int true "SPK ID"
+// @Param spk body dto.SpkDTO true "SPK Data"
+// @Success 200 {object} map[string]interface{} "Updated SPK"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Not Found"
+// @Failure 404 {object} map[string]string "SPK Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id} [put]
-func (h *SphHandler) UpdateSph(c *gin.Context) {
-	idStr := c.Param("sph_id")
+// @Router /api/spk/{spk_id} [put]
+func (h *SpkHandler) UpdateSpk(c *gin.Context) {
+	idStr := c.Param("spk_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
-	var sphDTO dto.SphDTO
-	if err := c.ShouldBindJSON(&sphDTO); err != nil {
+	var spkDTO dto.SpkDTO
+	if err := c.ShouldBindJSON(&spkDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
@@ -166,48 +164,48 @@ func (h *SphHandler) UpdateSph(c *gin.Context) {
 		return
 	}
 
-	existingSph, err := h.sphService.GetSphByID(id)
+	existingSpk, err := h.spkService.GetSpkByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "SPH not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "SPK not found"})
 		return
 	}
 
-	updatedSph := sphDTO.ToModelForUpdate(existingSph, claims.UserID)
-	updatedSph.OrganizationId = claims.OrganizationId
+	updatedSpk := spkDTO.ToModelForUpdate(existingSpk, claims.UserID)
+	updatedSpk.OrganizationId = claims.OrganizationId
 
-	if err := h.sphService.UpdateSph(updatedSph); err != nil {
+	if err := h.spkService.UpdateSpk(updatedSpk); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "SPH updated successfully",
-		"data":    sphDTO,
+		"message": "SPK updated successfully",
+		"data":    spkDTO,
 	})
 }
 
-// DeleteSph
-// @Summary Delete SPH
-// @Description Delete an SPH by ID
-// @Tags SPHs
+// DeleteSpk
+// @Summary Delete SPK
+// @Description Delete an SPK by ID
+// @Tags SPKs
 // @Security BearerAuth
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Produce json
 // @Success 204 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Not Found"
+// @Failure 404 {object} map[string]string "SPK Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id} [delete]
-func (h *SphHandler) DeleteSph(c *gin.Context) {
-	idStr := c.Param("sph_id")
+// @Router /api/spk/{spk_id} [delete]
+func (h *SpkHandler) DeleteSpk(c *gin.Context) {
+	idStr := c.Param("spk_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
-	if err := h.sphService.DeleteSph(id); err != nil {
+	if err := h.spkService.DeleteSpk(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -215,31 +213,31 @@ func (h *SphHandler) DeleteSph(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// CreateSphSection
-// @Summary Create SPH Section
-// @Description Create a new SPH Section
-// @Tags SPHSections
+// CreateSpkSection
+// @Summary Create SPK Section
+// @Description Create a new SPK Section
+// @Tags SPKSections
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph_id path int true "SPH ID"
-// @Param section body dto.SphSectionDTO true "SPH Section Data"
-// @Success 201 {object} map[string]interface{} "Created SPH Section"
+// @Param spk_id path int true "SPK ID"
+// @Param section body dto.SpkSectionDTO true "SPK Section Data"
+// @Success 201 {object} map[string]interface{} "Created SPK Section"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections [post]
-func (h *SphHandler) CreateSphSection(c *gin.Context) {
-	var sectionDTO dto.SphSectionDTO
+// @Router /api/spk/{spk_id}/sections [post]
+func (h *SpkHandler) CreateSpkSection(c *gin.Context) {
+	var sectionDTO dto.SpkSectionDTO
 	if err := c.ShouldBindJSON(&sectionDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -248,41 +246,41 @@ func (h *SphHandler) CreateSphSection(c *gin.Context) {
 		return
 	}
 
-	section := sectionDTO.ToModel(sphID, claims.UserID)
+	section := sectionDTO.ToModel(claims.UserID)
 	section.OrganizationId = claims.OrganizationId
 
-	if err := h.sphService.CreateSphSection(section); err != nil {
+	if err := h.spkService.CreateSpkSection(section, spkID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "SPH section created successfully",
+		"message": "SPK section created successfully",
 		"data":    section,
 	})
 }
 
-// UpdateSphSection
-// @Summary Update SPH Section
-// @Description Update an existing SPH Section
-// @Tags SPHSections
+// UpdateSpkSection
+// @Summary Update SPK Section
+// @Description Update an existing SPK Section
+// @Tags SPKSections
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Param section_id path int true "Section ID"
-// @Param section body dto.SphSectionDTO true "SPH Section Data"
-// @Success 200 {object} map[string]interface{} "Updated SPH Section"
+// @Param section body dto.SpkSectionDTO true "SPK Section Data"
+// @Success 200 {object} map[string]interface{} "Updated SPK Section"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Section Not Found"
+// @Failure 404 {object} map[string]string "SPK Section Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections/{section_id} [put]
-func (h *SphHandler) UpdateSphSection(c *gin.Context) {
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+// @Router /api/spk/{spk_id}/sections/{section_id} [put]
+func (h *SpkHandler) UpdateSpkSection(c *gin.Context) {
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -293,7 +291,7 @@ func (h *SphHandler) UpdateSphSection(c *gin.Context) {
 		return
 	}
 
-	var sectionDTO dto.SphSectionDTO
+	var sectionDTO dto.SpkSectionDTO
 	if err := c.ShouldBindJSON(&sectionDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
@@ -304,45 +302,45 @@ func (h *SphHandler) UpdateSphSection(c *gin.Context) {
 		return
 	}
 
-	existingSection, err := h.sphService.GetSphSectionByID(sectionID)
+	existingSection, err := h.spkService.GetSpkSectionByID(sectionID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "SPH section not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "SPK section not found"})
 		return
 	}
 
 	updatedSection := sectionDTO.ToModelForUpdate(existingSection, claims.UserID)
 	updatedSection.OrganizationId = claims.OrganizationId
 
-	if err := h.sphService.UpdateSphSection(updatedSection); err != nil {
+	if err := h.spkService.UpdateSpkSection(updatedSection); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "SPH section updated successfully",
+		"message": "SPK section updated successfully",
 		"data":    updatedSection,
 	})
 }
 
-// DeleteSphSection
-// @Summary Delete SPH Section
-// @Description Delete an SPH Section by ID
-// @Tags SPHSections
+// DeleteSpkSection
+// @Summary Delete SPK Section
+// @Description Delete an SPK Section by ID
+// @Tags SPKSections
 // @Security BearerAuth
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Param section_id path int true "Section ID"
 // @Produce json
 // @Success 204 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Section Not Found"
+// @Failure 404 {object} map[string]string "SPK Section Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections/{section_id} [delete]
-func (h *SphHandler) DeleteSphSection(c *gin.Context) {
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+// @Router /api/spk/{spk_id}/sections/{section_id} [delete]
+func (h *SpkHandler) DeleteSpkSection(c *gin.Context) {
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -353,7 +351,7 @@ func (h *SphHandler) DeleteSphSection(c *gin.Context) {
 		return
 	}
 
-	if err := h.sphService.DeleteSphSection(sectionID, sphID); err != nil {
+	if err := h.spkService.DeleteSpkSection(sectionID, spkID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -361,26 +359,26 @@ func (h *SphHandler) DeleteSphSection(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// CreateSphDetail
-// @Summary Create SPH Detail
-// @Description Create a new SPH Detail
-// @Tags SPHDetails
+// CreateSpkDetail
+// @Summary Create SPK Detail
+// @Description Create a new SPK Detail
+// @Tags SPKDetails
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Param section_id path int true "Section ID"
-// @Param detail body dto.SphDetailDTO true "SPH Detail Data"
-// @Success 201 {object} map[string]interface{} "Created SPH Detail"
+// @Param detail body dto.SpkDetailDTO true "SPK Detail Data"
+// @Success 201 {object} map[string]interface{} "Created SPK Detail"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections/{section_id}/details [post]
-func (h *SphHandler) CreateSphDetail(c *gin.Context) {
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+// @Router /api/spk/{spk_id}/sections/{section_id}/details [post]
+func (h *SpkHandler) CreateSpkDetail(c *gin.Context) {
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -391,7 +389,7 @@ func (h *SphHandler) CreateSphDetail(c *gin.Context) {
 		return
 	}
 
-	var detailDTO dto.SphDetailDTO
+	var detailDTO dto.SpkDetailDTO
 	if err := c.ShouldBindJSON(&detailDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
@@ -402,42 +400,42 @@ func (h *SphHandler) CreateSphDetail(c *gin.Context) {
 		return
 	}
 
-	detail := detailDTO.ToModel(sectionID, claims.UserID)
+	detail := detailDTO.ToModel(claims.UserID)
 	detail.OrganizationId = claims.OrganizationId
 
-	if err := h.sphService.CreateSphDetail(detail, sphID); err != nil {
+	if err := h.spkService.CreateSpkDetail(detail, spkID, sectionID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "SPH detail created successfully",
+		"message": "SPK detail created successfully",
 		"data":    detail,
 	})
 }
 
-// UpdateSphDetail
-// @Summary Update SPH Detail
-// @Description Update an existing SPH Detail
-// @Tags SPHDetails
+// UpdateSpkDetail
+// @Summary Update SPK Detail
+// @Description Update an existing SPK Detail
+// @Tags SPKDetails
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Param section_id path int true "Section ID"
 // @Param detail_id path int true "Detail ID"
-// @Param detail body dto.SphDetailDTO true "SPH Detail Data"
-// @Success 200 {object} map[string]interface{} "Updated SPH Detail"
+// @Param detail body dto.SpkDetailDTO true "SPK Detail Data"
+// @Success 200 {object} map[string]interface{} "Updated SPK Detail"
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Detail Not Found"
+// @Failure 404 {object} map[string]string "SPK Detail Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections/{section_id}/details/{detail_id} [put]
-func (h *SphHandler) UpdateSphDetail(c *gin.Context) {
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+// @Router /api/spk/{spk_id}/sections/{section_id}/details/{detail_id} [put]
+func (h *SpkHandler) UpdateSpkDetail(c *gin.Context) {
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -455,7 +453,7 @@ func (h *SphHandler) UpdateSphDetail(c *gin.Context) {
 		return
 	}
 
-	var detailDTO dto.SphDetailDTO
+	var detailDTO dto.SpkDetailDTO
 	if err := c.ShouldBindJSON(&detailDTO); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
@@ -466,46 +464,46 @@ func (h *SphHandler) UpdateSphDetail(c *gin.Context) {
 		return
 	}
 
-	existingDetail, err := h.sphService.GetSphDetailByID(detailID)
+	existingDetail, err := h.spkService.GetSpkDetailByID(detailID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "SPH detail not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "SPK detail not found"})
 		return
 	}
 
 	updatedDetail := detailDTO.ToModelForUpdate(existingDetail, claims.UserID)
 	updatedDetail.OrganizationId = claims.OrganizationId
 
-	if err := h.sphService.UpdateSphDetail(updatedDetail, sphID); err != nil {
+	if err := h.spkService.UpdateSpkDetail(updatedDetail, spkID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "SPH detail updated successfully",
+		"message": "SPK detail updated successfully",
 		"data":    updatedDetail,
 	})
 }
 
-// DeleteSphDetail
-// @Summary Delete SPH Detail
-// @Description Delete an SPH Detail by ID
-// @Tags SPHDetails
+// DeleteSpkDetail
+// @Summary Delete SPK Detail
+// @Description Delete an SPK Detail by ID
+// @Tags SPKDetails
 // @Security BearerAuth
-// @Param sph_id path int true "SPH ID"
+// @Param spk_id path int true "SPK ID"
 // @Param section_id path int true "Section ID"
 // @Param detail_id path int true "Detail ID"
 // @Produce json
 // @Success 204 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "SPH Detail Not Found"
+// @Failure 404 {object} map[string]string "SPK Detail Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/sph/{sph_id}/sections/{section_id}/details/{detail_id} [delete]
-func (h *SphHandler) DeleteSphDetail(c *gin.Context) {
-	sphIDStr := c.Param("sph_id")
-	sphID, err := strconv.Atoi(sphIDStr)
-	if err != nil || sphID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPH ID"})
+// @Router /api/spk/{spk_id}/sections/{section_id}/details/{detail_id} [delete]
+func (h *SpkHandler) DeleteSpkDetail(c *gin.Context) {
+	spkIDStr := c.Param("spk_id")
+	spkID, err := strconv.Atoi(spkIDStr)
+	if err != nil || spkID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
 
@@ -523,7 +521,7 @@ func (h *SphHandler) DeleteSphDetail(c *gin.Context) {
 		return
 	}
 
-	if err := h.sphService.DeleteSphDetail(detailID, sphID); err != nil {
+	if err := h.spkService.DeleteSpkDetail(detailID, spkID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

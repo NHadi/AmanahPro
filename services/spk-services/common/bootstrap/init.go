@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"AmanahPro/services/sph-services/common/config"
-	"AmanahPro/services/sph-services/common/factories"
+	"AmanahPro/services/spk-services/common/config"
+	"AmanahPro/services/spk-services/common/factories"
 	"log"
 	"strconv"
 	"time"
@@ -53,7 +53,7 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 
 	// List of queues to declare
 	queueNames := []string{
-		"sph_events",
+		"spk_events",
 	}
 
 	// Initialize RabbitMQ service
@@ -99,7 +99,7 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 	scheduler := cron.New()
 
 	// Initialize Logger
-	logger, err := middleware.InitializeLogger("sph-services", cfg.ElasticsearchURL, "sph-services-logs")
+	logger, err := middleware.InitializeLogger("spk-services", cfg.ElasticsearchURL, "spk-services-logs")
 	if err != nil {
 		return nil, err
 	}

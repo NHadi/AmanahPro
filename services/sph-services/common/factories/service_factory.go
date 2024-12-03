@@ -4,7 +4,7 @@ import (
 	"AmanahPro/services/sph-services/internal/application/services"
 	"AmanahPro/services/sph-services/internal/domain/repositories"
 
-	"AmanahPro/services/sph-services/common/messagebroker"
+	"github.com/NHadi/AmanahPro-common/messagebroker"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-redis/redis/v8"
