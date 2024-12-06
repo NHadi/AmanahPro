@@ -1,13 +1,14 @@
 package repositories
 
 import (
-	"AmanahPro/services/project-management/common/helpers"
 	"AmanahPro/services/project-management/internal/domain/models"
 	"AmanahPro/services/project-management/internal/domain/repositories"
 	"AmanahPro/services/project-management/internal/dto"
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/NHadi/AmanahPro-common/helpers"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/gorm"
@@ -28,6 +29,28 @@ func NewProjectRepository(db *gorm.DB, esClient *elasticsearch.Client, esIndex s
 }
 
 // SQL Operations (Create, Update, Delete)
+
+func (r *projectRepositoryImpl) GetByID(projectID int, loadRelations bool) (*models.Project, error) {
+	log.Printf("Retrieving project by ID: %d", projectID)
+
+	var project models.Project
+	query := r.db
+	if loadRelations {
+		query = query.Preload("ProjectRecap").Preload("ProjectUsers")
+	}
+
+	if err := query.First(&project, projectID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Printf("Project ID %d not found", projectID)
+			return nil, nil
+		}
+		log.Printf("Error retrieving project ID %d: %v", projectID, err)
+		return nil, fmt.Errorf("failed to retrieve project: %w", err)
+	}
+
+	log.Printf("Successfully retrieved project: %+v", project)
+	return &project, nil
+}
 
 // Create adds a new project to the database
 func (r *projectRepositoryImpl) Create(project *models.Project) error {
@@ -129,38 +152,4 @@ func (r *projectRepositoryImpl) SearchProjectsByOrganization(organizationID int,
 	}
 
 	return projects, nil
-}
-
-// helper
-
-func ToProjectDTO(project *models.Project, recap *models.ProjectRecap, keyUsers []models.ProjectUser) *dto.ProjectDTO {
-	var recapDTO *dto.ProjectRecapDTO
-	if recap != nil {
-		recapDTO = &dto.ProjectRecapDTO{
-			TotalOpname:      recap.TotalOpname,
-			TotalPengeluaran: recap.TotalPengeluaran,
-			Margin:           recap.Margin,
-			MarginPercentage: recap.MarginPercentage,
-		}
-	}
-
-	keyUsersDTO := make([]dto.ProjectUserDTO, len(keyUsers))
-	for i, user := range keyUsers {
-		keyUsersDTO[i] = dto.ProjectUserDTO{
-			UserID: user.UserID,
-			Role:   *user.Role,
-		}
-	}
-
-	return &dto.ProjectDTO{
-		ProjectID:      project.ProjectID,
-		ProjectName:    project.ProjectName,
-		Location:       *project.Location,
-		Status:         *project.Status,
-		OrganizationID: project.OrganizationID,
-		Recap:          recapDTO,
-		KeyUsers:       keyUsersDTO,
-		CreatedAt:      *project.CreatedAt,
-		UpdatedAt:      *project.UpdatedAt,
-	}
 }

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/NHadi/AmanahPro-common/helpers"
+	"github.com/NHadi/AmanahPro-common/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -105,6 +106,11 @@ func (h *SpkHandler) CreateSpk(c *gin.Context) {
 		return
 	}
 
+	traceID, exists := c.Get(middleware.TraceIDHeader)
+	if !exists {
+		traceID = "unknown"
+	}
+
 	// Map DTO to Model
 	spk := models.SPK{
 		ProjectId:      spkDTO.ProjectId,
@@ -113,10 +119,11 @@ func (h *SpkHandler) CreateSpk(c *gin.Context) {
 		Date:           spkDTO.Date,
 		OrganizationId: claims.OrganizationId,
 		CreatedBy:      &claims.UserID,
+		SphId:          spkDTO.SphId,
 	}
 
 	// Call the service to create SPK
-	if err := h.spkService.CreateSpk(&spk, int32(spkDTO.SphId)); err != nil {
+	if err := h.spkService.CreateSpk(&spk, int32(spkDTO.SphId), traceID.(string)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -164,6 +171,11 @@ func (h *SpkHandler) UpdateSpk(c *gin.Context) {
 		return
 	}
 
+	traceID, exists := c.Get(middleware.TraceIDHeader)
+	if !exists {
+		traceID = "unknown"
+	}
+
 	existingSpk, err := h.spkService.GetSpkByID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "SPK not found"})
@@ -173,7 +185,7 @@ func (h *SpkHandler) UpdateSpk(c *gin.Context) {
 	updatedSpk := spkDTO.ToModelForUpdate(existingSpk, claims.UserID)
 	updatedSpk.OrganizationId = claims.OrganizationId
 
-	if err := h.spkService.UpdateSpk(updatedSpk); err != nil {
+	if err := h.spkService.UpdateSpk(updatedSpk, traceID.(string)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -204,8 +216,16 @@ func (h *SpkHandler) DeleteSpk(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
 		return
 	}
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		return
+	}
+	traceID, exists := c.Get(middleware.TraceIDHeader)
+	if !exists {
+		traceID = "unknown"
+	}
 
-	if err := h.spkService.DeleteSpk(id); err != nil {
+	if err := h.spkService.DeleteSpk(id, traceID.(string), claims.UserID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

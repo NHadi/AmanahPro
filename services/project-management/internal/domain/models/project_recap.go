@@ -18,6 +18,9 @@ type ProjectRecap struct {
 	DeletedBy        *int       `gorm:"null"`                     // Deleted by user ID
 	DeletedAt        *time.Time `gorm:"index;null"`               // Deletion timestamp
 	OrganizationID   *int       `gorm:"null"`                     // Organization ID
+
+	// Relationships
+	Project Project `gorm:"foreignKey:ProjectID;references:ProjectID"` // One-to-One relationship with Project
 }
 
 func (ProjectRecap) TableName() string {

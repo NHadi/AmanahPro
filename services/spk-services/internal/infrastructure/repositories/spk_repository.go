@@ -1,13 +1,13 @@
 package repositories
 
 import (
-	"AmanahPro/services/spk-services/common/helpers"
 	"AmanahPro/services/spk-services/internal/domain/models"
 	"AmanahPro/services/spk-services/internal/domain/repositories"
 	"context"
 	"fmt"
 	"log"
 
+	"github.com/NHadi/AmanahPro-common/helpers"
 	"github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/gorm"
 )
@@ -136,12 +136,18 @@ func (r *spkRepositoryImpl) Delete(spkId int) error {
 	return nil
 }
 
-// GetByID retrieves a SPK record by its ID
-func (r *spkRepositoryImpl) GetByID(spkId int) (*models.SPK, error) {
-	log.Printf("Retrieving SPK by ID: %d", spkId)
+func (r *spkRepositoryImpl) GetByID(spkId int, loadDetails bool) (*models.SPK, error) {
+	log.Printf("Retrieving SPK by ID: %d, loadDetails: %v", spkId, loadDetails)
 
 	var spk models.SPK
-	if err := r.db.Preload("Sections.Details").First(&spk, spkId).Error; err != nil {
+
+	// Decide whether to preload Sections and Details based on the loadDetails flag
+	query := r.db
+	if loadDetails {
+		query = query.Preload("Sections.Details")
+	}
+
+	if err := query.First(&spk, spkId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			log.Printf("SPK ID %d not found", spkId)
 			return nil, nil

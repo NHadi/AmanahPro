@@ -475,7 +475,7 @@
         </div>
 
         <!-- Dashboard Charts -->
-        <div class="card mb-4">
+        <!-- <div class="card mb-4">
           <div class="card-header">
             <h4>Project Dashboard</h4>
           </div>
@@ -495,7 +495,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <!-- Projects Grid with Document and Task Tracker Columns -->
         <div class="card">
@@ -517,565 +517,486 @@
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script src="global.js"></script>
     <script>
-      // Sample project data
-      const projects = [
-        {
-          project_id: 1,
-          name: "Proyek Gedung A",
-          location: "Jakarta, Indonesia",
-          start_date: "2024-01-01",
-          end_date: "2024-12-31",
-          description: "Pembangunan gedung perkantoran",
-          status: "in-progress",
-          progress: 70,
-          budget: 300000000,
-        },
-        {
-          project_id: 2,
-          name: "Proyek Mall B",
-          location: "Bandung, Indonesia",
-          start_date: "2024-03-01",
-          end_date: "2024-11-30",
-          description: "Renovasi pusat perbelanjaan",
-          status: "in-progress",
-          progress: 50,
-          budget: 200000000,
-        },
-      ];
 
-      // Mock data fetching functions
-      function getSPKData(projectId) {
-        return [
+$(document).ready(function () {
+  $('#username-display').html(localStorage.getItem("user"));
+
+  // Initialize notification (dxToast)
+  function showNotification(message, type) {
+    DevExpress.ui.notify({
+      message: message,
+      type: type, // 'success', 'error', 'info', 'warning'
+      displayTime: 3000,
+      position: {
+        at: "top center",
+        my: "top center",
+      },
+    });
+  }
+
+  // Fetch projects data from the API
+  function fetchProjects() {
+    return $.ajax({
+      url: `${API_BASE_URL}/project_management_services/api/projects/search`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+  }
+
+  // Add new project
+  function addProject(project) {
+    return $.ajax({
+      url: `${API_BASE_URL}/project_management_services/api/projects`,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify(project),
+    });
+  }
+
+  // Update project
+  function updateProject(projectID, project) {
+    return $.ajax({
+      url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify(project),
+    });
+  }
+
+  // Delete project
+  function deleteProject(projectID) {
+    return $.ajax({
+      url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+  }
+
+  function fetchBreakdownByProject(projectId) {
+  return $.ajax({
+    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter`,
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    },
+    data: { project_id: projectId },
+  })
+    .then(function (data) {
+      console.log("Breakdown Data for Project:", data); // Debugging
+      return data; // Return breakdown data
+    })
+    .catch(function (error) {
+      console.error("Error fetching breakdown:", error);
+      return [];
+    });
+}
+
+
+  // Update summary counts
+  function updateSummaryCounts(data) {
+    const activeProjects = data.filter(p => p.Status === "In Progress").length;
+    const completedProjects = data.filter(p => p.Status === "Completed").length;
+    $("#active-projects-count").text(activeProjects);
+    $("#completed-projects-count").text(completedProjects);
+    $("#pending-documents-count").text(2); // Example static count for pending documents
+    $("#budget-overview").text("IDR 500,000,000"); // Example static budget overview
+  }
+
+  // Initialize the DataGrid for Projects
+  function initializeProjectsGrid(projects) {
+    $("#projects-grid").dxDataGrid({
+      dataSource: new DevExpress.data.CustomStore({
+        key: "ProjectID",
+        load: function () {
+          return fetchProjects().then(data => {
+            updateSummaryCounts(data); // Update counts dynamically
+            return data;
+          });
+        },
+        insert: function (values) {
+          return addProject(values);
+        },
+        update: function (key, values) {
+          return updateProject(key, values);
+        },
+        remove: function (key) {
+          return deleteProject(key);
+        },
+      }),
+      columnAutoWidth: true,
+      showBorders: true,
+      searchPanel: { visible: true, placeholder: "Search..." },
+      headerFilter: { visible: true },
+      filterRow: { visible: true, applyFilter: "auto" },
+      paging: { pageSize: 10 },
+      editing: {
+        mode: "form", // Use Form editing mode
+        allowAdding: true,
+        allowUpdating: true,
+        allowDeleting: true,
+        form: {
+          colCount: 2,
+        },
+      },
+      columns: [
+        { dataField: "ProjectName", caption: "Project Name", validationRules: [{ type: "required" }] },
+        { dataField: "Location", caption: "Location" },
+        { dataField: "StartDate", caption: "Start Date", dataType: "date" },
+        { dataField: "EndDate", caption: "End Date", dataType: "date" },
+        { dataField: "Description", caption: "Description" },
+        { dataField: "Status", caption: "Status" },
+      ],
+    
+
+
+      masterDetail: {
+  enabled: true,
+  template: function (container, options) {
+    const projectId = options.data.ProjectID;
+
+    $("<div>")
+      .dxTabPanel({
+        items: [
           {
-            id: 1,
-            number: "SPK001",
-            description: "Project Work",
-            date: "2024-01-15",
-          },
-        ];
-      }
-
-      function getBDData(projectId) {
-        return [
-          { id: 1, subject: "Breakdown Subject 1", date: "2024-01-15" },
-          { id: 2, subject: "Breakdown Subject 2", date: "2024-02-20" },
-        ];
-      }
-
-      function getSPHData(projectId) {
-        return [{ id: 1, recipient: "Recipient Name", date: "2024-01-15" }];
-      }
-
-      function getSPKSections(spkId) {
-        return [
-          { sectionId: 1, name: "Female Toilet" },
-          { sectionId: 2, name: "Male Toilet" },
-          { sectionId: 3, name: "Difable Toilet" },
-          { sectionId: 4, name: "Nursery" },
-          { sectionId: 5, name: "PRELIMINARIES" },
-        ];
-      }
-
-      function getSPKDetails(sectionId) {
-        const details = {
-          1: [
-            {
-              id: 1,
-              no: 1,
-              areaPemasangan: "Jasa pasang lantai",
-              qty: 16,
-              unit: "m2",
-              hargaSatuan: 170000,
-              totalJasa: 2720000,
-            },
-            {
-              id: 2,
-              no: 2,
-              areaPemasangan: "Jasa pasang dinding",
-              qty: 42.76,
-              unit: "m2",
-              hargaSatuan: 250000,
-              totalJasa: 10690000,
-            },
-          ],
-          2: [
-            {
-              id: 1,
-              no: 1,
-              areaPemasangan: "Jasa pasang lantai",
-              qty: 21.02,
-              unit: "m2",
-              hargaSatuan: 260000,
-              totalJasa: 5465200,
-            },
-            {
-              id: 2,
-              no: 2,
-              areaPemasangan: "Jasa pasang dinding",
-              qty: 61.08,
-              unit: "m2",
-              hargaSatuan: 330000,
-              totalJasa: 20156400,
-            },
-          ],
-          // Add more sections as needed
-        };
-        return details[sectionId] || [];
-      }
-
-      // Functions to create grids for SPK, BD, and SPH
-      function createSPKGrid(projectId) {
-        const container = $("<div>");
-        container.dxDataGrid({
-          dataSource: getSPKData(projectId), // Directly fetch all SPK data for the project
-          editing: {
-            mode: "popup",
-            allowUpdating: true,
-            allowAdding: true,
-            allowDeleting: true,
-          },
-          columns: [
-            { dataField: "number", caption: "SPK Number" },
-            { dataField: "description", caption: "Description" },
-            { dataField: "date", caption: "Date", dataType: "date" },
-          ],
-          paging: { pageSize: 5 },
-          showBorders: true,
-          masterDetail: {
-            enabled: true,
-            template: function (spkContainer, options) {
-              const spkId = options.data.id;
-
-              // Define the main grid for sections
-              const sectionGrid = $("<div>").dxDataGrid({
-                dataSource: getSPKSections(spkId),
-                columns: [{ dataField: "name", caption: "" }],
-                showBorders: true,
-                summary: {
-                  totalItems: [
-                    {
-                      column: "name",
-                      summaryType: "custom",
-                      displayFormat: "Grand Total",
-                      cssClass: "font-weight-bold", // Optional: Makes the label bold
-                    },
-                    {
-                      column: "totalJasa",
-                      summaryType: "custom",
-                      displayFormat: "{0}",
-                      valueFormat: "currency",
-                      cssClass: "font-weight-bold", // Optional: Makes the grand total bold
-                    },
-                  ],
-                  calculateCustomSummary: function (options) {
-                    if (options.name === "totalJasa") {
-                      if (options.summaryProcess === "start") {
-                        options.totalValue = 0; // Initialize grand total
-                      }
-                      if (options.summaryProcess === "calculate") {
-                        // Calculate the totalJasa for each section and accumulate it
-                        const sectionData = getSPKDetails(
-                          options.value.sectionId
-                        );
-                        const sectionTotal = sectionData.reduce(
-                          (sum, item) => sum + item.totalJasa,
-                          0
-                        );
-                        options.totalValue += sectionTotal; // Add section total to grand total
-                      }
-                    }
+            title: "Breakdown",
+            template: function () {
+              return $("<div>").dxDataGrid({
+                dataSource: new DevExpress.data.CustomStore({
+                  key: "BreakdownId",
+                  load: function () {
+                    return $.ajax({
+                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter?project_id=${projectId}`,
+                      method: "GET",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                      },
+                    });
                   },
+                  insert: function (values) {
+                    DevExpress.ui.notify("Adding breakdown...", "info", 2000);
+                    return $.ajax({
+                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns`,
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                        "Content-Type": "application/json",
+                      },
+                      data: JSON.stringify({ ...values, ProjectId: projectId }),
+                    })
+                      .done(() => {
+                        DevExpress.ui.notify("Breakdown added successfully!", "success", 2000);
+                      })
+                      .fail(() => {
+                        DevExpress.ui.notify("Failed to add breakdown.", "error", 2000);
+                      });
+                  },
+                  update: function (key, values) {
+                    const updatedData = { ...values, ProjectId: projectId };
+                    DevExpress.ui.notify("Updating breakdown...", "info", 2000);
+                    return $.ajax({
+                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
+                      method: "PUT",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                        "Content-Type": "application/json",
+                      },
+                      data: JSON.stringify(updatedData),
+                    })
+                      .done(() => {
+                        DevExpress.ui.notify("Breakdown updated successfully!", "success", 2000);
+                      })
+                      .fail(() => {
+                        DevExpress.ui.notify("Failed to update breakdown.", "error", 2000);
+                      });
+                  },
+                  remove: function (key) {
+                    DevExpress.ui.notify("Deleting breakdown...", "info", 2000);
+                    return $.ajax({
+                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
+                      method: "DELETE",
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                      },
+                    })
+                      .done(() => {
+                        DevExpress.ui.notify("Breakdown deleted successfully!", "success", 2000);
+                      })
+                      .fail(() => {
+                        DevExpress.ui.notify("Failed to delete breakdown.", "error", 2000);
+                      });
+                  },
+                }),
+                keyExpr: "BreakdownId",
+                editing: {
+                  mode: "row",
+                  allowAdding: true,
+                  allowUpdating: true,
+                  allowDeleting: true,
                 },
+                showBorders: true,
+                columns: [
+                  { dataField: "Subject", caption: "Breakdown Name", validationRules: [{ type: "required" }] },
+                  { dataField: "Location", caption: "Location" },
+                  { dataField: "Date", caption: "Date", dataType: "date" },
+                ],
                 masterDetail: {
                   enabled: true,
-                  template: function (sectionContainer, sectionOptions) {
-                    const sectionId = sectionOptions.data.sectionId;
+                  template: function (breakdownContainer, breakdownOptions) {
+                    const breakdownId = breakdownOptions.data.BreakdownId;
 
-                    // Define the details grid for each section with subtotal calculation
                     $("<div>")
                       .dxDataGrid({
-                        dataSource: getSPKDetails(sectionId),
+                        dataSource: new DevExpress.data.CustomStore({
+                          key: "BreakdownSectionId",
+                          load: function () {
+                            return Promise.resolve(breakdownOptions.data.Sections || []); // Sections come from Breakdown data
+                          },
+                          insert: function (values) {
+                            DevExpress.ui.notify("Adding section...", "info", 2000);
+                            return $.ajax({
+                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections`,
+                              method: "POST",
+                              headers: {
+                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                                "Content-Type": "application/json",
+                              },
+                              data: JSON.stringify(values),
+                            })
+                              .done(() => {
+                                DevExpress.ui.notify("Section added successfully!", "success", 2000);
+                              })
+                              .fail(() => {
+                                DevExpress.ui.notify("Failed to add section.", "error", 2000);
+                              });
+                          },
+                          update: function (key, values) {
+                            DevExpress.ui.notify("Updating section...", "info", 2000);
+                            return $.ajax({
+                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
+                              method: "PUT",
+                              headers: {
+                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                                "Content-Type": "application/json",
+                              },
+                              data: JSON.stringify(values),
+                            })
+                              .done(() => {
+                                DevExpress.ui.notify("Section updated successfully!", "success", 2000);
+                              })
+                              .fail(() => {
+                                DevExpress.ui.notify("Failed to update section.", "error", 2000);
+                              });
+                          },
+                          remove: function (key) {
+                            DevExpress.ui.notify("Deleting section...", "info", 2000);
+                            return $.ajax({
+                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
+                              method: "DELETE",
+                              headers: {
+                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                              },
+                            })
+                              .done(() => {
+                                DevExpress.ui.notify("Section deleted successfully!", "success", 2000);
+                              })
+                              .fail(() => {
+                                DevExpress.ui.notify("Failed to delete section.", "error", 2000);
+                              });
+                          },
+                        }),
+                        keyExpr: "BreakdownSectionId",
                         editing: {
-                          mode: "popup",
-                          allowUpdating: true,
+                          mode: "row",
                           allowAdding: true,
+                          allowUpdating: true,
                           allowDeleting: true,
                         },
-                        columns: [
-                          { dataField: "no", caption: "No" },
-                          {
-                            dataField: "areaPemasangan",
-                            caption: "Area Pemasangan",
-                          },
-                          {
-                            dataField: "qty",
-                            caption: "Qty",
-                            dataType: "number",
-                          },
-                          { dataField: "unit", caption: "Unit" },
-                          {
-                            dataField: "hargaSatuan",
-                            caption: "Harga Satuan",
-                            format: { type: "currency", precision: 0 },
-                          },
-                          {
-                            dataField: "totalJasa",
-                            caption: "Total Jasa",
-                            format: { type: "currency", precision: 0 },
-                          },
-                        ],
-                        summary: {
-                          totalItems: [
-                            {
-                              column: "totalJasa",
-                              summaryType: "sum",
-                              displayFormat: "Subtotal: {0}",
-                              showInColumn: "totalJasa",
-                            },
-                          ],
-                        },
-                        paging: { pageSize: 5 },
                         showBorders: true,
+                        columns: [
+                          { dataField: "SectionTitle", caption: "Section Title", validationRules: [{ type: "required" }] },
+                        ],
+                        masterDetail: {
+                          enabled: true,
+                          template: function (sectionContainer, sectionOptions) {
+                            const sectionId = sectionOptions.data.BreakdownSectionId;
+
+                            $("<div>")
+                              .dxDataGrid({
+                                dataSource: new DevExpress.data.CustomStore({
+                                  key: "BreakdownItemId",
+                                  load: function () {
+                                    return Promise.resolve(sectionOptions.data.Items || []); // Items come from Section data
+                                  },
+                                  insert: function (values) {
+                                    DevExpress.ui.notify("Adding item...", "info", 2000);
+                                    return $.ajax({
+                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items`,
+                                      method: "POST",
+                                      headers: {
+                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                                        "Content-Type": "application/json",
+                                      },
+                                      data: JSON.stringify(values),
+                                    })
+                                      .done(() => {
+                                        DevExpress.ui.notify("Item added successfully!", "success", 2000);
+                                      })
+                                      .fail(() => {
+                                        DevExpress.ui.notify("Failed to add item.", "error", 2000);
+                                      });
+                                  },
+                                  update: function (key, values) {
+                                    DevExpress.ui.notify("Updating item...", "info", 2000);
+                                    return $.ajax({
+                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
+                                      method: "PUT",
+                                      headers: {
+                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                                        "Content-Type": "application/json",
+                                      },
+                                      data: JSON.stringify(values),
+                                    })
+                                      .done(() => {
+                                        DevExpress.ui.notify("Item updated successfully!", "success", 2000);
+                                      })
+                                      .fail(() => {
+                                        DevExpress.ui.notify("Failed to update item.", "error", 2000);
+                                      });
+                                  },
+                                  remove: function (key) {
+                                    DevExpress.ui.notify("Deleting item...", "info", 2000);
+                                    return $.ajax({
+                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
+                                      method: "DELETE",
+                                      headers: {
+                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                                      },
+                                    })
+                                      .done(() => {
+                                        DevExpress.ui.notify("Item deleted successfully!", "success", 2000);
+                                      })
+                                      .fail(() => {
+                                        DevExpress.ui.notify("Failed to delete item.", "error", 2000);
+                                      });
+                                  },
+                                }),
+                                keyExpr: "BreakdownItemId",
+                                editing: {
+                                  mode: "row",
+                                  allowAdding: true,
+                                  allowUpdating: true,
+                                  allowDeleting: true,
+                                },
+                                columns: [
+                                  { dataField: "Description", caption: "Item Description", validationRules: [{ type: "required" }] },
+                                  { dataField: "UnitPrice", caption: "Unit Price", dataType: "number", format: { type: "currency" } },
+                                ],
+                                showBorders: true,
+                              })
+                              .appendTo(sectionContainer);
+                          },
+                        },
                       })
-                      .appendTo(sectionContainer);
+                      .appendTo(breakdownContainer);
                   },
                 },
               });
-
-              sectionGrid.appendTo(spkContainer);
             },
           },
-          summary: {
-            totalItems: [
-              {
-                column: "totalJasa",
-                summaryType: "custom",
-                displayFormat: "Grand Total: {0}",
-                valueFormat: "currency",
-              },
-            ],
-            calculateCustomSummary: function (options) {
-              if (options.name === "totalJasa") {
-                if (options.summaryProcess === "start") {
-                  options.totalValue = 0;
-                }
-                if (options.summaryProcess === "calculate") {
-                  const sections = getSPKSections(options.value.id);
-                  sections.forEach((section) => {
-                    const sectionData = getSPKDetails(section.sectionId);
-                    options.totalValue += sectionData.reduce(
-                      (sum, item) => sum + item.totalJasa,
-                      0
-                    );
-                  });
-                }
-              }
-            },
-          },
-        });
-        return container;
-      }
-
-      function createBDGrid(projectId) {
-        const container = $("<div>");
-        container.dxDataGrid({
-          dataSource: getBDData(projectId),
-          editing: {
-            mode: "popup",
-            allowUpdating: true,
-            allowAdding: true,
-            allowDeleting: true,
-          },
-          columns: [
-            { dataField: "subject", caption: "Subject" },
-            { dataField: "date", caption: "Date", dataType: "date" },
-          ],
-          paging: { pageSize: 5 },
-          showBorders: true,
-        });
-        return container;
-      }
-
-      function createSPHGrid(projectId) {
-        const container = $("<div>");
-        container.dxDataGrid({
-          dataSource: getSPHData(projectId),
-          editing: {
-            mode: "popup",
-            allowUpdating: true,
-            allowAdding: true,
-            allowDeleting: true,
-          },
-          columns: [
-            { dataField: "recipient", caption: "Recipient" },
-            { dataField: "date", caption: "Date", dataType: "date" },
-          ],
-          paging: { pageSize: 5 },
-          showBorders: true,
-        });
-        return container;
-      }
-
-      $(document).ready(function () {
-        $('#username-display').html(localStorage.getItem("user"));
-        // Set summary card values based on dummy data
-        $("#active-projects-count").text(
-          projects.filter((p) => p.status === "in-progress").length
-        );
-        $("#completed-projects-count").text(
-          projects.filter((p) => p.status === "completed").length
-        );
-        $("#pending-documents-count").text(2); // Example count for pending documents
-        $("#budget-overview").text("IDR 500,000,000"); // Example budget overview
-
-        $("#projects-grid").dxDataGrid({
-          dataSource: projects,
-          columnAutoWidth: true,
-          showBorders: true,
-          searchPanel: { visible: true, placeholder: "Search..." },
-          headerFilter: { visible: true },
-          filterRow: { visible: true, applyFilter: "auto" },
-          paging: { pageSize: 10 },
-          columns: [
-            { dataField: "name", caption: "Project Name" },
-            { dataField: "location", caption: "Location" },
-            {
-              dataField: "start_date",
-              caption: "Start Date",
-              dataType: "date",
-            },
-            { dataField: "end_date", caption: "End Date", dataType: "date" },
-            { dataField: "description", caption: "Description" },
-            { dataField: "status", caption: "Status" },
-            {
-              dataField: "progress",
-              caption: "Progress",
-              cellTemplate: function (container, options) {
-                const progress = options.value || 0;
-                const progressBar = $("<div>")
-                  .addClass("progress")
-                  .css("height", "20px");
-                $("<div>")
-                  .addClass("progress-bar")
-                  .attr("role", "progressbar")
-                  .css("width", progress + "%")
-                  .text(progress + "%")
-                  .appendTo(progressBar);
-                progressBar.appendTo(container);
-              },
-            },
-          ],
-          masterDetail: {
-            enabled: true,
-            template: function (container, options) {
-              const projectId = options.data.project_id;
-              $("<div>")
-                .dxTabPanel({
-                  items: [
-                    {
-                      title: "BD",
-                      template: function () {
-                        return createBDGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "SPH",
-                      template: function () {
-                        return createSPHGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "SPK",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "Rekap",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "BA",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "Invoice",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "Opname",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                    {
-                      title: "Rekap Opname",
-                      template: function () {
-                        return createSPKGrid(projectId);
-                      },
-                    },
-                  ],
-                  selectedIndex: 0,
-                  deferRendering: false,
-                })
-                .appendTo(container);
-            },
-          },
-        });
-
-        // Chart 1: Project Progress (Bar Chart)
-        const progressCtx = document
-          .getElementById("progressBarChart")
-          .getContext("2d");
-        new Chart(progressCtx, {
-          type: "bar",
-          data: {
-            labels: projects.map((p) => p.name),
-            datasets: [
-              {
-                label: "Progress (%)",
-                data: projects.map((p) => p.progress),
-                backgroundColor: ["#4caf50", "#ff9800"],
-                hoverBackgroundColor: ["#388e3c", "#fb8c00"],
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.label}: ${context.raw}% complete`;
-                  },
-                },
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 100,
-                title: { display: true, text: "Progress (%)" },
-              },
-            },
-          },
-        });
-
-        // Chart 2: Budget Distribution (Doughnut Chart)
-        const budgetCtx = document
-          .getElementById("budgetPieChart")
-          .getContext("2d");
-        new Chart(budgetCtx, {
-          type: "doughnut",
-          data: {
-            labels: projects.map((p) => p.name),
-            datasets: [
-              {
-                label: "Budget (IDR)",
-                data: projects.map((p) => p.budget),
-                backgroundColor: ["#42a5f5", "#ff7043"],
-                hoverBackgroundColor: ["#1e88e5", "#f4511e"],
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${
-                      context.label
-                    }: IDR ${context.raw.toLocaleString()}`;
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        // Chart 3: Status Overview (Pie Chart)
-        const statusCounts = projects.reduce((acc, p) => {
-          acc[p.status] = (acc[p.status] || 0) + 1;
-          return acc;
-        }, {});
-
-        const statusCtx = document
-          .getElementById("statusPieChart")
-          .getContext("2d");
-        new Chart(statusCtx, {
-          type: "pie",
-          data: {
-            labels: Object.keys(statusCounts),
-            datasets: [
-              {
-                data: Object.values(statusCounts),
-                backgroundColor: ["#ffca28", "#66bb6a", "#ef5350"],
-                hoverBackgroundColor: ["#ffb300", "#43a047", "#e53935"],
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.label}: ${context.raw} project(s)`;
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        // Sample project data for trends
-        const historicalData = [
-          { month: "January", progress: 20, budget: 100000000 },
-          { month: "February", progress: 35, budget: 150000000 },
-          { month: "March", progress: 50, budget: 200000000 },
-          { month: "April", progress: 65, budget: 250000000 },
-          { month: "May", progress: 80, budget: 300000000 },
-          { month: "June", progress: 90, budget: 350000000 },
-        ];
+        ],
+        deferRendering: false,
+        showNavButtons: true,
+        selectedIndex: 0,
+      })
+      .appendTo(container);
+  },
+},
 
 
-        // Monthly Budget Data
-        const monthlyBudgetData = {
-          months: ["January", "February", "March", "April", "May", "June"],
-          projects: [
-            {
-              name: "Proyek Gedung A",
-              budgets: [
-                50000000, 60000000, 80000000, 100000000, 110000000, 120000000,
-              ],
-            },
-            {
-              name: "Proyek Mall B",
-              budgets: [
-                30000000, 40000000, 60000000, 70000000, 80000000, 90000000,
-              ],
-            },
-          ],
-        };
 
-        // Prepare dataset for the chart
-        const budgetDatasets = monthlyBudgetData.projects.map((project) => ({
-          label: project.name,
-          data: project.budgets,
-          backgroundColor:
-            project.name === "Proyek Gedung A" ? "#42a5f5" : "#ff7043",
-          hoverBackgroundColor:
-            project.name === "Proyek Gedung A" ? "#1e88e5" : "#f4511e",
-        }));
+      onRowInserting: function (e) {
+        const newProject = { ...e.data };
+        const store = e.component.getDataSource().store();
 
-      });
+        // Optimistic update: Insert the project locally
+        store.insert(newProject);
+        e.component.refresh();
+
+        e.cancel = addProject(newProject)
+          .done(function () {
+            showNotification("Project added successfully!", "success");
+            e.component.getDataSource().reload(); // Reload grid
+          })
+          .fail(function (error) {
+            store.remove(newProject.ProjectID); // Revert on failure
+            e.component.refresh();
+            showNotification("Failed to add project.", "error");
+            console.error("Failed to add project:", error);
+          });
+      },
+      onRowUpdating: function (e) {
+        const projectID = e.key;
+        const updatedProject = { ...e.oldData, ...e.newData };
+        const store = e.component.getDataSource().store();
+
+        store.update(projectID, updatedProject);
+        e.component.refresh();
+
+        e.cancel = updateProject(projectID, updatedProject)
+          .done(function () {
+            showNotification("Project updated successfully!", "success");
+            e.component.getDataSource().reload();
+          })
+          .fail(function (error) {
+            store.update(projectID, e.oldData); // Revert on failure
+            e.component.refresh();
+            showNotification("Failed to update project.", "error");
+            console.error("Failed to update project:", error);
+          });
+      },
+      onRowRemoving: function (e) {
+        const projectID = e.key;
+        const store = e.component.getDataSource().store();
+
+        store.remove(projectID);
+        e.component.refresh();
+
+        e.cancel = deleteProject(projectID)
+          .done(function () {
+            showNotification("Project deleted successfully!", "success");
+            e.component.getDataSource().reload();
+          })
+          .fail(function (error) {
+            store.insert(e.data); // Revert on failure
+            e.component.refresh();
+            showNotification("Failed to delete project.", "error");
+            console.error("Failed to delete project:", error);
+          });
+      },
+    });
+  }
+
+  // Fetch and bind project data to the grid
+  fetchProjects()
+    .done(function (data) {
+      initializeProjectsGrid(data);
+    })
+    .fail(function (error) {
+      showNotification("Failed to fetch projects data.", "error");
+      console.error("Failed to fetch projects data:", error);
+    });
+});
+
     </script>
     <script>
       var win = navigator.platform.indexOf("Win") > -1;

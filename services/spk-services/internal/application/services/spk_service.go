@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 
+	commonServices "github.com/NHadi/AmanahPro-common/services"
+
 	"github.com/NHadi/AmanahPro-common/messagebroker"
 	pb "github.com/NHadi/AmanahPro-common/protos"
 )
@@ -17,7 +19,8 @@ type SpkService struct {
 	detailRepo      repositories.SPKDetailRepository
 	rabbitPublisher *messagebroker.RabbitMQPublisher
 	spkQueueName    string
-	sphGrpcClient   pb.SphServiceClient // gRPC client for SPH
+	sphGrpcClient   pb.SphServiceClient // gRPC client for SPH,
+	auditTrail      *commonServices.AuditTrailService
 }
 
 // NewSpkService initializes the SpkService
@@ -28,6 +31,7 @@ func NewSpkService(
 	rabbitPublisher *messagebroker.RabbitMQPublisher,
 	spkQueueName string,
 	sphGrpcClient pb.SphServiceClient, // Inject SPH gRPC client
+	auditTrail *commonServices.AuditTrailService,
 ) *SpkService {
 	return &SpkService{
 		spkRepo:         spkRepo,
@@ -36,6 +40,7 @@ func NewSpkService(
 		rabbitPublisher: rabbitPublisher,
 		spkQueueName:    spkQueueName,
 		sphGrpcClient:   sphGrpcClient,
+		auditTrail:      auditTrail,
 	}
 }
 
@@ -54,21 +59,29 @@ func (s *SpkService) Filter(organizationID int, spkID *int, projectID *int) ([]m
 }
 
 // Helper: PublishFullReindexEvent sends a RabbitMQ event to re-index the full SPK
-func (s *SpkService) PublishFullReindexEvent(spkID int) error {
+func (s *SpkService) PublishFullReindexEvent(spkID int, traceID string, userID int) error {
 	log.Printf("Triggering re-index for SpkID: %d", spkID)
 
 	// Retrieve the full SPK structure for re-indexing
-	spk, err := s.spkRepo.GetByID(spkID)
+	spk, err := s.spkRepo.GetByID(spkID, true)
 	if err != nil {
 		log.Printf("Error retrieving SPK for reindexing: %v", err)
 		return fmt.Errorf("error retrieving SPK for reindexing: %w", err)
+	}
+
+	if spk == nil {
+		log.Printf("Reindex failed because spk ID: %d Not Found", spkID)
+		return nil
 	}
 
 	event := map[string]interface{}{
 		"event":   "Reindexed",
 		"payload": spk,
 		"meta": map[string]interface{}{
+			"traceId": traceID,
+			"action":  "REINDEX",
 			"idField": "SpkId",
+			"userId":  userID,
 		},
 	}
 	if err := s.rabbitPublisher.PublishEvent(s.spkQueueName, event); err != nil {
@@ -84,7 +97,7 @@ func (s *SpkService) PublishFullReindexEvent(spkID int) error {
 func (s *SpkService) GetSpkByID(spkID int) (*models.SPK, error) {
 	log.Printf("Fetching SPK with ID: %d", spkID)
 
-	spk, err := s.spkRepo.GetByID(spkID)
+	spk, err := s.spkRepo.GetByID(spkID, false)
 	if err != nil {
 		log.Printf("Error fetching SPK: %v", err)
 		return nil, fmt.Errorf("failed to fetch SPK: %w", err)
@@ -94,7 +107,7 @@ func (s *SpkService) GetSpkByID(spkID int) (*models.SPK, error) {
 }
 
 // CreateSpk creates an SPK and populates sections and details from SPH
-func (s *SpkService) CreateSpk(spk *models.SPK, sphId int32) error {
+func (s *SpkService) CreateSpk(spk *models.SPK, sphId int32, traceID string) error {
 	log.Printf("Creating SPK: %+v with SPH ID: %d", spk, sphId)
 
 	// Call SPH gRPC service to get sections and details
@@ -107,16 +120,19 @@ func (s *SpkService) CreateSpk(spk *models.SPK, sphId int32) error {
 
 	// Populate SPK with sections and details from SPH
 	for _, grpcSection := range sphDetailsResponse.Sections {
-		// Create a section
 		section := models.SPKSection{
+			SphSectionId:   int(grpcSection.SphSectionId),
 			SectionTitle:   &grpcSection.SectionTitle,
 			CreatedBy:      spk.CreatedBy,
 			OrganizationId: spk.OrganizationId,
 		}
 
-		// Populate details for this section
 		for _, grpcDetail := range grpcSection.Details {
 			detail := models.SPKDetail{
+				SphItemId: func(v int32) *int {
+					value := int(v)
+					return &value
+				}(grpcDetail.SphDetailId),
 				Description:    &grpcDetail.ItemDescription,
 				Quantity:       grpcDetail.Quantity,
 				Unit:           &grpcDetail.Unit,
@@ -125,57 +141,84 @@ func (s *SpkService) CreateSpk(spk *models.SPK, sphId int32) error {
 				CreatedBy:      spk.CreatedBy,
 				OrganizationId: spk.OrganizationId,
 			}
-			// Add detail to section
 			section.Details = append(section.Details, detail)
 		}
-
-		// Add section to SPK
 		spk.Sections = append(spk.Sections, section)
 	}
 
-	// Save the SPK
 	if err := s.spkRepo.Create(spk); err != nil {
 		log.Printf("Error creating SPK: %v", err)
 		return fmt.Errorf("error creating SPK: %w", err)
 	}
 
-	s.PublishFullReindexEvent(spk.SpkId)
+	// Publish event for centralized logging
+	event := map[string]interface{}{
+		"event":   "Created",
+		"payload": spk,
+		"meta": map[string]interface{}{
+			"traceId": traceID,
+			"action":  "CREATE",
+			"idField": "SpkId",
+			"userId":  spk.CreatedBy,
+		},
+	}
+	if err := s.rabbitPublisher.PublishEvent(s.spkQueueName, event); err != nil {
+		log.Printf("TraceID: %s - Error publishing create event for SPK ID: %d, %v", traceID, spk.SpkId, err)
+	}
 
 	log.Printf("Successfully created SPK: %+v", spk)
 	return nil
 }
 
-func (s *SpkService) UpdateSpk(spk *models.SPK) error {
-	log.Printf("Updating SPK: %+v", spk)
+// UpdateSpk updates an SPK
+func (s *SpkService) UpdateSpk(spk *models.SPK, traceID string) error {
+
 	if err := s.spkRepo.Update(spk); err != nil {
-		log.Printf("Error updating SPK: %v", err)
+		log.Printf("TraceID: %s - Error updating SPK: %v", traceID, err)
 		return fmt.Errorf("error updating SPK: %w", err)
 	}
 
-	return s.PublishFullReindexEvent(spk.SpkId)
+	// Publish event for centralized logging
+	event := map[string]interface{}{
+		"event":   "Updated",
+		"payload": spk,
+		"meta": map[string]interface{}{
+			"traceId": traceID,
+			"action":  "UPDATE",
+			"idField": "SpkId",
+			"userId":  spk.UpdatedBy,
+		},
+	}
+	if err := s.rabbitPublisher.PublishEvent(s.spkQueueName, event); err != nil {
+		log.Printf("TraceID: %s - Error publishing update event for SPK ID: %d, %v", traceID, spk.SpkId, err)
+	}
+
+	return s.PublishFullReindexEvent(spk.SphId, traceID, *spk.UpdatedBy)
 }
 
-func (s *SpkService) DeleteSpk(spkID int) error {
-	log.Printf("Deleting SPK ID: %d", spkID)
+// DeleteSpk deletes an SPK
+func (s *SpkService) DeleteSpk(spkID int, traceID string, userID int) error {
 	if err := s.spkRepo.Delete(spkID); err != nil {
-		log.Printf("Error deleting SPK: %v", err)
+		log.Printf("TraceID: %s - Error deleting SPK: %v", traceID, err)
 		return fmt.Errorf("error deleting SPK: %w", err)
 	}
 
-	// Send a delete event to RabbitMQ
+	// Publish event for centralized logging
 	event := map[string]interface{}{
 		"event":   "Deleted",
 		"payload": map[string]int{"SpkId": spkID},
 		"meta": map[string]interface{}{
+			"traceId": traceID,
+			"action":  "DELETE",
 			"idField": "SpkId",
+			"userId":  userID,
 		},
 	}
 	if err := s.rabbitPublisher.PublishEvent(s.spkQueueName, event); err != nil {
-		log.Printf("Error publishing delete event for SpkID: %d, %v", spkID, err)
-		return fmt.Errorf("error publishing delete event: %w", err)
+		log.Printf("TraceID: %s - Error publishing delete event for SPK ID: %d, %v", traceID, spkID, err)
 	}
 
-	log.Printf("Successfully deleted SPK ID: %d", spkID)
+	log.Printf("TraceID: %s - Successfully deleted SPK ID: %d", traceID, spkID)
 	return nil
 }
 
@@ -193,7 +236,7 @@ func (s *SpkService) CreateSpkSection(section *models.SPKSection, spkID int) err
 		return fmt.Errorf("failed to create SPK Section: %w", err)
 	}
 
-	s.PublishFullReindexEvent(spkID)
+	s.PublishFullReindexEvent(spkID, "", 0)
 
 	log.Printf("Successfully created SPK Section with ID: %d", section.SectionId)
 	return nil
@@ -208,7 +251,7 @@ func (s *SpkService) UpdateSpkSection(updatedSection *models.SPKSection) error {
 		return fmt.Errorf("failed to update SPK Section: %w", err)
 	}
 
-	s.PublishFullReindexEvent(updatedSection.SpkId)
+	s.PublishFullReindexEvent(updatedSection.SpkId, "", *updatedSection.UpdatedBy)
 
 	log.Printf("Successfully updated SPK Section with ID: %d", updatedSection.SectionId)
 	return nil
@@ -223,7 +266,7 @@ func (s *SpkService) DeleteSpkSection(sectionID, SPKId int) error {
 		return fmt.Errorf("failed to delete SPK Section: %w", err)
 	}
 
-	s.PublishFullReindexEvent(SPKId)
+	s.PublishFullReindexEvent(SPKId, "", 0)
 
 	log.Printf("Successfully deleted SPK Section with ID: %d", sectionID)
 	return nil
@@ -256,7 +299,7 @@ func (s *SpkService) CreateSpkDetail(detail *models.SPKDetail, sectionID, SPKId 
 		return fmt.Errorf("failed to create SPK Detail: %w", err)
 	}
 
-	s.PublishFullReindexEvent(SPKId)
+	s.PublishFullReindexEvent(SPKId, "", *detail.CreatedBy)
 
 	log.Printf("Successfully created SPK Detail with ID: %d", detail.DetailId)
 	return nil
@@ -271,7 +314,7 @@ func (s *SpkService) UpdateSpkDetail(updatedDetail *models.SPKDetail, SPKId int)
 		return fmt.Errorf("failed to update SPK Detail: %w", err)
 	}
 
-	s.PublishFullReindexEvent(SPKId)
+	s.PublishFullReindexEvent(SPKId, "", *updatedDetail.UpdatedBy)
 
 	log.Printf("Successfully updated SPK Detail with ID: %d", updatedDetail.DetailId)
 	return nil
@@ -286,7 +329,7 @@ func (s *SpkService) DeleteSpkDetail(detailID, SPKId int) error {
 		return fmt.Errorf("failed to delete SPK Detail: %w", err)
 	}
 
-	s.PublishFullReindexEvent(SPKId)
+	s.PublishFullReindexEvent(SPKId, "", detailID)
 
 	log.Printf("Successfully deleted SPK Detail with ID: %d", detailID)
 	return nil

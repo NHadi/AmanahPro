@@ -59,6 +59,11 @@ func (s *SphService) PublishFullReindexEvent(sphID int) error {
 		return fmt.Errorf("error retrieving SPH for reindexing: %w", err)
 	}
 
+	if sph == nil {
+		log.Printf("Reindex failed because sph id: %d Not Found", sphID)
+		return nil
+	}
+
 	event := map[string]interface{}{
 		"event":   "Reindexed",
 		"payload": sph,

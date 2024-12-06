@@ -7,6 +7,7 @@ import (
 
 	"github.com/NHadi/AmanahPro-common/messagebroker"
 	"github.com/NHadi/AmanahPro-common/protos"
+	commonServices "github.com/NHadi/AmanahPro-common/services"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-redis/redis/v8"
@@ -28,6 +29,8 @@ func CreateServices(
 	}
 	sphGrpcClient := protos.NewSphServiceClient(conn)
 
+	auditTrailService := commonServices.NewAuditTrailService(esClient, "audit-trail")
+
 	// Create the SpkService instance
 	spkService := services.NewSpkService(
 		repos.SpkRepository,
@@ -36,9 +39,11 @@ func CreateServices(
 		rabbitPublisher,
 		"spk_events",
 		sphGrpcClient, // Inject SPH gRPC client
+		auditTrailService,
 	)
 
 	return &services.Services{
-		SPKService: spkService,
+		SPKService:        spkService,
+		AuditTrailService: auditTrailService,
 	}
 }

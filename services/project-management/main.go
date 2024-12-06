@@ -4,8 +4,6 @@ import (
 	"AmanahPro/services/project-management/common/bootstrap"
 	"AmanahPro/services/project-management/common/config"
 	"AmanahPro/services/project-management/common/factories"
-	"AmanahPro/services/project-management/common/messagebroker"
-	commonMiddleware "AmanahPro/services/project-management/common/middleware"
 	"AmanahPro/services/project-management/common/routes"
 	"AmanahPro/services/project-management/internal/handlers"
 	"context"
@@ -17,6 +15,10 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"time"
+
+	commonMiddleware "github.com/NHadi/AmanahPro-common/middleware"
+
+	"github.com/NHadi/AmanahPro-common/messagebroker"
 
 	_ "AmanahPro/services/project-management/docs"
 
@@ -122,6 +124,8 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 
 	router.Use(deps.LoggerMiddleware)
 	router.Use(commonMiddleware.RequestLoggingMiddleware())
+	// Add Trace-ID middleware
+	router.Use(middleware.TraceIDMiddleware())
 
 	api := router.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))

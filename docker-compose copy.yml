@@ -39,9 +39,10 @@ services:
       - es_logs:/usr/share/elasticsearch/logs
       - docker_logs:/var/log/containers
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s
-      retries: 5
+      timeout: 10s
+      retries: 3
     networks:
       - app_network
 

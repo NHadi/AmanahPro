@@ -28,16 +28,22 @@ definitions:
         type: number
       TotalJasa:
         type: number
+      TotalMaterial:
+        type: number
       Unit:
         type: string
       UnitPriceJasa:
+        type: number
+      UnitPriceMaterial:
         type: number
     required:
     - Description
     - Quantity
     - TotalJasa
+    - TotalMaterial
     - Unit
     - UnitPriceJasa
+    - UnitPriceMaterial
     type: object
   dto.SpkSectionDTO:
     properties:
@@ -189,6 +195,8 @@ definitions:
       sectionTitle:
         description: Section title
         type: string
+      sphSectionId:
+        type: integer
       spkId:
         description: Foreign key to SPK
         type: integer

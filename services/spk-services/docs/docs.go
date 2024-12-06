@@ -853,8 +853,10 @@ const docTemplate = `{
                 "Description",
                 "Quantity",
                 "TotalJasa",
+                "TotalMaterial",
                 "Unit",
-                "UnitPriceJasa"
+                "UnitPriceJasa",
+                "UnitPriceMaterial"
             ],
             "properties": {
                 "Description": {
@@ -869,10 +871,16 @@ const docTemplate = `{
                 "TotalJasa": {
                     "type": "number"
                 },
+                "TotalMaterial": {
+                    "type": "number"
+                },
                 "Unit": {
                     "type": "string"
                 },
                 "UnitPriceJasa": {
+                    "type": "number"
+                },
+                "UnitPriceMaterial": {
                     "type": "number"
                 }
             }
@@ -1085,6 +1093,9 @@ const docTemplate = `{
                 "sectionTitle": {
                     "description": "Section title",
                     "type": "string"
+                },
+                "sphSectionId": {
+                    "type": "integer"
                 },
                 "spkId": {
                     "description": "Foreign key to SPK",

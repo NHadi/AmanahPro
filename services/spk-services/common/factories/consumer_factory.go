@@ -9,6 +9,6 @@ import (
 
 func CreateConsumers(esClient *elasticsearch.Client, rabbitChannel *amqp.Channel) map[string]*services.ConsumerService {
 	return map[string]*services.ConsumerService{
-		"spk_events": services.NewConsumerService(esClient, "spks", "spk_events"),
+		"spk_events": services.NewConsumerService(esClient, "spks", "even-stores", "spk_events"),
 	}
 }

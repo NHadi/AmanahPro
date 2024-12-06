@@ -8,73 +8,6 @@
     },
     "paths": {
         "/api/projects": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Update an existing project",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Projects"
-                ],
-                "summary": "Update Project",
-                "parameters": [
-                    {
-                        "description": "Project Data",
-                        "name": "project",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Project"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -99,18 +32,16 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/dto.ProjectDTO"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Created Project",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
                         }
                     },
                     "400": {
@@ -214,7 +145,88 @@
                 }
             }
         },
-        "/api/projects/{id}": {
+        "/api/projects/{project_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Update Project",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Project Data",
+                        "name": "project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProjectDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated Project",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -233,14 +245,14 @@
                     {
                         "type": "integer",
                         "description": "Project ID",
-                        "name": "id",
+                        "name": "project_id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "204": {
+                        "description": "No Content",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -266,6 +278,15 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Project Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -282,131 +303,43 @@
     "definitions": {
         "dto.ProjectDTO": {
             "type": "object",
+            "required": [
+                "ProjectName"
+            ],
             "properties": {
-                "CreatedAt": {
+                "Description": {
+                    "description": "Project Description",
                     "type": "string"
                 },
-                "KeyUsers": {
-                    "description": "Nested KeyUsers array",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ProjectUserDTO"
-                    }
+                "EndDate": {
+                    "$ref": "#/definitions/models.CustomDate"
                 },
                 "Location": {
+                    "description": "Project Location",
                     "type": "string"
                 },
-                "OrganizationID": {
-                    "type": "integer"
-                },
                 "ProjectID": {
+                    "description": "Project ID",
                     "type": "integer"
                 },
                 "ProjectName": {
+                    "description": "Project Name (Required)",
                     "type": "string"
                 },
-                "Recap": {
-                    "description": "Nested Recap object",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/dto.ProjectRecapDTO"
-                        }
-                    ]
+                "StartDate": {
+                    "$ref": "#/definitions/models.CustomDate"
                 },
                 "Status": {
-                    "type": "string"
-                },
-                "UpdatedAt": {
+                    "description": "Project Status",
                     "type": "string"
                 }
             }
         },
-        "dto.ProjectRecapDTO": {
+        "models.CustomDate": {
             "type": "object",
             "properties": {
-                "Margin": {
-                    "type": "number"
-                },
-                "MarginPercentage": {
-                    "type": "number"
-                },
-                "TotalOpname": {
-                    "type": "number"
-                },
-                "TotalPengeluaran": {
-                    "type": "number"
-                }
-            }
-        },
-        "dto.ProjectUserDTO": {
-            "type": "object",
-            "properties": {
-                "Role": {
+                "time.Time": {
                     "type": "string"
-                },
-                "UserID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.Project": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "description": "Creation timestamp",
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "Created by user ID",
-                    "type": "integer"
-                },
-                "deletedAt": {
-                    "description": "Deletion timestamp",
-                    "type": "string"
-                },
-                "deletedBy": {
-                    "description": "Deleted by user ID",
-                    "type": "integer"
-                },
-                "description": {
-                    "description": "Description of the project",
-                    "type": "string"
-                },
-                "endDate": {
-                    "description": "End date of the project",
-                    "type": "string"
-                },
-                "location": {
-                    "description": "Project location",
-                    "type": "string"
-                },
-                "organizationID": {
-                    "description": "Organization ID",
-                    "type": "integer"
-                },
-                "projectID": {
-                    "description": "Primary key",
-                    "type": "integer"
-                },
-                "projectName": {
-                    "description": "Name of the project",
-                    "type": "string"
-                },
-                "startDate": {
-                    "description": "Start date of the project",
-                    "type": "string"
-                },
-                "status": {
-                    "description": "Status of the project",
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "description": "Update timestamp",
-                    "type": "string"
-                },
-                "updatedBy": {
-                    "description": "Updated by user ID",
-                    "type": "integer"
                 }
             }
         }

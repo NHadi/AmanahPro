@@ -1,0 +1,746 @@
+definitions:
+  dto.SpkDTO:
+    properties:
+      Date:
+        $ref: '#/definitions/models.CustomDate'
+      ProjectId:
+        type: integer
+      ProjectName:
+        type: string
+      SphId:
+        type: integer
+      SpkId:
+        type: integer
+      Subject:
+        type: string
+    required:
+    - ProjectId
+    - ProjectName
+    - Subject
+    type: object
+  dto.SpkDetailDTO:
+    properties:
+      Description:
+        type: string
+      DetailId:
+        type: integer
+      Quantity:
+        type: number
+      TotalJasa:
+        type: number
+      TotalMaterial:
+        type: number
+      Unit:
+        type: string
+      UnitPriceJasa:
+        type: number
+      UnitPriceMaterial:
+        type: number
+    required:
+    - Description
+    - Quantity
+    - TotalJasa
+    - TotalMaterial
+    - Unit
+    - UnitPriceJasa
+    - UnitPriceMaterial
+    type: object
+  dto.SpkSectionDTO:
+    properties:
+      SectionId:
+        type: integer
+      SectionTitle:
+        type: string
+    required:
+    - SectionTitle
+    type: object
+  models.CustomDate:
+    properties:
+      time.Time:
+        type: string
+    type: object
+  models.SPK:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      date:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Date of SPK
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      organizationId:
+        description: Organization ID
+        type: integer
+      projectId:
+        description: Foreign key to Projects
+        type: integer
+      projectName:
+        description: Project name
+        type: string
+      sections:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.SPKSection'
+        type: array
+      sphId:
+        description: Foreign key to SPH
+        type: integer
+      baId:
+        description: Primary key
+        type: integer
+      subject:
+        description: SPK subject
+        type: string
+      totalJasa:
+        description: Total Jasa Cost
+        type: number
+      totalMaterial:
+        description: Total Material Cost
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.SPKDetail:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      description:
+        description: Item description
+        type: string
+      detailId:
+        description: Primary key
+        type: integer
+      organizationId:
+        description: Organization ID
+        type: integer
+      quantity:
+        description: Item quantity
+        type: number
+      sectionId:
+        description: Foreign key to SPK Section
+        type: integer
+      sphItemId:
+        description: Reference to SPH Item (optional)
+        type: integer
+      totalJasa:
+        description: Total Jasa cost
+        type: number
+      totalMaterial:
+        description: Total Material cost
+        type: number
+      unit:
+        description: Unit of measurement
+        type: string
+      unitPriceJasa:
+        description: Unit price for Jasa
+        type: number
+      unitPriceMaterial:
+        description: Unit price for Material
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.SPKSection:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      details:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.SPKDetail'
+        type: array
+      organizationId:
+        description: Organization ID
+        type: integer
+      sectionId:
+        description: Primary key
+        type: integer
+      sectionTitle:
+        description: Section title
+        type: string
+      sphSectionId:
+        type: integer
+      baId:
+        description: Foreign key to SPK
+        type: integer
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is the SPH Management Services API documentation for managing
+    SPK, and reconciliations.
+  title: SPK Management Services API
+  version: "1.0"
+paths:
+  /api/ba:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPK
+      parameters:
+      - description: SPK Data
+        in: body
+        name: ba
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPK
+      tags:
+      - SPKs
+  /api/ba/{ba_id}:
+    delete:
+      description: Delete an SPK by ID
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPK
+      tags:
+      - SPKs
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPK
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: SPK Data
+        in: body
+        name: ba
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPK
+      tags:
+      - SPKs
+  /api/ba/{ba_id}/sections:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPK Section
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: SPK Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkSectionDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPK Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPK Section
+      tags:
+      - SPKSections
+  /api/ba/{ba_id}/sections/{section_id}:
+    delete:
+      description: Delete an SPK Section by ID
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPK Section
+      tags:
+      - SPKSections
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPK Section
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: SPK Section Data
+        in: body
+        name: section
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkSectionDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPK Section
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Section Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPK Section
+      tags:
+      - SPKSections
+  /api/ba/{ba_id}/sections/{section_id}/details:
+    post:
+      consumes:
+      - application/json
+      description: Create a new SPK Detail
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: SPK Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkDetailDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created SPK Detail
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create SPK Detail
+      tags:
+      - SPKDetails
+  /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}:
+    delete:
+      description: Delete an SPK Detail by ID
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Detail Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete SPK Detail
+      tags:
+      - SPKDetails
+    put:
+      consumes:
+      - application/json
+      description: Update an existing SPK Detail
+      parameters:
+      - description: SPK ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Section ID
+        in: path
+        name: section_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: SPK Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SpkDetailDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated SPK Detail
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: SPK Detail Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update SPK Detail
+      tags:
+      - SPKDetails
+  /api/ba/filter:
+    get:
+      description: Filter SPKs by organization ID, SPK ID, and project ID
+      parameters:
+      - description: Organization ID
+        in: query
+        name: organization_id
+        required: true
+        type: integer
+      - description: SPK ID
+        in: query
+        name: ba_id
+        type: integer
+      - description: Project ID
+        in: query
+        name: project_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.SPK'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Filter SPKs
+      tags:
+      - SPKs
+securityDefinitions:
+  BearerAuth:
+    description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

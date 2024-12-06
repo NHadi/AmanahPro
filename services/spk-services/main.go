@@ -122,6 +122,8 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 
 	router.Use(deps.LoggerMiddleware)
 	router.Use(middleware.RequestLoggingMiddleware())
+	// Add Trace-ID middleware
+	router.Use(middleware.TraceIDMiddleware())
 
 	api := router.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))

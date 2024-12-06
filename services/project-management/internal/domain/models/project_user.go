@@ -2,7 +2,6 @@ package models
 
 import "time"
 
-// ProjectUser represents the ProjectUser table in the database
 type ProjectUser struct {
 	ID             int        `gorm:"primaryKey;autoIncrement"` // Primary key
 	ProjectID      int        `gorm:"not null"`                 // Foreign key to Projects
@@ -12,7 +11,12 @@ type ProjectUser struct {
 	CreatedBy      *int       `gorm:"null"`                     // Created by user ID
 	UpdatedBy      *int       `gorm:"null"`                     // Updated by user ID
 	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`           // Update timestamp
+	DeletedBy      *int       `gorm:"null"`                     // Deleted by user ID
+	DeletedAt      *time.Time `gorm:"index;null"`               // Deletion timestamp
 	OrganizationID *int       `gorm:"null"`                     // Organization ID
+
+	// Relationships
+	Project Project `gorm:"foreignKey:ProjectID;references:ProjectID"` // Many-to-One relationship with Project
 }
 
 // TableName specifies the table name for ProjectUser

@@ -3,12 +3,13 @@ package bootstrap
 import (
 	"AmanahPro/services/project-management/common/config"
 	"AmanahPro/services/project-management/common/factories"
-	"AmanahPro/services/project-management/common/messagebroker"
-	"AmanahPro/services/project-management/internal/application/services"
-	"AmanahPro/services/project-management/internal/infrastructure/persistence"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/NHadi/AmanahPro-common/infrastructure/persistence"
+	"github.com/NHadi/AmanahPro-common/messagebroker"
+	commonServices "github.com/NHadi/AmanahPro-common/services"
 
 	"github.com/NHadi/AmanahPro-common/middleware"
 	"github.com/elastic/go-elasticsearch/v8"
@@ -53,8 +54,6 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 	// List of queues to declare
 	queueNames := []string{
 		"project_events",
-		"project_user_events",
-		"project_recap_events",
 	}
 
 	// Initialize RabbitMQ service
@@ -76,7 +75,7 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 	rabbitService.SetOnReconnect(func() {
 		log.Println("RabbitMQ reconnected. Reinitializing consumers...")
 		for queueName, consumer := range consumers {
-			go func(c *services.ConsumerService, q string) {
+			go func(c *commonServices.ConsumerService, q string) {
 				for {
 					channel, err := rabbitService.NewChannel()
 					if err != nil {
@@ -119,14 +118,14 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 }
 
 // startConsumers starts RabbitMQ consumers for the provided queues.
-func startConsumers(cfg *config.Config, consumers map[string]*services.ConsumerService, rabbitService *messagebroker.RabbitMQService) {
+func startConsumers(cfg *config.Config, consumers map[string]*commonServices.ConsumerService, rabbitService *messagebroker.RabbitMQService) {
 	concurrency, err := strconv.Atoi(cfg.CONCURRENCY)
 	if err != nil || concurrency == 0 {
 		concurrency = 5
 	}
 
 	for queueName, consumer := range consumers {
-		go func(c *services.ConsumerService, q string) {
+		go func(c *commonServices.ConsumerService, q string) {
 			for {
 				log.Printf("Starting consumer for queue: %s", q)
 

@@ -17,8 +17,8 @@ github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 h1:DzHpqpoJVaC
 github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1/go.mod h1:wP83P5OoQ5p6ip3ScPr0BAq0BvuPAvacpEuSzyouqAI=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
-github.com/NHadi/AmanahPro-common v0.3.0 h1:3SaO2Ab4JhNekBazDjCg3rUXu1y40t7ZQw00Yu8QgEE=
-github.com/NHadi/AmanahPro-common v0.3.0/go.mod h1:2YF5LKp8kxyy4COxN1TVbQhq9YoB2628Jo+4nHjjjNA=
+github.com/NHadi/AmanahPro-common v0.3.7 h1:TtJT9+5xgpluQ9aH5RVEMMzT+qiJqtdCZExOWib19+w=
+github.com/NHadi/AmanahPro-common v0.3.7/go.mod h1:2YF5LKp8kxyy4COxN1TVbQhq9YoB2628Jo+4nHjjjNA=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=

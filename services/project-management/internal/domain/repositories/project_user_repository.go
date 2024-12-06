@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"AmanahPro/services/project-management/internal/domain/models"
-	"AmanahPro/services/project-management/internal/dto"
 )
 
 type ProjectUserRepository interface {
@@ -14,9 +13,5 @@ type ProjectUserRepository interface {
 
 	// Delete removes a project user from the database by ID
 	Delete(id int) error
-
-	// FindByProjectID retrieves project users associated with a specific project ID from Elasticsearch
-	FindByProjectID(projectID int, organizationID *int) ([]dto.ProjectUserDTO, error)
-
-	FindByUserAndProject(userID, projectID int, organizationID *int) (*dto.ProjectUserDTO, error)
+	GetByID(id int) (*models.ProjectUser, error)
 }
