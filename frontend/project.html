@@ -67,8 +67,6 @@
       #sidenav-main {
         z-index: 1000; /* Ensure it stays below the popup */
       }
-
-
     </style>
   </head>
 
@@ -241,23 +239,44 @@
               </li>
             </ol>
             <h6 class="font-weight-bolder text-white mb-0">Project</h6>
-          </nav>   
-          <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+          </nav>
+          <div
+            class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4"
+            id="navbar"
+          >
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
               <div class="input-group">
-                <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                <input type="text" class="form-control" placeholder="Type here..." onfocus="focused(this)" onfocusout="defocused(this)" fdprocessedid="e9r3t4">
+                <span class="input-group-text text-body"
+                  ><i class="fas fa-search" aria-hidden="true"></i
+                ></span>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Type here..."
+                  onfocus="focused(this)"
+                  onfocusout="defocused(this)"
+                  fdprocessedid="e9r3t4"
+                />
               </div>
             </div>
-            <ul class="navbar-nav  justify-content-end">
+            <ul class="navbar-nav justify-content-end">
               <li class="nav-item d-flex align-items-center">
-                <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
+                <a
+                  href="javascript:;"
+                  class="nav-link text-white font-weight-bold px-0"
+                >
                   <i class="fa fa-user me-sm-1" aria-hidden="true"></i>
-                  <span id="username-display" class="d-sm-inline d-none">Sign In</span>
+                  <span id="username-display" class="d-sm-inline d-none"
+                    >Sign In</span
+                  >
                 </a>
               </li>
               <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                <a href="javascript:;" class="nav-link text-white p-0" id="iconNavbarSidenav">
+                <a
+                  href="javascript:;"
+                  class="nav-link text-white p-0"
+                  id="iconNavbarSidenav"
+                >
                   <div class="sidenav-toggler-inner">
                     <i class="sidenav-toggler-line bg-white"></i>
                     <i class="sidenav-toggler-line bg-white"></i>
@@ -517,486 +536,1406 @@
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script src="global.js"></script>
     <script>
+      $(document).ready(function () {
+        $("#username-display").html(localStorage.getItem("user"));
 
-$(document).ready(function () {
-  $('#username-display').html(localStorage.getItem("user"));
-
-  // Initialize notification (dxToast)
-  function showNotification(message, type) {
-    DevExpress.ui.notify({
-      message: message,
-      type: type, // 'success', 'error', 'info', 'warning'
-      displayTime: 3000,
-      position: {
-        at: "top center",
-        my: "top center",
-      },
-    });
-  }
-
-  // Fetch projects data from the API
-  function fetchProjects() {
-    return $.ajax({
-      url: `${API_BASE_URL}/project_management_services/api/projects/search`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
-  }
-
-  // Add new project
-  function addProject(project) {
-    return $.ajax({
-      url: `${API_BASE_URL}/project_management_services/api/projects`,
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        "Content-Type": "application/json",
-      },
-      data: JSON.stringify(project),
-    });
-  }
-
-  // Update project
-  function updateProject(projectID, project) {
-    return $.ajax({
-      url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        "Content-Type": "application/json",
-      },
-      data: JSON.stringify(project),
-    });
-  }
-
-  // Delete project
-  function deleteProject(projectID) {
-    return $.ajax({
-      url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
-  }
-
-  function fetchBreakdownByProject(projectId) {
-  return $.ajax({
-    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter`,
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-    },
-    data: { project_id: projectId },
-  })
-    .then(function (data) {
-      console.log("Breakdown Data for Project:", data); // Debugging
-      return data; // Return breakdown data
-    })
-    .catch(function (error) {
-      console.error("Error fetching breakdown:", error);
-      return [];
-    });
-}
-
-
-  // Update summary counts
-  function updateSummaryCounts(data) {
-    const activeProjects = data.filter(p => p.Status === "In Progress").length;
-    const completedProjects = data.filter(p => p.Status === "Completed").length;
-    $("#active-projects-count").text(activeProjects);
-    $("#completed-projects-count").text(completedProjects);
-    $("#pending-documents-count").text(2); // Example static count for pending documents
-    $("#budget-overview").text("IDR 500,000,000"); // Example static budget overview
-  }
-
-  // Initialize the DataGrid for Projects
-  function initializeProjectsGrid(projects) {
-    $("#projects-grid").dxDataGrid({
-      dataSource: new DevExpress.data.CustomStore({
-        key: "ProjectID",
-        load: function () {
-          return fetchProjects().then(data => {
-            updateSummaryCounts(data); // Update counts dynamically
-            return data;
-          });
-        },
-        insert: function (values) {
-          return addProject(values);
-        },
-        update: function (key, values) {
-          return updateProject(key, values);
-        },
-        remove: function (key) {
-          return deleteProject(key);
-        },
-      }),
-      columnAutoWidth: true,
-      showBorders: true,
-      searchPanel: { visible: true, placeholder: "Search..." },
-      headerFilter: { visible: true },
-      filterRow: { visible: true, applyFilter: "auto" },
-      paging: { pageSize: 10 },
-      editing: {
-        mode: "form", // Use Form editing mode
-        allowAdding: true,
-        allowUpdating: true,
-        allowDeleting: true,
-        form: {
-          colCount: 2,
-        },
-      },
-      columns: [
-        { dataField: "ProjectName", caption: "Project Name", validationRules: [{ type: "required" }] },
-        { dataField: "Location", caption: "Location" },
-        { dataField: "StartDate", caption: "Start Date", dataType: "date" },
-        { dataField: "EndDate", caption: "End Date", dataType: "date" },
-        { dataField: "Description", caption: "Description" },
-        { dataField: "Status", caption: "Status" },
-      ],
-    
-
-
-      masterDetail: {
-  enabled: true,
-  template: function (container, options) {
-    const projectId = options.data.ProjectID;
-
-    $("<div>")
-      .dxTabPanel({
-        items: [
-          {
-            title: "Breakdown",
-            template: function () {
-              return $("<div>").dxDataGrid({
-                dataSource: new DevExpress.data.CustomStore({
-                  key: "BreakdownId",
-                  load: function () {
-                    return $.ajax({
-                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter?project_id=${projectId}`,
-                      method: "GET",
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                      },
-                    });
-                  },
-                  insert: function (values) {
-                    DevExpress.ui.notify("Adding breakdown...", "info", 2000);
-                    return $.ajax({
-                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns`,
-                      method: "POST",
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                        "Content-Type": "application/json",
-                      },
-                      data: JSON.stringify({ ...values, ProjectId: projectId }),
-                    })
-                      .done(() => {
-                        DevExpress.ui.notify("Breakdown added successfully!", "success", 2000);
-                      })
-                      .fail(() => {
-                        DevExpress.ui.notify("Failed to add breakdown.", "error", 2000);
-                      });
-                  },
-                  update: function (key, values) {
-                    const updatedData = { ...values, ProjectId: projectId };
-                    DevExpress.ui.notify("Updating breakdown...", "info", 2000);
-                    return $.ajax({
-                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
-                      method: "PUT",
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                        "Content-Type": "application/json",
-                      },
-                      data: JSON.stringify(updatedData),
-                    })
-                      .done(() => {
-                        DevExpress.ui.notify("Breakdown updated successfully!", "success", 2000);
-                      })
-                      .fail(() => {
-                        DevExpress.ui.notify("Failed to update breakdown.", "error", 2000);
-                      });
-                  },
-                  remove: function (key) {
-                    DevExpress.ui.notify("Deleting breakdown...", "info", 2000);
-                    return $.ajax({
-                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
-                      method: "DELETE",
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                      },
-                    })
-                      .done(() => {
-                        DevExpress.ui.notify("Breakdown deleted successfully!", "success", 2000);
-                      })
-                      .fail(() => {
-                        DevExpress.ui.notify("Failed to delete breakdown.", "error", 2000);
-                      });
-                  },
-                }),
-                keyExpr: "BreakdownId",
-                editing: {
-                  mode: "row",
-                  allowAdding: true,
-                  allowUpdating: true,
-                  allowDeleting: true,
-                },
-                showBorders: true,
-                columns: [
-                  { dataField: "Subject", caption: "Breakdown Name", validationRules: [{ type: "required" }] },
-                  { dataField: "Location", caption: "Location" },
-                  { dataField: "Date", caption: "Date", dataType: "date" },
-                ],
-                masterDetail: {
-                  enabled: true,
-                  template: function (breakdownContainer, breakdownOptions) {
-                    const breakdownId = breakdownOptions.data.BreakdownId;
-
-                    $("<div>")
-                      .dxDataGrid({
-                        dataSource: new DevExpress.data.CustomStore({
-                          key: "BreakdownSectionId",
-                          load: function () {
-                            return Promise.resolve(breakdownOptions.data.Sections || []); // Sections come from Breakdown data
-                          },
-                          insert: function (values) {
-                            DevExpress.ui.notify("Adding section...", "info", 2000);
-                            return $.ajax({
-                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections`,
-                              method: "POST",
-                              headers: {
-                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                                "Content-Type": "application/json",
-                              },
-                              data: JSON.stringify(values),
-                            })
-                              .done(() => {
-                                DevExpress.ui.notify("Section added successfully!", "success", 2000);
-                              })
-                              .fail(() => {
-                                DevExpress.ui.notify("Failed to add section.", "error", 2000);
-                              });
-                          },
-                          update: function (key, values) {
-                            DevExpress.ui.notify("Updating section...", "info", 2000);
-                            return $.ajax({
-                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
-                              method: "PUT",
-                              headers: {
-                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                                "Content-Type": "application/json",
-                              },
-                              data: JSON.stringify(values),
-                            })
-                              .done(() => {
-                                DevExpress.ui.notify("Section updated successfully!", "success", 2000);
-                              })
-                              .fail(() => {
-                                DevExpress.ui.notify("Failed to update section.", "error", 2000);
-                              });
-                          },
-                          remove: function (key) {
-                            DevExpress.ui.notify("Deleting section...", "info", 2000);
-                            return $.ajax({
-                              url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
-                              method: "DELETE",
-                              headers: {
-                                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                              },
-                            })
-                              .done(() => {
-                                DevExpress.ui.notify("Section deleted successfully!", "success", 2000);
-                              })
-                              .fail(() => {
-                                DevExpress.ui.notify("Failed to delete section.", "error", 2000);
-                              });
-                          },
-                        }),
-                        keyExpr: "BreakdownSectionId",
-                        editing: {
-                          mode: "row",
-                          allowAdding: true,
-                          allowUpdating: true,
-                          allowDeleting: true,
-                        },
-                        showBorders: true,
-                        columns: [
-                          { dataField: "SectionTitle", caption: "Section Title", validationRules: [{ type: "required" }] },
-                        ],
-                        masterDetail: {
-                          enabled: true,
-                          template: function (sectionContainer, sectionOptions) {
-                            const sectionId = sectionOptions.data.BreakdownSectionId;
-
-                            $("<div>")
-                              .dxDataGrid({
-                                dataSource: new DevExpress.data.CustomStore({
-                                  key: "BreakdownItemId",
-                                  load: function () {
-                                    return Promise.resolve(sectionOptions.data.Items || []); // Items come from Section data
-                                  },
-                                  insert: function (values) {
-                                    DevExpress.ui.notify("Adding item...", "info", 2000);
-                                    return $.ajax({
-                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items`,
-                                      method: "POST",
-                                      headers: {
-                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                                        "Content-Type": "application/json",
-                                      },
-                                      data: JSON.stringify(values),
-                                    })
-                                      .done(() => {
-                                        DevExpress.ui.notify("Item added successfully!", "success", 2000);
-                                      })
-                                      .fail(() => {
-                                        DevExpress.ui.notify("Failed to add item.", "error", 2000);
-                                      });
-                                  },
-                                  update: function (key, values) {
-                                    DevExpress.ui.notify("Updating item...", "info", 2000);
-                                    return $.ajax({
-                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
-                                      method: "PUT",
-                                      headers: {
-                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                                        "Content-Type": "application/json",
-                                      },
-                                      data: JSON.stringify(values),
-                                    })
-                                      .done(() => {
-                                        DevExpress.ui.notify("Item updated successfully!", "success", 2000);
-                                      })
-                                      .fail(() => {
-                                        DevExpress.ui.notify("Failed to update item.", "error", 2000);
-                                      });
-                                  },
-                                  remove: function (key) {
-                                    DevExpress.ui.notify("Deleting item...", "info", 2000);
-                                    return $.ajax({
-                                      url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
-                                      method: "DELETE",
-                                      headers: {
-                                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                                      },
-                                    })
-                                      .done(() => {
-                                        DevExpress.ui.notify("Item deleted successfully!", "success", 2000);
-                                      })
-                                      .fail(() => {
-                                        DevExpress.ui.notify("Failed to delete item.", "error", 2000);
-                                      });
-                                  },
-                                }),
-                                keyExpr: "BreakdownItemId",
-                                editing: {
-                                  mode: "row",
-                                  allowAdding: true,
-                                  allowUpdating: true,
-                                  allowDeleting: true,
-                                },
-                                columns: [
-                                  { dataField: "Description", caption: "Item Description", validationRules: [{ type: "required" }] },
-                                  { dataField: "UnitPrice", caption: "Unit Price", dataType: "number", format: { type: "currency" } },
-                                ],
-                                showBorders: true,
-                              })
-                              .appendTo(sectionContainer);
-                          },
-                        },
-                      })
-                      .appendTo(breakdownContainer);
-                  },
-                },
-              });
+        // Initialize notification (dxToast)
+        function showNotification(message, type) {
+          DevExpress.ui.notify({
+            message: message,
+            type: type, // 'success', 'error', 'info', 'warning'
+            displayTime: 3000,
+            position: {
+              at: "top center",
+              my: "top center",
             },
-          },
-        ],
-        deferRendering: false,
-        showNavButtons: true,
-        selectedIndex: 0,
-      })
-      .appendTo(container);
-  },
-},
+          });
+        }
 
+        // Fetch projects data from the API
+        function fetchProjects() {
+          return $.ajax({
+            url: `${API_BASE_URL}/project_management_services/api/projects/search`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          });
+        }
 
+        // Add new project
+        function addProject(project) {
+          return $.ajax({
+            url: `${API_BASE_URL}/project_management_services/api/projects`,
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify(project),
+          });
+        }
 
-      onRowInserting: function (e) {
-        const newProject = { ...e.data };
-        const store = e.component.getDataSource().store();
+        // Update project
+        function updateProject(projectID, project) {
+          return $.ajax({
+            url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify(project),
+          });
+        }
 
-        // Optimistic update: Insert the project locally
-        store.insert(newProject);
-        e.component.refresh();
+        // Delete project
+        function deleteProject(projectID) {
+          return $.ajax({
+            url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          });
+        }
 
-        e.cancel = addProject(newProject)
-          .done(function () {
-            showNotification("Project added successfully!", "success");
-            e.component.getDataSource().reload(); // Reload grid
+        function fetchBreakdownByProject(projectId) {
+          return $.ajax({
+            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+            data: { project_id: projectId },
+          })
+            .then(function (data) {
+              console.log("Breakdown Data for Project:", data); // Debugging
+              return data; // Return breakdown data
+            })
+            .catch(function (error) {
+              console.error("Error fetching breakdown:", error);
+              return [];
+            });
+        }
+
+        // Update summary counts
+        function updateSummaryCounts(data) {
+          const activeProjects = data.filter(
+            (p) => p.Status === "In Progress"
+          ).length;
+          const completedProjects = data.filter(
+            (p) => p.Status === "Completed"
+          ).length;
+          $("#active-projects-count").text(activeProjects);
+          $("#completed-projects-count").text(completedProjects);
+          $("#pending-documents-count").text(2); // Example static count for pending documents
+          $("#budget-overview").text("IDR 500,000,000"); // Example static budget overview
+        }
+
+        function pollDataReload(component, interval = 1000, retries = 1) {
+          let attempts = 0;
+
+          const intervalId = setInterval(() => {
+            attempts++;
+            component.refresh(); // Reload the grid data
+
+            if (attempts >= retries) {
+              clearInterval(intervalId); // Stop polling after max retries
+            }
+          }, interval);
+        }
+
+        function formatBreakdownData(data) {
+          const formattedData = [];
+
+          data.forEach((breakdown) => {
+            formattedData.push({
+              id: `B-${breakdown.BreakdownId}`,
+              parentId: null,
+              description: breakdown.Subject,
+              unitPrice: null,
+              type: "Breakdown",
+            });
+
+            breakdown.Sections.forEach((section) => {
+              formattedData.push({
+                id: `S-${section.BreakdownSectionId}`,
+                parentId: `B-${breakdown.BreakdownId}`,
+                description: section.SectionTitle,
+                unitPrice: null,
+                type: "Section",
+              });
+
+              section.Items.forEach((item) => {
+                formattedData.push({
+                  id: `I-${item.BreakdownItemId}`,
+                  parentId: `S-${section.BreakdownSectionId}`,
+                  description: item.Description,
+                  unitPrice: item.UnitPrice,
+                  type: "Item",
+                });
+              });
+            });
+          });
+
+          return formattedData;
+        }
+
+        function initializeProjectsGrid(projects) {
+          $("#projects-grid").dxDataGrid({
+            dataSource: new DevExpress.data.CustomStore({
+              key: "ProjectID",
+              load: function () {
+                return fetchProjects().then((data) => {
+                  updateSummaryCounts(data); // Update counts dynamically
+                  return data;
+                });
+              },
+              insert: function (values) {
+                DevExpress.ui.notify("Adding project...", "info", 2000);
+                return addProject(values)
+                  .done(() => {
+                    DevExpress.ui.notify(
+                      "Project added successfully!",
+                      "success",
+                      2000
+                    );
+                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
+                  })
+                  .fail(() => {
+                    DevExpress.ui.notify(
+                      "Failed to add project.",
+                      "error",
+                      2000
+                    );
+                  });
+              },
+              update: function (key, values) {
+                DevExpress.ui.notify("Updating project...", "info", 2000);
+                return updateProject(key, values)
+                  .done(() => {
+                    DevExpress.ui.notify(
+                      "Project updated successfully!",
+                      "success",
+                      2000
+                    );
+                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
+                  })
+                  .fail(() => {
+                    DevExpress.ui.notify(
+                      "Failed to update project.",
+                      "error",
+                      2000
+                    );
+                  });
+              },
+              remove: function (key) {
+                DevExpress.ui.notify("Deleting project...", "info", 2000);
+                return deleteProject(key)
+                  .done(() => {
+                    DevExpress.ui.notify(
+                      "Project deleted successfully!",
+                      "success",
+                      2000
+                    );
+                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
+                  })
+                  .fail(() => {
+                    DevExpress.ui.notify(
+                      "Failed to delete project.",
+                      "error",
+                      2000
+                    );
+                  });
+              },
+            }),
+            columnAutoWidth: true,
+            showBorders: true,
+            searchPanel: { visible: true, placeholder: "Search..." },
+            headerFilter: { visible: true },
+            filterRow: { visible: true, applyFilter: "auto" },
+            paging: { pageSize: 10 },
+            editing: {
+              mode: "form", // Use Form editing mode
+              allowAdding: true,
+              allowUpdating: true,
+              allowDeleting: true,
+              form: {
+                colCount: 2,
+              },
+            },
+            columns: [
+              {
+                dataField: "ProjectName",
+                caption: "Project Name",
+                validationRules: [{ type: "required" }],
+              },
+              { dataField: "Location", caption: "Location" },
+              {
+                dataField: "StartDate",
+                caption: "Start Date",
+                dataType: "date",
+              },
+              { dataField: "EndDate", caption: "End Date", dataType: "date" },
+              { dataField: "Description", caption: "Description" },
+              { dataField: "Status", caption: "Status" },
+            ],
+            onRowInserting: function (e) {
+              const newProject = { ...e.data };
+              const store = e.component.getDataSource().store();
+
+              // Optimistic update: Insert the project locally
+              store.insert(newProject);
+              e.component.refresh();
+
+              e.cancel = addProject(newProject)
+                .done(() => {
+                  DevExpress.ui.notify(
+                    "Project added successfully!",
+                    "success",
+                    2000
+                  );
+                  pollDataReload(e.component); // Reload grid
+                })
+                .fail((error) => {
+                  store.remove(newProject.ProjectID); // Revert on failure
+                  e.component.refresh();
+                  DevExpress.ui.notify("Failed to add project.", "error", 2000);
+                  console.error("Failed to add project:", error);
+                });
+            },
+            onRowUpdating: function (e) {
+              const projectID = e.key;
+              const updatedProject = { ...e.oldData, ...e.newData };
+              const store = e.component.getDataSource().store();
+
+              store.update(projectID, updatedProject);
+              e.component.refresh();
+
+              e.cancel = updateProject(projectID, updatedProject)
+                .done(() => {
+                  DevExpress.ui.notify(
+                    "Project updated successfully!",
+                    "success",
+                    2000
+                  );
+                  pollDataReload(e.component); // Reload grid
+                })
+                .fail((error) => {
+                  store.update(projectID, e.oldData); // Revert on failure
+                  e.component.refresh();
+                  DevExpress.ui.notify(
+                    "Failed to update project.",
+                    "error",
+                    2000
+                  );
+                  console.error("Failed to update project:", error);
+                });
+            },
+            onRowRemoving: function (e) {
+              const projectID = e.key;
+              const store = e.component.getDataSource().store();
+
+              store.remove(projectID);
+              e.component.refresh();
+
+              e.cancel = deleteProject(projectID)
+                .done(() => {
+                  DevExpress.ui.notify(
+                    "Project deleted successfully!",
+                    "success",
+                    2000
+                  );
+                  pollDataReload(e.component); // Reload grid
+                })
+                .fail((error) => {
+                  store.insert(e.data); // Revert on failure
+                  e.component.refresh();
+                  DevExpress.ui.notify(
+                    "Failed to delete project.",
+                    "error",
+                    2000
+                  );
+                  console.error("Failed to delete project:", error);
+                });
+            },
+
+            masterDetail: {
+              enabled: true,
+              template: function (container, options) {
+                const projectId = options.data.ProjectID;
+
+                $("<div>")
+                  .dxTabPanel({
+                    items: [
+                      {
+                        title: "Breakdown",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "BreakdownId",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/filter?project_id=${projectId}`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                });
+                              },
+                              insert: function (values) {
+                                if (values.Date) {
+                                  const date = new Date(values.Date);
+                                  values.Date = date
+                                    .toISOString()
+                                    .split("T")[0];
+                                }
+                                DevExpress.ui.notify(
+                                  "Adding breakdown...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns`,
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    ...values,
+                                    ProjectId: projectId,
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "Breakdown added successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to add breakdown.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              update: function (key, values) {
+                                const updatedData = {
+                                  ...values,
+                                  ProjectId: projectId,
+                                };
+                                DevExpress.ui.notify(
+                                  "Updating breakdown...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
+                                  method: "PUT",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify(updatedData),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "Breakdown updated successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to update breakdown.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              remove: function (key) {
+                                DevExpress.ui.notify(
+                                  "Deleting breakdown...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${key}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "Breakdown deleted successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to delete breakdown.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                            }),
+                            keyExpr: "BreakdownId",
+                            editing: {
+                              mode: "row",
+                              allowAdding: true,
+                              allowUpdating: true,
+                              allowDeleting: true,
+                            },
+                            showBorders: true,
+                            columnAutoWidth: true, // Auto-resize columns
+                            wordWrapEnabled: true, // Wrap text in cells
+                            filterRow: {
+                              visible: true,
+                              applyFilter: "auto",
+                            },
+                            headerFilter: {
+                              visible: true,
+                            },
+                            columns: [
+                              {
+                                dataField: "Subject",
+                                caption: "Breakdown Name",
+                                validationRules: [{ type: "required" }],
+                                headerFilter: { allowSearch: true },
+                              },
+                              {
+                                dataField: "Location",
+                                caption: "Location",
+                                headerFilter: { allowSearch: true },
+                              },
+                              {
+                                dataField: "Date",
+                                caption: "Date",
+                                dataType: "date",
+                              },
+                            ],
+                            masterDetail: {
+                              enabled: true,
+                              template: function (
+                                breakdownContainer,
+                                breakdownOptions
+                              ) {
+                                const breakdownId =
+                                  breakdownOptions.data.BreakdownId;
+
+                                $("<div>")
+                                  .dxDataGrid({
+                                    dataSource: new DevExpress.data.CustomStore(
+                                      {
+                                        key: "BreakdownSectionId",
+                                        load: function () {
+                                          return Promise.resolve(
+                                            breakdownOptions.data.Sections || []
+                                          );
+                                        },
+                                        insert: function (values) {
+                                          DevExpress.ui.notify(
+                                            "Adding section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections`,
+                                            method: "POST",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section added successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to add section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        update: function (key, values) {
+                                          DevExpress.ui.notify(
+                                            "Updating section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
+                                            method: "PUT",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section updated successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to update section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        remove: function (key) {
+                                          DevExpress.ui.notify(
+                                            "Deleting section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
+                                            method: "DELETE",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                            },
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                      }
+                                    ),
+                                    keyExpr: "BreakdownSectionId",
+                                    editing: {
+                                      mode: "row",
+                                      allowAdding: true,
+                                      allowUpdating: true,
+                                      allowDeleting: true,
+                                    },
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    wordWrapEnabled: true,
+                                    showColumnHeaders: false, // Hide the column headers
+                                    filterRow: {
+                                      visible: true, // Show the filter row
+                                      applyFilter: "auto",
+                                    },
+                                    headerFilter: {
+                                      visible: false, // Disable header filters
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "SectionTitle",
+                                        caption: "Section Title",
+                                        validationRules: [{ type: "required" }],
+                                        headerFilter: { allowSearch: true },
+                                      },
+                                    ],
+                                    masterDetail: {
+                                      enabled: true,
+                                      template: function (
+                                        sectionContainer,
+                                        sectionOptions
+                                      ) {
+                                        const sectionId =
+                                          sectionOptions.data
+                                            .BreakdownSectionId;
+
+                                        $("<div>")
+                                          .dxDataGrid({
+                                            dataSource:
+                                              new DevExpress.data.CustomStore({
+                                                key: "BreakdownItemId",
+                                                load: function () {
+                                                  return Promise.resolve(
+                                                    sectionOptions.data.Items ||
+                                                      []
+                                                  );
+                                                },
+                                                insert: function (values) {
+                                                  DevExpress.ui.notify(
+                                                    "Adding item...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items`,
+                                                    method: "POST",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    data: JSON.stringify(
+                                                      values
+                                                    ),
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Item added successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to add item.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                                update: function (key, values) {
+                                                  DevExpress.ui.notify(
+                                                    "Updating item...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
+                                                    method: "PUT",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    data: JSON.stringify(
+                                                      values
+                                                    ),
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Item updated successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to update item.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                                remove: function (key) {
+                                                  DevExpress.ui.notify(
+                                                    "Deleting item...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
+                                                    method: "DELETE",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                    },
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Item deleted successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to delete item.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                              }),
+                                            keyExpr: "BreakdownItemId",
+                                            editing: {
+                                              mode: "batch",
+                                              allowAdding: true,
+                                              allowUpdating: true,
+                                              allowDeleting: true,
+                                            },
+                                            showBorders: true,
+                                            columnAutoWidth: true,
+                                            wordWrapEnabled: true,
+                                            filterRow: {
+                                              visible: true,
+                                              applyFilter: "auto",
+                                            },
+                                            headerFilter: {
+                                              visible: true,
+                                            },
+                                            columns: [
+                                              {
+                                                dataField: "Description",
+                                                caption: "Item Description",
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "UnitPrice",
+                                                caption: "Unit Price",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                              },
+                                            ],
+                                            summary: {
+                                              totalItems: [
+                                                {
+                                                  column: "UnitPrice",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat: "Total: {0}",
+                                                },
+                                              ],
+                                            },
+                                          })
+                                          .appendTo(sectionContainer);
+                                      },
+                                    },
+                                  })
+                                  .appendTo(breakdownContainer);
+                              },
+                            },
+                          });
+                        },
+                      },
+                      {
+                        title: "SPH",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "SphId",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/sph_services/api/sph/filter?project_id=${projectId}`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                });
+                              },
+                              insert: function (values) {
+                                if (values.Date) {
+                                  const date = new Date(values.Date);
+                                  values.Date = date
+                                    .toISOString()
+                                    .split("T")[0];
+                                }
+                                DevExpress.ui.notify(
+                                  "Adding SPH...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/sph_services/api/sph`,
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    ...values,
+                                    ProjectId: projectId,
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPH added successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to add SPH.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              update: function (key, values) {
+                                const updatedData = {
+                                  ...values,
+                                  ProjectId: projectId,
+                                };
+                                DevExpress.ui.notify(
+                                  "Updating SPH...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
+                                  method: "PUT",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify(updatedData),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPH updated successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to update SPH.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              remove: function (key) {
+                                DevExpress.ui.notify(
+                                  "Deleting SPH...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPH deleted successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to delete SPH.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                            }),
+                            keyExpr: "SphId",
+                            editing: {
+                              mode: "row",
+                              allowAdding: true,
+                              allowUpdating: true,
+                              allowDeleting: true,
+                            },
+                            showBorders: true,
+                            columnAutoWidth: true, // Auto-resize columns
+                            wordWrapEnabled: true, // Wrap text in cells
+                            filterRow: {
+                              visible: true,
+                              applyFilter: "auto",
+                            },
+                            headerFilter: {
+                              visible: true,
+                            },
+                            columns: [
+                              {
+                                dataField: "Subject",
+                                caption: "SPH Name",
+                                validationRules: [{ type: "required" }],
+                                headerFilter: { allowSearch: true },
+                              },
+                              {
+                                dataField: "Location",
+                                caption: "Location",
+                                headerFilter: { allowSearch: true },
+                              },
+                              {
+                                dataField: "Date",
+                                caption: "Date",
+                                dataType: "date",
+                              },
+                              {
+                                dataField: "RecepientName",
+                                caption: "Recipient Name",
+                              },
+                            ],
+                            masterDetail: {
+                              enabled: true,
+                              template: function (sphContainer, sphOptions) {
+                                const sphId = sphOptions.data.SphId;
+
+                                $("<div>")
+                                  .dxDataGrid({
+                                    dataSource: new DevExpress.data.CustomStore(
+                                      {
+                                        key: "SphSectionId",
+                                        load: function () {
+                                          return Promise.resolve(
+                                            sphOptions.data.Sections || []
+                                          );
+                                        },
+                                        insert: function (values) {
+                                          DevExpress.ui.notify(
+                                            "Adding SPH Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections`,
+                                            method: "POST",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "SPH Section added successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to add SPH Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        update: function (key, values) {
+                                          DevExpress.ui.notify(
+                                            "Updating SPH Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
+                                            method: "PUT",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "SPH Section updated successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to update SPH Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        remove: function (key) {
+                                          DevExpress.ui.notify(
+                                            "Deleting SPH Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
+                                            method: "DELETE",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                            },
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "SPH Section deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete SPH Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                      }
+                                    ),
+                                    keyExpr: "SphSectionId",
+                                    editing: {
+                                      mode: "row",
+                                      allowAdding: true,
+                                      allowUpdating: true,
+                                      allowDeleting: true,
+                                    },
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    wordWrapEnabled: true,
+                                    filterRow: {
+                                      visible: true,
+                                      applyFilter: "auto",
+                                    },
+                                    headerFilter: {
+                                      visible: true,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "SectionTitle",
+                                        caption: "Section Title",
+                                        validationRules: [{ type: "required" }],
+                                        headerFilter: { allowSearch: true },
+                                      },
+                                    ],
+                                    masterDetail: {
+                                      enabled: true,
+                                      template: function (
+                                        sectionContainer,
+                                        sectionOptions
+                                      ) {
+                                        const sectionId =
+                                          sectionOptions.data.SphSectionId;
+
+                                        $("<div>")
+                                          .dxDataGrid({
+                                            dataSource:
+                                              new DevExpress.data.CustomStore({
+                                                key: "SphDetailId",
+                                                load: function () {
+                                                  return Promise.resolve(
+                                                    sectionOptions.data
+                                                      .Details || []
+                                                  );
+                                                },
+                                                insert: function (values) {
+                                                  DevExpress.ui.notify(
+                                                    "Adding SPH Detail...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details`,
+                                                    method: "POST",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    data: JSON.stringify(
+                                                      values
+                                                    ),
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "SPH Detail added successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to add SPH Detail.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                                update: function (key, values) {
+                                                  DevExpress.ui.notify(
+                                                    "Updating SPH Detail...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
+                                                    method: "PUT",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    data: JSON.stringify(
+                                                      values
+                                                    ),
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "SPH Detail updated successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to update SPH Detail.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                                remove: function (key) {
+                                                  DevExpress.ui.notify(
+                                                    "Deleting SPH Detail...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
+                                                    method: "DELETE",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                    },
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "SPH Detail deleted successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to delete SPH Detail.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                              }),
+                                            keyExpr: "SphDetailId",
+                                            editing: {
+                                              mode: "batch", // Batch mode for details
+                                              allowAdding: true,
+                                              allowUpdating: true,
+                                              allowDeleting: true,
+                                            },
+                                            showBorders: true,
+                                            columnAutoWidth: true,
+                                            wordWrapEnabled: true,
+                                            filterRow: {
+                                              visible: true,
+                                              applyFilter: "auto",
+                                            },
+                                            headerFilter: {
+                                              visible: true,
+                                            },
+                                            columns: [
+                                              {
+                                                dataField: "ItemDescription",
+                                                caption: "Item Description",
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "Quantity",
+                                                caption: "Quantity",
+                                                dataType: "number",
+                                              },
+                                              {
+                                                dataField: "Unit",
+                                                caption: "Unit",
+                                              },
+                                              {
+                                                dataField: "UnitPrice",
+                                                caption: "Unit Price",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                              },
+                                              {
+                                                dataField: "DiscountPrice",
+                                                caption: "Discount (%)",
+                                                dataType: "number",
+                                                editorOptions: {
+                                                  min: 0,
+                                                  max: 100,
+                                                },
+                                              },
+                                              {
+                                                dataField: "TotalPrice",
+                                                caption: "Total Price",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                calculateCellValue: function (
+                                                  data
+                                                ) {
+                                                  // Calculate Total Price considering UnitPrice, DiscountPrice, and Quantity
+                                                  if (
+                                                    data.UnitPrice &&
+                                                    data.DiscountPrice !=
+                                                      null &&
+                                                    data.Quantity
+                                                  ) {
+                                                    const discountedPrice =
+                                                      data.UnitPrice -
+                                                      (data.UnitPrice *
+                                                        data.DiscountPrice) /
+                                                        100;
+                                                    return (
+                                                      discountedPrice *
+                                                      data.Quantity
+                                                    );
+                                                  }
+                                                  return 0; // Return 0 if any value is missing
+                                                },
+                                              },
+                                            ],
+
+                                            summary: {
+                                              totalItems: [
+                                                {
+                                                  column: "TotalPrice",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat: "Total: {0}",
+                                                },
+                                              ],
+                                            },
+                                          })
+                                          .appendTo(sectionContainer);
+                                      },
+                                    },
+                                  })
+                                  .appendTo(sphContainer);
+                              },
+                            },
+                          });
+                        },
+                      },
+                    ],
+                    deferRendering: false,
+                    showNavButtons: true,
+                    selectedIndex: 0,
+                  })
+                  .appendTo(container);
+              },
+            },
+          });
+        }
+
+        // Fetch and bind project data to the grid
+        fetchProjects()
+          .done(function (data) {
+            initializeProjectsGrid(data);
           })
           .fail(function (error) {
-            store.remove(newProject.ProjectID); // Revert on failure
-            e.component.refresh();
-            showNotification("Failed to add project.", "error");
-            console.error("Failed to add project:", error);
+            showNotification("Failed to fetch projects data.", "error");
+            console.error("Failed to fetch projects data:", error);
           });
-      },
-      onRowUpdating: function (e) {
-        const projectID = e.key;
-        const updatedProject = { ...e.oldData, ...e.newData };
-        const store = e.component.getDataSource().store();
-
-        store.update(projectID, updatedProject);
-        e.component.refresh();
-
-        e.cancel = updateProject(projectID, updatedProject)
-          .done(function () {
-            showNotification("Project updated successfully!", "success");
-            e.component.getDataSource().reload();
-          })
-          .fail(function (error) {
-            store.update(projectID, e.oldData); // Revert on failure
-            e.component.refresh();
-            showNotification("Failed to update project.", "error");
-            console.error("Failed to update project:", error);
-          });
-      },
-      onRowRemoving: function (e) {
-        const projectID = e.key;
-        const store = e.component.getDataSource().store();
-
-        store.remove(projectID);
-        e.component.refresh();
-
-        e.cancel = deleteProject(projectID)
-          .done(function () {
-            showNotification("Project deleted successfully!", "success");
-            e.component.getDataSource().reload();
-          })
-          .fail(function (error) {
-            store.insert(e.data); // Revert on failure
-            e.component.refresh();
-            showNotification("Failed to delete project.", "error");
-            console.error("Failed to delete project:", error);
-          });
-      },
-    });
-  }
-
-  // Fetch and bind project data to the grid
-  fetchProjects()
-    .done(function (data) {
-      initializeProjectsGrid(data);
-    })
-    .fail(function (error) {
-      showNotification("Failed to fetch projects data.", "error");
-      console.error("Failed to fetch projects data:", error);
-    });
-});
-
+      });
     </script>
     <script>
       var win = navigator.platform.indexOf("Win") > -1;

@@ -33,6 +33,15 @@ func NewBreakdownService(
 	}
 }
 
+// GetBreakdownByID retrieves a breakdown by its ID
+func (s *BreakdownService) GetBreakdownByID(id int) (*models.Breakdown, error) {
+	item, err := s.breakdownRepo.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving breakdown item: %w", err)
+	}
+	return item, nil
+}
+
 // FilterBreakdowns filters breakdowns by organization ID and optional breakdown ID or project ID
 func (s *BreakdownService) FilterBreakdowns(organizationID int, breakdownID *int, projectID *int) ([]models.Breakdown, error) {
 	log.Printf("Filtering breakdowns for OrganizationID: %d, BreakdownID: %v, ProjectID: %v", organizationID, breakdownID, projectID)

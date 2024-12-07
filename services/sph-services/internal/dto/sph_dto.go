@@ -7,8 +7,8 @@ import (
 type SphDTO struct {
 	SphId         int                `json:"SphId,omitempty"`
 	ProjectId     *int               `json:"ProjectId" binding:"required"`
-	ProjectName   *string            `json:"ProjectName" binding:"required"`
-	Subject       *string            `json:"Subject" binding:"required"`
+	ProjectName   *string            `json:"ProjectName"`
+	Subject       *string            `json:"Subject,omitempty"`
 	Location      *string            `json:"Location,omitempty"`
 	Date          *models.CustomDate `json:"Date,omitempty"`
 	RecepientName *string            `json:"RecepientName,omitempty"`
@@ -31,12 +31,28 @@ func (dto *SphDTO) ToModel(organizationID *int, userID int) *models.Sph {
 
 // ToModelForUpdate maps the DTO to the domain model for updates
 func (dto *SphDTO) ToModelForUpdate(existing *models.Sph, userID int) *models.Sph {
-	existing.ProjectId = dto.ProjectId
-	existing.ProjectName = dto.ProjectName
-	existing.Subject = dto.Subject
-	existing.Location = dto.Location
-	existing.Date = dto.Date
-	existing.RecepientName = dto.RecepientName
+	// Update fields only if the DTO contains non-empty values
+	if dto.ProjectId != nil {
+		existing.ProjectId = dto.ProjectId
+	}
+	if dto.ProjectName != nil {
+		existing.ProjectName = dto.ProjectName
+	}
+	if dto.Subject != nil {
+		existing.Subject = dto.Subject
+	}
+	if dto.Location != nil {
+		existing.Location = dto.Location
+	}
+	if dto.Date != nil { // Check for zero value in time.Time
+		existing.Date = dto.Date
+	}
+	if dto.RecepientName != nil {
+		existing.RecepientName = dto.RecepientName
+	}
+
+	// Always update the UpdatedBy field
 	existing.UpdatedBy = &userID
+
 	return existing
 }

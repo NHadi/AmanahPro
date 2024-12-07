@@ -5,10 +5,12 @@ import (
 	"AmanahPro/services/breakdown-services/internal/application/services"
 	"AmanahPro/services/breakdown-services/internal/domain/models"
 	"AmanahPro/services/breakdown-services/internal/dto"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type BreakdownHandler struct {
@@ -164,14 +166,25 @@ func (h *BreakdownHandler) UpdateBreakdown(c *gin.Context) {
 		return
 	}
 
-	// Map DTO to Model
+	// Fetch existing breakdown from the database
+	existingBreakdown, err := h.breakdownService.GetBreakdownByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Breakdown not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch breakdown"})
+		}
+		return
+	}
+
+	// Map incoming data to existing breakdown (only overwrite non-zero fields)
 	breakdown := models.Breakdown{
 		BreakdownId:    id,
-		ProjectId:      breakdownDTO.ProjectId,
-		ProjectName:    breakdownDTO.ProjectName,
-		Subject:        breakdownDTO.Subject,
-		Location:       breakdownDTO.Location,
-		Date:           breakdownDTO.Date,
+		ProjectId:      firstNonZeroInt(breakdownDTO.ProjectId, existingBreakdown.ProjectId),
+		ProjectName:    firstNonEmptyString(breakdownDTO.ProjectName, existingBreakdown.ProjectName),
+		Subject:        firstNonEmptyString(breakdownDTO.Subject, existingBreakdown.Subject),
+		Location:       firstNonEmptyStringPointer(breakdownDTO.Location, existingBreakdown.Location),
+		Date:           firstNonZeroCustomDate(breakdownDTO.Date, existingBreakdown.Date),
 		OrganizationId: claims.OrganizationId,
 		UpdatedBy:      &claims.UserID,
 	}

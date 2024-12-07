@@ -21,8 +21,14 @@ func (dto *BreakdownItemDTO) ToModel(SectionId int, createdBy int) *models.Break
 
 // ToModelForUpdate maps the DTO to the BreakdownSection model for updates
 func (dto *BreakdownItemDTO) ToModelForUpdate(existing *models.BreakdownItem, updatedBy int) *models.BreakdownItem {
-	existing.Description = dto.Description
-	existing.UnitPrice = dto.UnitPrice
+	if dto.Description != "" {
+		existing.Description = dto.Description
+	}
+
+	if dto.UnitPrice != 0 {
+		existing.UnitPrice = dto.UnitPrice
+	}
+
 	existing.UpdatedBy = &updatedBy
 	return existing
 }
