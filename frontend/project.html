@@ -565,6 +565,17 @@
 
         // Add new project
         function addProject(project) {
+          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+          if (project.StartDate) {
+            const startDate = new Date(project.StartDate);
+            project.StartDate = startDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
+          }
+
+          if (project.EndDate) {
+            const endDate = new Date(project.EndDate);
+            project.EndDate = endDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
+          }
+
           return $.ajax({
             url: `${API_BASE_URL}/project_management_services/api/projects`,
             method: "POST",
@@ -578,6 +589,17 @@
 
         // Update project
         function updateProject(projectID, project) {
+          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+          if (project.StartDate) {
+            const startDate = new Date(project.StartDate);
+            project.StartDate = startDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
+          }
+
+          if (project.EndDate) {
+            const endDate = new Date(project.EndDate);
+            project.EndDate = endDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
+          }
+
           return $.ajax({
             url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
             method: "PUT",
@@ -599,6 +621,49 @@
             },
           });
         }
+
+        // Initialize the popup
+        $("#generateSpkPopup").dxPopup({
+          title: "Generate SPK",
+          visible: false,
+          width: 500,
+          height: 300,
+          contentTemplate: function (contentElement) {
+            const grid = $("#sph-grid").dxDataGrid("instance");
+            const selectedData = grid.getSelectedRowsData();
+
+            contentElement.append(`
+          <div>
+            <label><b>SPH:</b></label>
+            <span id="sphInfo">${
+              selectedData[0]?.Subject || "No Selection"
+            }</span>
+          </div>
+          <div>
+            <label><b>Subject:</b></label>
+            <span id="subjectInfo">${
+              selectedData[0]?.Subject || "No Selection"
+            }</span>
+          </div>
+          <div style="margin-top: 20px;">
+            <dx-button id="confirmGenerateSpk" text="Generate" type="success"></dx-button>
+          </div>
+        `);
+
+            // Add Generate SPK button action
+            $("#confirmGenerateSpk").dxButton({
+              text: "Generate SPK",
+              onClick: function () {
+                DevExpress.ui.notify(
+                  "SPK generated successfully!",
+                  "success",
+                  2000
+                );
+                $("#generateSpkPopup").dxPopup("instance").hide();
+              },
+            });
+          },
+        });
 
         function fetchBreakdownByProject(projectId) {
           return $.ajax({
@@ -633,18 +698,25 @@
           $("#budget-overview").text("IDR 500,000,000"); // Example static budget overview
         }
 
-        function pollDataReload(component, interval = 1000, retries = 1) {
-          let attempts = 0;
-
-          const intervalId = setInterval(() => {
-            attempts++;
-            component.refresh(); // Reload the grid data
-
-            if (attempts >= retries) {
-              clearInterval(intervalId); // Stop polling after max retries
-            }
-          }, interval);
+        function pollDataReload(component, delay = 1000) {
+          clearTimeout(component.refreshTimeout); // Clear any existing timeout
+          component.refreshTimeout = setTimeout(() => {
+            component.refresh(); // Refresh the grid data after the delay
+          }, delay);
         }
+
+        // function pollDataReload(component, interval = 1000, retries = 3) {
+        //   let attempts = 0;
+
+        //   const intervalId = setInterval(() => {
+        //     attempts++;
+        //     component.refresh(); // Reload the grid data
+
+        //     if (attempts >= retries) {
+        //       clearInterval(intervalId); // Stop polling after max retries
+        //     }
+        //   }, interval);
+        // }
 
         function formatBreakdownData(data) {
           const formattedData = [];
@@ -701,7 +773,10 @@
                       "success",
                       2000
                     );
-                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
+                    const grid = $("#projects-grid").dxDataGrid("instance");
+                    setTimeout(() => {
+                      grid.refresh(); // Refresh the grid after a 1-second delay
+                    }, 1000);
                   })
                   .fail(() => {
                     DevExpress.ui.notify(
@@ -781,85 +856,6 @@
               { dataField: "Description", caption: "Description" },
               { dataField: "Status", caption: "Status" },
             ],
-            onRowInserting: function (e) {
-              const newProject = { ...e.data };
-              const store = e.component.getDataSource().store();
-
-              // Optimistic update: Insert the project locally
-              store.insert(newProject);
-              e.component.refresh();
-
-              e.cancel = addProject(newProject)
-                .done(() => {
-                  DevExpress.ui.notify(
-                    "Project added successfully!",
-                    "success",
-                    2000
-                  );
-                  pollDataReload(e.component); // Reload grid
-                })
-                .fail((error) => {
-                  store.remove(newProject.ProjectID); // Revert on failure
-                  e.component.refresh();
-                  DevExpress.ui.notify("Failed to add project.", "error", 2000);
-                  console.error("Failed to add project:", error);
-                });
-            },
-            onRowUpdating: function (e) {
-              const projectID = e.key;
-              const updatedProject = { ...e.oldData, ...e.newData };
-              const store = e.component.getDataSource().store();
-
-              store.update(projectID, updatedProject);
-              e.component.refresh();
-
-              e.cancel = updateProject(projectID, updatedProject)
-                .done(() => {
-                  DevExpress.ui.notify(
-                    "Project updated successfully!",
-                    "success",
-                    2000
-                  );
-                  pollDataReload(e.component); // Reload grid
-                })
-                .fail((error) => {
-                  store.update(projectID, e.oldData); // Revert on failure
-                  e.component.refresh();
-                  DevExpress.ui.notify(
-                    "Failed to update project.",
-                    "error",
-                    2000
-                  );
-                  console.error("Failed to update project:", error);
-                });
-            },
-            onRowRemoving: function (e) {
-              const projectID = e.key;
-              const store = e.component.getDataSource().store();
-
-              store.remove(projectID);
-              e.component.refresh();
-
-              e.cancel = deleteProject(projectID)
-                .done(() => {
-                  DevExpress.ui.notify(
-                    "Project deleted successfully!",
-                    "success",
-                    2000
-                  );
-                  pollDataReload(e.component); // Reload grid
-                })
-                .fail((error) => {
-                  store.insert(e.data); // Revert on failure
-                  e.component.refresh();
-                  DevExpress.ui.notify(
-                    "Failed to delete project.",
-                    "error",
-                    2000
-                  );
-                  console.error("Failed to delete project:", error);
-                });
-            },
 
             masterDetail: {
               enabled: true,
@@ -1075,7 +1071,7 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                              pollDataReload(breakdownOptions.component);
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1109,7 +1105,7 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                              pollDataReload(breakdownOptions.component);
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1140,7 +1136,7 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                              pollDataReload(breakdownOptions.component);
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1226,7 +1222,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        options.component
+                                                        sectionOptions.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1264,7 +1260,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        options.component
+                                                        sectionOptions.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1297,7 +1293,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        options.component
+                                                        sectionOptions.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1534,6 +1530,141 @@
                                 dataField: "RecepientName",
                                 caption: "Recipient Name",
                               },
+                              {
+                                caption: "SPK",
+                                type: "buttons",
+                                buttons: [
+                                  {
+                                    hint: "Generate SPK",
+                                    icon: "export", // Use a predefined DevExtreme icon
+                                    onClick: function (e) {
+                                      const data = e.row.data;
+
+                                      // Create and show the popup
+                                      const popup = $("<div>")
+                                        .appendTo("body")
+                                        .dxPopup({
+                                          title: "Generate SPK",
+                                          visible: true,
+                                          width: 500,
+                                          height: 400,
+                                          closeOnOutsideClick: true,
+                                          showCloseButton: true,
+                                          contentTemplate: function (
+                                            contentElement
+                                          ) {
+                                            const formContainer =
+                                              $("<div>").appendTo(
+                                                contentElement
+                                              );
+
+                                            // Display SPH and Subject information
+                                            formContainer.append(`
+                <div style="padding: 20px;">
+                  <div>
+                    <label><b>SPH:</b></label>
+                    <span>${data.Subject}</span>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <label><b>Recipient Name:</b></label>
+                    <span>${data.RecepientName}</span>
+                  </div>
+                  <div style="margin-top: 20px;">
+                    <label><b>Description:</b></label>
+                  </div>
+                </div>
+              `);
+
+                                            // Add TextArea for user input
+                                            const textArea = $("<div>")
+                                              .dxTextArea({
+                                                height: 100,
+                                                placeholder:
+                                                  "Enter description...",
+                                              })
+                                              .appendTo(formContainer);
+
+                                            // Add Button to call the API
+                                            $("<div style='margin-top: 20px;'>")
+                                              .dxButton({
+                                                text: "Submit",
+                                                type: "success",
+                                                onClick: function () {
+                                                  // Get user input from TextArea
+                                                  const description = textArea
+                                                    .dxTextArea("instance")
+                                                    .option("value");
+
+                                                  // API Request Payload
+                                                  const payload = {
+                                                    Date: new Date()
+                                                      .toISOString()
+                                                      .split("T")[0],
+                                                    ProjectId: data.ProjectId,
+                                                    ProjectName:
+                                                      data.ProjectName,
+                                                    Subject:
+                                                      description ||
+                                                      data.Subject, // Use description if provided
+                                                    SphId: data.SphId,
+                                                  };
+
+                                                  // Call the API
+                                                  $.ajax({
+                                                    url: `${API_BASE_URL}/spk_services/api/spk`,
+                                                    method: "POST",
+                                                    contentType:
+                                                      "application/json",
+                                                    data: JSON.stringify(
+                                                      payload
+                                                    ),
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                    },
+                                                    success: function () {
+                                                      DevExpress.ui.notify(
+                                                        "SPK generated successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+
+                                                      // Close popup on success
+                                                      const popupInstance =
+                                                        popup.dxPopup(
+                                                          "instance"
+                                                        );
+                                                      if (popupInstance)
+                                                        popupInstance.hide();
+                                                    },
+                                                    error: function (err) {
+                                                      console.error(
+                                                        "Failed to generate SPK:",
+                                                        err
+                                                      );
+                                                      DevExpress.ui.notify(
+                                                        "Failed to generate SPK.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    },
+                                                  });
+                                                },
+                                              })
+                                              .appendTo(formContainer);
+                                          },
+                                        })
+                                        .dxPopup("instance");
+
+                                      // Correctly hide the popup on close
+                                      popup.option("onHiding", function () {
+                                        popup.element().remove();
+                                      });
+                                    },
+                                  },
+                                ],
+                              },
                             ],
                             masterDetail: {
                               enabled: true,
@@ -1689,7 +1820,7 @@
                                           .dxDataGrid({
                                             dataSource:
                                               new DevExpress.data.CustomStore({
-                                                key: "SphDetailId",
+                                                key: "DetailId",
                                                 load: function () {
                                                   return Promise.resolve(
                                                     sectionOptions.data
@@ -1806,7 +1937,7 @@
                                                     });
                                                 },
                                               }),
-                                            keyExpr: "SphDetailId",
+                                            keyExpr: "DetailId",
                                             editing: {
                                               mode: "batch", // Batch mode for details
                                               allowAdding: true,
@@ -1915,6 +2046,600 @@
                           });
                         },
                       },
+                      {
+                        title: "SPK",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "SpkId",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/spk_services/api/spk/filter?project_id=${projectId}`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                });
+                              },
+                              insert: function (values) {
+                                if (values.Date) {
+                                  const date = new Date(values.Date);
+                                  values.Date = date
+                                    .toISOString()
+                                    .split("T")[0];
+                                }
+                                DevExpress.ui.notify(
+                                  "Adding SPK...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/spk_services/api/spk`,
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    ...values,
+                                    ProjectId: projectId,
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPK added successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to add SPK.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              update: function (key, values) {
+                                const updatedData = {
+                                  ...values,
+                                  ProjectId: projectId,
+                                };
+                                DevExpress.ui.notify(
+                                  "Updating SPK...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/spk_services/api/spk/${key}`,
+                                  method: "PUT",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify(updatedData),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPK updated successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to update SPK.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              remove: function (key) {
+                                DevExpress.ui.notify(
+                                  "Deleting SPK...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/spk_services/api/spk/${key}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPK deleted successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to delete SPK.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                            }),
+                            keyExpr: "SpkId",
+                            editing: {
+                              mode: "row",
+                              allowAdding: true,
+                              allowUpdating: true,
+                              allowDeleting: true,
+                            },
+                            showBorders: true,
+                            columnAutoWidth: true,
+                            wordWrapEnabled: true,
+                            filterRow: {
+                              visible: true,
+                              applyFilter: "auto",
+                            },
+                            headerFilter: {
+                              visible: true,
+                            },
+                            columns: [
+                              {
+                                dataField: "Subject",
+                                caption: "SPK Name",
+                                validationRules: [{ type: "required" }],
+                                headerFilter: { allowSearch: true },
+                              },
+                              {
+                                dataField: "Date",
+                                caption: "Date",
+                                dataType: "date",
+                              },
+                            ],
+                            masterDetail: {
+                              enabled: true,
+                              template: function (spkContainer, spkOptions) {
+                                const spkId = spkOptions.data.SpkId;
+
+                                $("<div>")
+                                  .dxDataGrid({
+                                    dataSource: new DevExpress.data.CustomStore(
+                                      {
+                                        key: "SectionId",
+                                        load: function () {
+                                          return Promise.resolve(
+                                            spkOptions.data.Sections || []
+                                          );
+                                        },
+                                        insert: function (values) {
+                                          DevExpress.ui.notify(
+                                            "Adding Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections`,
+                                            method: "POST",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section added successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(
+                                                spkOptions.component
+                                              );
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to add Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        update: function (key, values) {
+                                          DevExpress.ui.notify(
+                                            "Updating Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${key}`,
+                                            method: "PUT",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            data: JSON.stringify(values),
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section updated successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to update Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                        remove: function (key) {
+                                          DevExpress.ui.notify(
+                                            "Deleting Section...",
+                                            "info",
+                                            2000
+                                          );
+                                          return $.ajax({
+                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${key}`,
+                                            method: "DELETE",
+                                            headers: {
+                                              Authorization: `Bearer ${localStorage.getItem(
+                                                "authToken"
+                                              )}`,
+                                            },
+                                          })
+                                            .done(() => {
+                                              DevExpress.ui.notify(
+                                                "Section deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                              pollDataReload(options.component);
+                                            })
+                                            .fail(() => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete Section.",
+                                                "error",
+                                                2000
+                                              );
+                                            });
+                                        },
+                                      }
+                                    ),
+                                    keyExpr: "SectionId",
+                                    editing: {
+                                      mode: "row",
+                                      allowAdding: true,
+                                      allowUpdating: true,
+                                      allowDeleting: true,
+                                    },
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    wordWrapEnabled: true,
+                                    filterRow: {
+                                      visible: true,
+                                      applyFilter: "auto",
+                                    },
+                                    headerFilter: {
+                                      visible: true,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "SectionTitle",
+                                        caption: "Section Title",
+                                      },
+                                    ],
+                                    masterDetail: {
+                                      enabled: true,
+                                      template: function (
+                                        sectionContainer,
+                                        sectionOptions
+                                      ) {
+                                        const sectionId =
+                                          sectionOptions.data.SectionId;
+
+                                        $("<div>")
+                                          .dxDataGrid({
+                                            dataSource:
+                                              new DevExpress.data.CustomStore({
+                                                key: "DetailId",
+                                                load: function () {
+                                                  return Promise.resolve(
+                                                    sectionOptions.data
+                                                      .Details || []
+                                                  );
+                                                },
+                                                insert: function (values) {
+                                                  DevExpress.ui.notify(
+                                                    "Adding Detail...",
+                                                    "info",
+                                                    2000
+                                                  );
+                                                  return $.ajax({
+                                                    url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details`,
+                                                    method: "POST",
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    data: JSON.stringify(
+                                                      values
+                                                    ),
+                                                  })
+                                                    .done(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Detail added successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+                                                      pollDataReload(
+                                                        sectionOptions.component
+                                                      );
+                                                    })
+                                                    .fail(() => {
+                                                      DevExpress.ui.notify(
+                                                        "Failed to add Detail.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    });
+                                                },
+                                              }),
+                                            keyExpr: "DetailId",
+                                            editing: {
+                                              mode: "batch",
+                                              allowAdding: true,
+                                              allowUpdating: true,
+                                              allowDeleting: true,
+                                            },
+                                            showBorders: true,
+                                            columnAutoWidth: true,
+                                            wordWrapEnabled: true,
+                                            filterRow: {
+                                              visible: true,
+                                              applyFilter: "auto",
+                                            },
+                                            headerFilter: {
+                                              visible: true,
+                                            },
+                                            columns: [
+                                              {
+                                                dataField: "Description",
+                                                caption: "Description",
+                                              },
+                                              {
+                                                dataField: "Quantity",
+                                                caption: "Quantity",
+                                                dataType: "number",
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "Unit",
+                                                caption: "Unit",
+                                              },
+                                              {
+                                                dataField: "UnitPriceJasa",
+                                                caption: "Unit Price Jasa",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "TotalJasa",
+                                                caption: "Total Jasa",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                calculateCellValue: function (
+                                                  data
+                                                ) {
+                                                  // Calculate TotalJasa based on Quantity and UnitPriceJasa
+                                                  return data.Quantity &&
+                                                    data.UnitPriceJasa
+                                                    ? data.Quantity *
+                                                        data.UnitPriceJasa
+                                                    : 0;
+                                                },
+                                              },
+                                              {
+                                                dataField: "UnitPriceMaterial",
+                                                caption: "Unit Price Material",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "TotalMaterial",
+                                                caption: "Total Material",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                calculateCellValue: function (
+                                                  data
+                                                ) {
+                                                  // Calculate TotalMaterial based on Quantity and UnitPriceMaterial
+                                                  return data.Quantity &&
+                                                    data.UnitPriceMaterial
+                                                    ? data.Quantity *
+                                                        data.UnitPriceMaterial
+                                                    : 0;
+                                                },
+                                              },
+                                            ],
+                                            summary: {
+                                              totalItems: [
+                                                {
+                                                  column: "TotalJasa",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat:
+                                                    "Total Jasa: {0}",
+                                                },
+                                                {
+                                                  column: "TotalMaterial",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat:
+                                                    "Total Material: {0}",
+                                                },
+                                              ],
+                                            },
+                                            columns: [
+                                              {
+                                                dataField: "Description",
+                                                caption: "Description",
+                                              },
+                                              {
+                                                dataField: "Quantity",
+                                                caption: "Quantity",
+                                                dataType: "number",
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "Unit",
+                                                caption: "Unit",
+                                              },
+                                              {
+                                                dataField: "UnitPriceJasa",
+                                                caption: "Unit Price Jasa",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "TotalJasa",
+                                                caption: "Total Jasa",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                calculateCellValue: function (
+                                                  data
+                                                ) {
+                                                  // Calculate TotalJasa based on Quantity and UnitPriceJasa
+                                                  return data.Quantity &&
+                                                    data.UnitPriceJasa
+                                                    ? data.Quantity *
+                                                        data.UnitPriceJasa
+                                                    : 0;
+                                                },
+                                              },
+                                              {
+                                                dataField: "UnitPriceMaterial",
+                                                caption: "Unit Price Material",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                validationRules: [
+                                                  { type: "required" },
+                                                ],
+                                              },
+                                              {
+                                                dataField: "TotalMaterial",
+                                                caption: "Total Material",
+                                                dataType: "number",
+                                                format: {
+                                                  type: "currency",
+                                                  currency: "IDR",
+                                                },
+                                                calculateCellValue: function (
+                                                  data
+                                                ) {
+                                                  // Calculate TotalMaterial based on Quantity and UnitPriceMaterial
+                                                  return data.Quantity &&
+                                                    data.UnitPriceMaterial
+                                                    ? data.Quantity *
+                                                        data.UnitPriceMaterial
+                                                    : 0;
+                                                },
+                                              },
+                                            ],
+                                            summary: {
+                                              totalItems: [
+                                                {
+                                                  column: "TotalJasa",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat:
+                                                    "Total Jasa: {0}",
+                                                },
+                                                {
+                                                  column: "TotalMaterial",
+                                                  summaryType: "sum",
+                                                  valueFormat: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  displayFormat:
+                                                    "Total Material: {0}",
+                                                },
+                                              ],
+                                            },
+                                          })
+                                          .appendTo(sectionContainer);
+                                      },
+                                    },
+                                  })
+                                  .appendTo(spkContainer);
+                              },
+                            },
+                          });
+                        },
+                      },
                     ],
                     deferRendering: false,
                     showNavButtons: true,
@@ -1926,7 +2651,6 @@
           });
         }
 
-        // Fetch and bind project data to the grid
         fetchProjects()
           .done(function (data) {
             initializeProjectsGrid(data);

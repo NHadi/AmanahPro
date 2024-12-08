@@ -75,7 +75,7 @@
   "compounds": [
     {
       "name": "Debug All Services",
-      "configurations": ["Debug Bank Service", "Debug Account Service", "Debug Api Gateway"]
+      "configurations": ["Debug Bank Service", "Debug Account Service", "Debug Api Gateway", "Debug Breakdown Management Service", "Debug Project Management Service", "Debug SPH Service", "Debug SPK Service"]
     }
   ]
 }

@@ -4,13 +4,13 @@ import "AmanahPro/services/spk-services/internal/domain/models"
 
 type SpkDetailDTO struct {
 	DetailId          int      `json:"DetailId,omitempty"`
-	Description       *string  `json:"Description" binding:"required"`
-	Quantity          *float64 `json:"Quantity" binding:"required"`
-	Unit              *string  `json:"Unit" binding:"required"`
-	UnitPriceJasa     *float64 `json:"UnitPriceJasa" binding:"required"`
-	TotalJasa         *float64 `json:"TotalJasa" binding:"required"`
-	UnitPriceMaterial float64  `json:"UnitPriceMaterial" binding:"required"`
-	TotalMaterial     float64  `json:"TotalMaterial" binding:"required"`
+	Description       *string  `json:"Description"`
+	Quantity          *float64 `json:"Quantity"`
+	Unit              *string  `json:"Unit"`
+	UnitPriceJasa     *float64 `json:"UnitPriceJasa"`
+	TotalJasa         *float64 `json:"TotalJasa"`
+	UnitPriceMaterial float64  `json:"UnitPriceMaterial"`
+	TotalMaterial     float64  `json:"TotalMaterial"`
 }
 
 // ToModel maps the DTO to the domain model
@@ -30,14 +30,29 @@ func (dto *SpkDetailDTO) ToModel(userID int) *models.SPKDetail {
 
 // ToModelForUpdate maps the DTO to the domain model for updates
 func (dto *SpkDetailDTO) ToModelForUpdate(existing *models.SPKDetail, userID int) *models.SPKDetail {
-	existing.Description = dto.Description
-	existing.Quantity = *dto.Quantity
-	existing.Unit = dto.Unit
-	existing.UnitPriceJasa = *dto.UnitPriceJasa
-	existing.TotalJasa = *dto.TotalJasa
+	if dto.Description != nil {
+		existing.Description = dto.Description
+	}
+	if dto.Quantity != nil {
+		existing.Quantity = *dto.Quantity
+	}
+	if dto.Unit != nil {
+		existing.Unit = dto.Unit
+	}
+	if dto.UnitPriceJasa != nil {
+		existing.UnitPriceJasa = *dto.UnitPriceJasa
+	}
+	if dto.TotalJasa != nil {
+		existing.TotalJasa = *dto.TotalJasa
+	}
+	if dto.UnitPriceMaterial != 0 {
+		existing.UnitPriceMaterial = dto.UnitPriceMaterial
+	}
+	if dto.TotalMaterial != 0 {
+		existing.TotalMaterial = dto.TotalMaterial
+	}
+
 	existing.UpdatedBy = &userID
-	existing.UnitPriceMaterial = dto.UnitPriceMaterial
-	existing.TotalMaterial = dto.TotalMaterial
 
 	return existing
 }
