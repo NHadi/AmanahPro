@@ -10,17 +10,17 @@ RUN go mod download
 COPY . ./
 
 # Build the application binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o breakdown-services .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o spk-services .
 
 # Stage 2: Create a lightweight container
 FROM alpine:latest
 WORKDIR /root/
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/breakdown-services .
+COPY --from=builder /app/spk-services .
 
 # Make the binary executable
-RUN chmod +x breakdown-services
+RUN chmod +x spk-services
 
 # Set the default command to run the binary
-CMD ["./breakdown-services"]
+CMD ["./spk-services"]

@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    image: nurulhadii/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "${GATEWAY_PORT}:8080" # Updated to use GATEWAY_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/api-gateway/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  spk-services:
+    image: nurulhadii/spk-services:latest
+    container_name: spk-services
+    ports:
+      - "${SPK_SERVICES_PORT}:8086" # Updated to use SPK_SERVICES_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/spk-services/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  sph-services:
+    image: nurulhadii/sph-services:latest
+    container_name: sph-services
+    ports:
+      - "${SPH_SERVICES_PORT}:8085" # Updated to use SPH_SERVICES_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/sph-services/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  bank-services:
+    image: nurulhadii/bank-services:latest
+    container_name: bank-services
+    ports:
+      - "${BANK_SERVICES_PORT}:8082" # Updated to use BANK_SERVICES_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/bank-services/log:/app/logs
+      - ./services/bank-services/uploads:/app/uploads
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  user-management:
+    image: nurulhadii/user-management:latest
+    container_name: user-management
+    ports:
+      - "${USER_MANAGEMENT_PORT}:8081" # Updated to use USER_MANAGEMENT_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/user-management/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  project-management:
+    image: nurulhadii/project-management:latest
+    container_name: project-management
+    ports:
+      - "${PROJECT_MANAGEMNET_SERVICES_PORT}:8083" # Updated to use PROJECT_MANAGEMNET_SERVICES_PORT
+    environment:
+      - DOCKER_ENV=true   
+    volumes:
+      - ./services/project-management/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+  breakdown-services:
+    image: nurulhadii/breakdown-services:latest
+    container_name: breakdown-services
+    ports:
+      - "${BREAKDOWN_MANAGEMNET_SERVICES_PORT}:8084" # Updated to use BREAKDOWN_MANAGEMNET_SERVICES_PORT
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./services/breakdown-services/log:/app/logs
+      - ./.env:/app/.env
+    depends_on:
+      - db
+      - elasticsearch
+      - rabbitmq
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

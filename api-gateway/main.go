@@ -52,6 +52,50 @@ func main() {
 
 	r := gin.Default()
 
+	// Define service configuration
+	serviceConfig := ServiceConfig{
+		ServiceMap: map[string]string{
+			"/user-management":               os.Getenv("SERVICES_USER_MANAGEMENT"),
+			"/bank_services":                 os.Getenv("SERVICES_BANK"),
+			"/project_management_services":   os.Getenv("PROJECT_MANAGEMNET_SERVICES"),
+			"/breakdown_management_services": os.Getenv("BREAKDOWN_MANAGEMNET_SERVICES"),
+			"/sph_services":                  os.Getenv("SPH_SERVICES"),
+			"/spk_services":                  os.Getenv("SPK_SERVICES"),
+		},
+	}
+
+	// Log the loaded service configuration
+	log.Printf("Service Configuration: %+v", serviceConfig.ServiceMap)
+
+	// Health Check Endpoint
+	r.GET("/health", func(c *gin.Context) {
+		healthResults := map[string]interface{}{}
+		allHealthy := true
+
+		for name, serviceURL := range serviceConfig.ServiceMap {
+			healthURL := fmt.Sprintf("%s/health", strings.TrimSuffix(serviceURL, "/"))
+			resp, err := http.Get(healthURL)
+			if err != nil || resp.StatusCode != http.StatusOK {
+				healthResults[name] = "unhealthy"
+				allHealthy = false
+			} else {
+				healthResults[name] = "healthy"
+			}
+		}
+
+		if allHealthy {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "healthy",
+				"details": healthResults,
+			})
+		} else {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status":  "unhealthy",
+				"details": healthResults,
+			})
+		}
+	})
+
 	// Apply Trace ID middleware
 	r.Use(TraceIDMiddleware())
 
@@ -91,21 +135,6 @@ func main() {
 		c.Next()
 	})
 
-	// Define service configuration
-	serviceConfig := ServiceConfig{
-		ServiceMap: map[string]string{
-			"/user-management":               os.Getenv("SERVICES_USER_MANAGEMENT"),
-			"/bank_services":                 os.Getenv("SERVICES_BANK"),
-			"/project_management_services":   os.Getenv("PROJECT_MANAGEMNET_SERVICES"),
-			"/breakdown_management_services": os.Getenv("BREAKDOWN_MANAGEMNET_SERVICES"),
-			"/sph_services":                  os.Getenv("SPH_SERVICES"),
-			"/spk_services":                  os.Getenv("SPK_SERVICES"),
-		},
-	}
-
-	// Log the loaded service configuration
-	log.Printf("Service Configuration: %+v", serviceConfig.ServiceMap)
-
 	// Apply JWT Authentication Middleware, excluding specific routes
 	r.Use(func(c *gin.Context) {
 		if c.Request.URL.Path == "/user-management/login" && c.Request.Method == http.MethodPost {
@@ -116,18 +145,14 @@ func main() {
 		middleware.JWTAuthMiddleware(jwtSecret)(c)
 	})
 
-	// Route for dynamic proxying
-	r.Any("/*proxyPath", func(c *gin.Context) {
-		traceID := c.GetString(TraceIDHeader) // Retrieve Trace ID
-		proxyPath := c.Param("proxyPath")
+	// Dynamic Proxy Path
+	r.NoRoute(func(c *gin.Context) {
+		proxyPath := c.Request.URL.Path
+		traceID := uuid.New().String()
 		log.Printf("TraceID: %s - Received request for: %s", traceID, proxyPath)
 
-		// Match the request path with the service map
 		for route, serviceURL := range serviceConfig.ServiceMap {
 			if strings.HasPrefix(proxyPath, route) {
-				log.Printf("TraceID: %s - Using service URL: %s for route: %s", traceID, serviceURL, route)
-
-				// Parse the service URL
 				parsedURL, err := url.Parse(serviceURL)
 				if err != nil {
 					log.Printf("TraceID: %s - Error parsing service URL: %v", traceID, err)
@@ -135,33 +160,69 @@ func main() {
 					return
 				}
 
-				// Create and configure the reverse proxy
 				proxy := httputil.NewSingleHostReverseProxy(parsedURL)
 				proxy.Director = func(req *http.Request) {
 					req.URL.Scheme = parsedURL.Scheme
 					req.URL.Host = parsedURL.Host
 					req.URL.Path = strings.TrimPrefix(proxyPath, route)
 					req.Host = parsedURL.Host
-					// Propagate the trace ID
 					req.Header.Set(TraceIDHeader, traceID)
 					log.Printf("TraceID: %s - Proxying request: %s %s", traceID, req.Method, req.URL.String())
 				}
 
-				proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-					log.Printf("TraceID: %s - Error during proxying: %v", traceID, err)
-					rw.WriteHeader(http.StatusBadGateway)
-					rw.Write([]byte("Bad Gateway"))
-				}
-
-				// Serve the proxied request
 				proxy.ServeHTTP(c.Writer, c.Request)
 				return
 			}
 		}
 
-		// Return 404 if no matching route is found
 		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 	})
+	// // Route for dynamic proxying
+	// r.Any("/*proxyPath", func(c *gin.Context) {
+	// 	traceID := c.GetString(TraceIDHeader) // Retrieve Trace ID
+	// 	proxyPath := c.Param("proxyPath")
+	// 	log.Printf("TraceID: %s - Received request for: %s", traceID, proxyPath)
+
+	// 	// Match the request path with the service map
+	// 	for route, serviceURL := range serviceConfig.ServiceMap {
+	// 		if strings.HasPrefix(proxyPath, route) {
+	// 			log.Printf("TraceID: %s - Using service URL: %s for route: %s", traceID, serviceURL, route)
+
+	// 			// Parse the service URL
+	// 			parsedURL, err := url.Parse(serviceURL)
+	// 			if err != nil {
+	// 				log.Printf("TraceID: %s - Error parsing service URL: %v", traceID, err)
+	// 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Service not available"})
+	// 				return
+	// 			}
+
+	// 			// Create and configure the reverse proxy
+	// 			proxy := httputil.NewSingleHostReverseProxy(parsedURL)
+	// 			proxy.Director = func(req *http.Request) {
+	// 				req.URL.Scheme = parsedURL.Scheme
+	// 				req.URL.Host = parsedURL.Host
+	// 				req.URL.Path = strings.TrimPrefix(proxyPath, route)
+	// 				req.Host = parsedURL.Host
+	// 				// Propagate the trace ID
+	// 				req.Header.Set(TraceIDHeader, traceID)
+	// 				log.Printf("TraceID: %s - Proxying request: %s %s", traceID, req.Method, req.URL.String())
+	// 			}
+
+	// 			proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+	// 				log.Printf("TraceID: %s - Error during proxying: %v", traceID, err)
+	// 				rw.WriteHeader(http.StatusBadGateway)
+	// 				rw.Write([]byte("Bad Gateway"))
+	// 			}
+
+	// 			// Serve the proxied request
+	// 			proxy.ServeHTTP(c.Writer, c.Request)
+	// 			return
+	// 		}
+	// 	}
+
+	// 	// Return 404 if no matching route is found
+	// 	c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+	// })
 
 	// Start server
 	port := os.Getenv("GATEWAY_PORT")

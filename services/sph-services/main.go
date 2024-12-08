@@ -8,6 +8,7 @@ import (
 	"AmanahPro/services/sph-services/internal/application/services"
 	"AmanahPro/services/sph-services/internal/handlers"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -136,6 +137,88 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 
 	router.Use(deps.LoggerMiddleware)
 	router.Use(middleware.RequestLoggingMiddleware())
+
+	// Add Health Check Endpoint
+	router.GET("/health", func(c *gin.Context) {
+		// Perform health checks for dependencies
+		healthChecks := map[string]string{}
+
+		// Check database connection
+		db, err := deps.DB.DB() // Extract the underlying *sql.DB from GORM
+		if err != nil || db.Ping() != nil {
+			healthChecks["database"] = "unhealthy"
+		} else {
+			healthChecks["database"] = "healthy"
+		}
+
+		// Check RabbitMQ connection
+		if deps.RabbitMQService != nil && (deps.RabbitMQService.Conn == nil || deps.RabbitMQService.Conn.IsClosed()) {
+			healthChecks["rabbitmq"] = "unhealthy"
+		} else {
+			healthChecks["rabbitmq"] = "healthy"
+		}
+
+		if deps.ElasticsearchClient != nil {
+			// Use the Elasticsearch client to perform a health check
+			res, err := deps.ElasticsearchClient.Cluster.Health()
+			if err != nil {
+				healthChecks["elasticsearch"] = "unhealthy"
+				log.Printf("Elasticsearch health check error: %v", err)
+			} else {
+				defer res.Body.Close() // Always close the response body
+				if res.IsError() {
+					healthChecks["elasticsearch"] = "unhealthy"
+					log.Printf("Elasticsearch health check failed with status: %s", res.Status())
+				} else {
+					// Parse the response to determine the cluster health
+					var result map[string]interface{}
+					if err := json.NewDecoder(res.Body).Decode(&result); err == nil {
+						if status, ok := result["status"].(string); ok && status == "green" {
+							healthChecks["elasticsearch"] = "healthy"
+						} else {
+							healthChecks["elasticsearch"] = "degraded" // If status is "yellow" or "red"
+						}
+					} else {
+						healthChecks["elasticsearch"] = "unhealthy"
+						log.Printf("Failed to parse Elasticsearch health response: %v", err)
+					}
+				}
+			}
+		} else {
+			healthChecks["elasticsearch"] = "unhealthy"
+			log.Println("Elasticsearch client is not initialized")
+		}
+
+		// Check Redis connection
+		if deps.RedisClient != nil {
+			_, err := deps.RedisClient.Ping(context.Background()).Result()
+			if err != nil {
+				healthChecks["redis"] = "unhealthy"
+			} else {
+				healthChecks["redis"] = "healthy"
+			}
+		}
+
+		// Determine overall health
+		overallStatus := "healthy"
+		for _, status := range healthChecks {
+			if status == "unhealthy" {
+				overallStatus = "unhealthy"
+				break
+			}
+		}
+
+		// Respond with health status
+		statusCode := http.StatusOK
+		if overallStatus == "unhealthy" {
+			statusCode = http.StatusServiceUnavailable
+		}
+
+		c.JSON(statusCode, gin.H{
+			"status":  overallStatus,
+			"details": healthChecks,
+		})
+	})
 
 	api := router.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))

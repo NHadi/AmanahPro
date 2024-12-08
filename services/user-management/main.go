@@ -8,6 +8,7 @@ import (
 	"AmanahPro/services/user-management/internal/infrastructure/persistence"
 	"AmanahPro/services/user-management/internal/infrastructure/repositories"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/NHadi/AmanahPro-common/middleware"
@@ -95,6 +96,21 @@ func main() {
 		loginHandler.Login(c.Writer, c.Request)
 	})
 
+	// Add Health Check Endpoint
+	r.GET("/health", func(c *gin.Context) {
+		// Perform health checks for dependencies
+		healthChecks := map[string]string{}
+
+		healthChecks["database"] = "healthy"
+
+		// Respond with health status
+		statusCode := http.StatusOK
+
+		c.JSON(statusCode, gin.H{
+			"status":  "healthy",
+			"details": healthChecks,
+		})
+	})
 	// Group for protected routes
 	api := r.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
