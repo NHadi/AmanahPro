@@ -807,6 +807,14 @@
           return progressColumns;
         }
 
+        function formatCurrency(value) {
+          if (!value) return "Rp 0";
+          return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+          }).format(value);
+        }
+
         function initializeProjectsGrid(projects) {
           $("#projects-grid").dxDataGrid({
             dataSource: new DevExpress.data.CustomStore({
@@ -2190,273 +2198,49 @@
                                       "authToken"
                                     )}`,
                                   },
+                                }).then((data) => {
+                                  return data; // Return SPK data for the master grid
                                 });
-                              },
-                              insert: function (values) {
-                                if (values.Date) {
-                                  const date = new Date(values.Date);
-                                  values.Date = date
-                                    .toISOString()
-                                    .split("T")[0];
-                                }
-                                DevExpress.ui.notify(
-                                  "Adding SPK...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/spk_services/api/spk`,
-                                  method: "POST",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                    "Content-Type": "application/json",
-                                  },
-                                  data: JSON.stringify({
-                                    ...values,
-                                    ProjectId: projectId,
-                                  }),
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPK added successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
-                                  })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to add SPK.",
-                                      "error",
-                                      2000
-                                    );
-                                  });
-                              },
-                              update: function (key, values) {
-                                const updatedData = {
-                                  ...values,
-                                  ProjectId: projectId,
-                                };
-                                DevExpress.ui.notify(
-                                  "Updating SPK...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/spk_services/api/spk/${key}`,
-                                  method: "PUT",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                    "Content-Type": "application/json",
-                                  },
-                                  data: JSON.stringify(updatedData),
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPK updated successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
-                                  })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to update SPK.",
-                                      "error",
-                                      2000
-                                    );
-                                  });
-                              },
-                              remove: function (key) {
-                                DevExpress.ui.notify(
-                                  "Deleting SPK...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/spk_services/api/spk/${key}`,
-                                  method: "DELETE",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                  },
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPK deleted successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
-                                  })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to delete SPK.",
-                                      "error",
-                                      2000
-                                    );
-                                  });
                               },
                             }),
                             keyExpr: "SpkId",
-                            editing: {
-                              mode: "row",
-                              allowAdding: false,
-                              allowUpdating: true,
-                              allowDeleting: false,
-                            },
                             showBorders: true,
                             columnAutoWidth: true,
                             wordWrapEnabled: true,
-                            filterRow: {
-                              visible: true,
-                              applyFilter: "auto",
-                            },
-                            headerFilter: {
-                              visible: true,
-                            },
-                            columns: [
-                              {
-                                dataField: "Subject",
-                                caption: "SPK Name",
-                                validationRules: [{ type: "required" }],
-                                headerFilter: { allowSearch: true },
-                              },
-                              {
-                                dataField: "Date",
-                                caption: "Date",
-                                dataType: "date",
-                              },
-                            ],
                             masterDetail: {
                               enabled: true,
-                              template: function (spkContainer, spkOptions) {
-                                const spkId = spkOptions.data.SpkId;
-
+                              template: function (container, options) {
+                                const spk = options.data;
+                                const detailData = spk.Sections.map(
+                                  (section) => {
+                                    const sectionRow = {
+                                      DetailId: `section-${section.SectionId}`, // Unique ID for section
+                                      SectionName: section.SectionTitle,
+                                      isSection: true,
+                                      SectionId: section.SectionId,
+                                      SpkId: section.SpkId,
+                                    };
+                                    const detailRows = section.Details.map(
+                                      (detail) => ({
+                                        ...detail,
+                                        DetailId: detail.DetailId, // Ensure valid DetailId
+                                        SectionName: section.SectionTitle,
+                                        isSection: false,
+                                        SpkId: section.SpkId,
+                                      })
+                                    );
+                                    return [sectionRow, ...detailRows];
+                                  }
+                                ).flat();
+                                console.log(detailData);    
                                 $("<div>")
                                   .dxDataGrid({
-                                    dataSource: new DevExpress.data.CustomStore(
-                                      {
-                                        key: "SectionId",
-                                        load: function () {
-                                          return Promise.resolve(
-                                            spkOptions.data.Sections || []
-                                          );
-                                        },
-                                        insert: function (values) {
-                                          DevExpress.ui.notify(
-                                            "Adding Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections`,
-                                            method: "POST",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            data: JSON.stringify(values),
-                                          })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section added successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(
-                                                spkOptions.component
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to add Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                        update: function (key, values) {
-                                          DevExpress.ui.notify(
-                                            "Updating Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${key}`,
-                                            method: "PUT",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            data: JSON.stringify(values),
-                                          })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section updated successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(options.component);
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to update Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                        remove: function (key) {
-                                          DevExpress.ui.notify(
-                                            "Deleting Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${key}`,
-                                            method: "DELETE",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                            },
-                                          })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section deleted successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(options.component);
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to delete Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                      }
-                                    ),
-                                    keyExpr: "SectionId",
+                                    dataSource: detailData,
+                                    keyExpr: "DetailId", // Use DetailId as the unique key
                                     editing: {
-                                      mode: "row",
-                                      allowAdding: false,
+                                      mode: "batch",
                                       allowUpdating: true,
-                                      allowDeleting: false,
+                                      startEditAction: "click",
                                     },
                                     showBorders: true,
                                     columnAutoWidth: true,
@@ -2470,306 +2254,207 @@
                                     },
                                     columns: [
                                       {
-                                        dataField: "SectionTitle",
-                                        caption: "Section Title",
+                                        dataField: "SectionName",
+                                        caption: "Area Pemasangan",
+                                        cellTemplate: function (
+                                          container,
+                                          options
+                                        ) {
+                                          if (options.data.isSection) {
+                                            $("<div>")
+                                              .css({ fontWeight: "bold" })
+                                              .text(options.data.SectionName)
+                                              .appendTo(container);
+                                          } else {
+                                            $("<div>")
+                                              .text(
+                                                options.data.Description || "-"
+                                              )
+                                              .appendTo(container);
+                                          }
+                                        },
+                                        allowEditing: false, // Section rows are never editable
+                                      },
+                                      {
+                                        dataField: "Quantity",
+                                        caption: "Qty",
+                                        alignment: "right",
+                                        allowEditing: false,
+                                      },
+                                      {
+                                        dataField: "Unit",
+                                        caption: "Unit",
+                                        allowEditing: false,
+                                      },
+                                      {
+                                        dataField: "UnitPriceJasa",
+                                        caption: "Harga Satuan Jasa",
+                                        dataType: "number",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: function (data) {                                      
+                                          return !data.isSection; // Editable only for details
+                                        },
+                                      },
+                                      {
+                                        dataField: "TotalJasa",
+                                        caption: "Total Jasa",
+                                        dataType: "number",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        calculateCellValue: function (data) {
+                                          if (data.isSection) {
+                                            return null;
+                                          }
+                                          return data.Quantity &&
+                                            data.UnitPriceJasa
+                                            ? data.Quantity * data.UnitPriceJasa
+                                            : 0;
+                                        },
+                                        allowEditing: false,
+                                      },
+                                      {
+                                        dataField: "UnitPriceMaterial",
+                                        caption: "Harga Satuan Material",
+                                        dataType: "number",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: function (rowData) {
+                                          return !rowData.isSection; // Editable only for details
+                                        },
+                                      },
+                                      {
+                                        dataField: "TotalMaterial",
+                                        caption: "Total Material",
+                                        dataType: "number",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        calculateCellValue: function (data) {
+                                          if (data.isSection) {
+                                            return null;
+                                          }
+                                          return data.Quantity &&
+                                            data.UnitPriceMaterial
+                                            ? data.Quantity *
+                                                data.UnitPriceMaterial
+                                            : 0;
+                                        },
+                                        allowEditing: false,
                                       },
                                     ],
-                                    masterDetail: {
-                                      enabled: true,
-                                      template: function (
-                                        sectionContainer,
-                                        sectionOptions
-                                      ) {
-                                        const sectionId =
-                                          sectionOptions.data.SectionId;
+                                    summary: {
+                                      totalItems: [
+                                        {
+                                          column: "TotalJasa",
+                                          summaryType: "sum",
+                                          displayFormat: "Total Jasa: {0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                        {
+                                          column: "TotalMaterial",
+                                          summaryType: "sum",
+                                          displayFormat: "Total Material: {0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    onRowUpdating: function (e) {
+                                      e.newData = {
+                                        ...e.oldData,
+                                        ...e.newData,
+                                      }; // Merge old and new data
 
-                                        $("<div>")
-                                          .dxDataGrid({
-                                            dataSource:
-                                              new DevExpress.data.CustomStore({
-                                                key: "DetailId",
-                                                load: function () {
-                                                  return Promise.resolve(
-                                                    sectionOptions.data
-                                                      .Details || []
-                                                  );
-                                                },
-                                                update: function (key, values) {
-                                                  DevExpress.ui.notify(
-                                                    "Updating SPK Detail...",
-                                                    "info",
-                                                    2000
-                                                  );
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details/${key}`,
-                                                    method: "PUT",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                      "Content-Type":
-                                                        "application/json",
-                                                    },
-                                                    data: JSON.stringify(
-                                                      values
-                                                    ),
-                                                  })
-                                                    .done(() => {
-                                                      DevExpress.ui.notify(
-                                                        "SPK Detail updated successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to update SPK Detail.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
-                                              }),
-                                            keyExpr: "DetailId",
-                                            editing: {
-                                              mode: "batch",
-                                              allowAdding: false,
-                                              allowUpdating: true,
-                                              allowDeleting: false,
-                                            },
-                                            showBorders: true,
-                                            columnAutoWidth: true,
-                                            wordWrapEnabled: true,
-                                            filterRow: {
-                                              visible: true,
-                                              applyFilter: "auto",
-                                            },
-                                            headerFilter: {
-                                              visible: true,
-                                            },
-                                            columns: [
-                                              {
-                                                dataField: "Description",
-                                                caption: "Description",
-                                              },
-                                              {
-                                                dataField: "Quantity",
-                                                caption: "Quantity",
-                                                dataType: "number",
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "Unit",
-                                                caption: "Unit",
-                                              },
-                                              {
-                                                dataField: "UnitPriceJasa",
-                                                caption: "Unit Price Jasa",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "TotalJasa",
-                                                caption: "Total Jasa",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                calculateCellValue: function (
-                                                  data
-                                                ) {
-                                                  // Calculate TotalJasa based on Quantity and UnitPriceJasa
-                                                  return data.Quantity &&
-                                                    data.UnitPriceJasa
-                                                    ? data.Quantity *
-                                                        data.UnitPriceJasa
-                                                    : 0;
-                                                },
-                                              },
-                                              {
-                                                dataField: "UnitPriceMaterial",
-                                                caption: "Unit Price Material",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "TotalMaterial",
-                                                caption: "Total Material",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                calculateCellValue: function (
-                                                  data
-                                                ) {
-                                                  // Calculate TotalMaterial based on Quantity and UnitPriceMaterial
-                                                  return data.Quantity &&
-                                                    data.UnitPriceMaterial
-                                                    ? data.Quantity *
-                                                        data.UnitPriceMaterial
-                                                    : 0;
-                                                },
-                                              },
-                                            ],
-                                            summary: {
-                                              totalItems: [
-                                                {
-                                                  column: "TotalJasa",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
-                                                    type: "currency",
-                                                    currency: "IDR",
-                                                  },
-                                                  displayFormat:
-                                                    "Total Jasa: {0}",
-                                                },
-                                                {
-                                                  column: "TotalMaterial",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
-                                                    type: "currency",
-                                                    currency: "IDR",
-                                                  },
-                                                  displayFormat:
-                                                    "Total Material: {0}",
-                                                },
-                                              ],
-                                            },
-                                            columns: [
-                                              {
-                                                dataField: "Description",
-                                                caption: "Description",
-                                              },
-                                              {
-                                                dataField: "Quantity",
-                                                caption: "Quantity",
-                                                dataType: "number",
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "Unit",
-                                                caption: "Unit",
-                                              },
-                                              {
-                                                dataField: "UnitPriceJasa",
-                                                caption: "Unit Price Jasa",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "TotalJasa",
-                                                caption: "Total Jasa",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                calculateCellValue: function (
-                                                  data
-                                                ) {
-                                                  // Calculate TotalJasa based on Quantity and UnitPriceJasa
-                                                  return data.Quantity &&
-                                                    data.UnitPriceJasa
-                                                    ? data.Quantity *
-                                                        data.UnitPriceJasa
-                                                    : 0;
-                                                },
-                                              },
-                                              {
-                                                dataField: "UnitPriceMaterial",
-                                                caption: "Unit Price Material",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
-                                              },
-                                              {
-                                                dataField: "TotalMaterial",
-                                                caption: "Total Material",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                calculateCellValue: function (
-                                                  data
-                                                ) {
-                                                  // Calculate TotalMaterial based on Quantity and UnitPriceMaterial
-                                                  return data.Quantity &&
-                                                    data.UnitPriceMaterial
-                                                    ? data.Quantity *
-                                                        data.UnitPriceMaterial
-                                                    : 0;
-                                                },
-                                              },
-                                            ],
-                                            summary: {
-                                              totalItems: [
-                                                {
-                                                  column: "TotalJasa",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
-                                                    type: "currency",
-                                                    currency: "IDR",
-                                                  },
-                                                  displayFormat:
-                                                    "Total Jasa: {0}",
-                                                },
-                                                {
-                                                  column: "TotalMaterial",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
-                                                    type: "currency",
-                                                    currency: "IDR",
-                                                  },
-                                                  displayFormat:
-                                                    "Total Material: {0}",
-                                                },
-                                              ],
-                                            },
-                                          })
-                                          .appendTo(sectionContainer);
-                                      },
+                                      // Skip updates for section rows
+                                      if (e.oldData.isSection) {
+                                        DevExpress.ui.notify(
+                                          "Updates are not allowed for section rows.",
+                                          "warning",
+                                          2000
+                                        );
+                                        e.cancel = true;
+                                        return;
+                                      }
+
+                                      const values = e.newData;
+                                      const spkId = e.oldData.SpkId;
+                                      const sectionId = e.oldData.SectionId;
+                                      const key = e.key;
+
+                                      // Ensure SPK ID and Section ID are present
+                                      if (!spkId || !sectionId) {
+                                        DevExpress.ui.notify(
+                                          "Failed to update: SPK ID or Section ID is missing.",
+                                          "error",
+                                          2000
+                                        );
+                                        e.cancel = true;
+                                        return;
+                                      }
+
+                                      DevExpress.ui.notify(
+                                        "Updating item...",
+                                        "info",
+                                        2000
+                                      );
+                                      return $.ajax({
+                                        url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details/${key}`,
+                                        method: "PUT",
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem(
+                                            "authToken"
+                                          )}`,
+                                          "Content-Type": "application/json",
+                                        },
+                                        data: JSON.stringify(values),
+                                      })
+                                        .done(() => {
+                                          DevExpress.ui.notify(
+                                            "Item updated successfully!",
+                                            "success",
+                                            2000
+                                          );
+                                        })
+                                        .fail(() => {
+                                          DevExpress.ui.notify(
+                                            "Failed to update item.",
+                                            "error",
+                                            2000
+                                          );
+                                        });
                                     },
                                   })
-                                  .appendTo(spkContainer);
+                                  .appendTo(container);
                               },
                             },
+                            columns: [
+                              {
+                                dataField: "Subject",
+                                caption: "Subject",
+                              },
+                              {
+                                dataField: "Date",
+                                caption: "Date",
+                                dataType: "date",
+                                format: "dd/MM/yyyy",
+                              },
+                            ],
                           });
                         },
                       },
-
                       {
                         title: "BA",
                         template: function () {
