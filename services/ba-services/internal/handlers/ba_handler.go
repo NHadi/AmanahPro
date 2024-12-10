@@ -546,7 +546,7 @@ func (h *BAHandler) DeleteBADetail(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 500 {object} map[string]string
-// @Router /api/ba/{ba_id}/details/{detail_id}/progress [post]
+// @Router /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}/progress [post]
 func (h *BAHandler) CreateBAProgress(c *gin.Context) {
 	baIDStr := c.Param("ba_id")
 	baID, err := strconv.Atoi(baIDStr)
@@ -604,7 +604,7 @@ func (h *BAHandler) CreateBAProgress(c *gin.Context) {
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 404 {object} map[string]string "BA Progress Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/ba/{ba_id}/details/{detail_id}/progress/{progress_id} [put]
+// @Router /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}/progress/{progress_id} [put]
 func (h *BAHandler) UpdateBAProgress(c *gin.Context) {
 	baIDStr := c.Param("ba_id")
 	baID, err := strconv.Atoi(baIDStr)
@@ -673,7 +673,7 @@ func (h *BAHandler) UpdateBAProgress(c *gin.Context) {
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 404 {object} map[string]string "BA Progress Not Found"
 // @Failure 500 {object} map[string]string
-// @Router /api/ba/{ba_id}/details/{detail_id}/progress/{progress_id} [delete]
+// @Router /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}/progress/{progress_id} [delete]
 func (h *BAHandler) DeleteBAProgress(c *gin.Context) {
 	baIDStr := c.Param("ba_id")
 	baID, err := strconv.Atoi(baIDStr)

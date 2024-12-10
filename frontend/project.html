@@ -741,6 +741,72 @@
           return formattedData;
         }
 
+        function processData(data) {
+          const flatData = [];
+          data.forEach((ba) => {
+            ba.Sections.forEach((section) => {
+              section.Details.forEach((detail) => {
+                const rowData = {
+                  RowId: `detail-${detail.DetailId}`, // Unique Row ID
+                  AreaPemasangan: section.SectionName,
+                  Quantity: detail.Quantity,
+                  Unit: detail.Unit,
+                  Progress: detail.Progress || [],
+                };
+
+                // Flatten Progress data into rowData dynamically
+                detail.Progress.forEach((progress, index) => {
+                  rowData[`Progress[${index}].ProgressPreviousM2`] =
+                    progress.ProgressPreviousM2;
+                  rowData[`Progress[${index}].ProgressPreviousPercentage`] =
+                    progress.ProgressPreviousPercentage;
+                  rowData[`Progress[${index}].ProgressCurrentM2`] =
+                    progress.ProgressCurrentM2;
+                  rowData[`Progress[${index}].ProgressCurrentPercentage`] =
+                    progress.ProgressCurrentPercentage;
+                });
+
+                flatData.push(rowData);
+              });
+            });
+          });
+          console.log("Processed Data:", flatData); // Debugging
+          return flatData;
+        }
+
+        function generateDynamicProgressColumns() {
+          // Generate Progress columns based on the max number of progress entries
+          const maxProgressCount = 3; // Adjust this dynamically based on data
+          const progressColumns = [];
+          for (let i = 0; i < maxProgressCount; i++) {
+            progressColumns.push({
+              caption: `Progress ${i + 1}`,
+              alignment: "center",
+              columns: [
+                {
+                  dataField: `Progress[${i}].ProgressPreviousM2`,
+                  caption: "Previous M2",
+                },
+                {
+                  dataField: `Progress[${i}].ProgressPreviousPercentage`,
+                  caption: "Previous %",
+                  format: { type: "percent", precision: 2 },
+                },
+                {
+                  dataField: `Progress[${i}].ProgressCurrentM2`,
+                  caption: "Current M2",
+                },
+                {
+                  dataField: `Progress[${i}].ProgressCurrentPercentage`,
+                  caption: "Current %",
+                  format: { type: "percent", precision: 2 },
+                },
+              ],
+            });
+          }
+          return progressColumns;
+        }
+
         function initializeProjectsGrid(projects) {
           $("#projects-grid").dxDataGrid({
             dataSource: new DevExpress.data.CustomStore({
@@ -2700,6 +2766,63 @@
                                   .appendTo(spkContainer);
                               },
                             },
+                          });
+                        },
+                      },
+
+                      {
+                        title: "BA",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "RowId",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                }).then((response) => processData(response));
+                              },
+                            }),
+                            keyExpr: "RowId",
+                            showBorders: true,
+                            columnAutoWidth: true,
+                            wordWrapEnabled: true,
+                            filterRow: {
+                              visible: true,
+                              applyFilter: "auto",
+                            },
+                            headerFilter: {
+                              visible: true,
+                            },
+                            scrolling: {
+                              mode: "virtual", // Enable scrollable grid
+                            },
+                            height: 600, // Set grid height
+                            columns: [
+                              {
+                                dataField: "AreaPemasangan",
+                                caption: "Breakdown",
+                              },
+                              {
+                                dataField: "Quantity",
+                                caption: "Qty",
+                                dataType: "number",
+                              },
+                              {
+                                dataField: "Unit",
+                                caption: "Unit",
+                              },
+                              {
+                                caption: "Progress",
+                                alignment: "center",
+                                columns: generateDynamicProgressColumns(),
+                              },
+                            ],
                           });
                         },
                       },

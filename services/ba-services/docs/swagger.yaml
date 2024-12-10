@@ -152,6 +152,9 @@ definitions:
       sphItemId:
         description: Reference to SPH Item
         type: integer
+      totalPrice:
+        description: Discounted price of the item
+        type: number
       unit:
         description: Unit
         type: string
@@ -406,179 +409,6 @@ paths:
       summary: Update BA
       tags:
       - BAs
-  /api/ba/{ba_id}/details/{detail_id}/progress:
-    post:
-      consumes:
-      - application/json
-      description: Create a new BA Progress entry
-      parameters:
-      - description: BA ID
-        in: path
-        name: ba_id
-        required: true
-        type: integer
-      - description: Detail ID
-        in: path
-        name: detail_id
-        required: true
-        type: integer
-      - description: BA Progress Data
-        in: body
-        name: progress
-        required: true
-        schema:
-          $ref: '#/definitions/dto.BAProgressDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created BA Progress
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Create BA Progress
-      tags:
-      - BAProgress
-  /api/ba/{ba_id}/details/{detail_id}/progress/{progress_id}:
-    delete:
-      description: Delete an existing BA Progress entry
-      parameters:
-      - description: BA ID
-        in: path
-        name: ba_id
-        required: true
-        type: integer
-      - description: Detail ID
-        in: path
-        name: detail_id
-        required: true
-        type: integer
-      - description: Progress ID
-        in: path
-        name: progress_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: BA Progress Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete BA Progress
-      tags:
-      - BAProgress
-    put:
-      consumes:
-      - application/json
-      description: Update an existing BA Progress entry
-      parameters:
-      - description: BA ID
-        in: path
-        name: ba_id
-        required: true
-        type: integer
-      - description: Detail ID
-        in: path
-        name: detail_id
-        required: true
-        type: integer
-      - description: Progress ID
-        in: path
-        name: progress_id
-        required: true
-        type: integer
-      - description: BA Progress Data
-        in: body
-        name: progress
-        required: true
-        schema:
-          $ref: '#/definitions/dto.BAProgressDTO'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Updated BA Progress
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: BA Progress Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Update BA Progress
-      tags:
-      - BAProgress
   /api/ba/{ba_id}/sections:
     post:
       consumes:
@@ -910,6 +740,179 @@ paths:
       summary: Update BA Detail
       tags:
       - BADetails
+  /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}/progress:
+    post:
+      consumes:
+      - application/json
+      description: Create a new BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: BA Progress Data
+        in: body
+        name: progress
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BAProgressDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created BA Progress
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create BA Progress
+      tags:
+      - BAProgress
+  /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}/progress/{progress_id}:
+    delete:
+      description: Delete an existing BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: Progress ID
+        in: path
+        name: progress_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: BA Progress Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete BA Progress
+      tags:
+      - BAProgress
+    put:
+      consumes:
+      - application/json
+      description: Update an existing BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: Progress ID
+        in: path
+        name: progress_id
+        required: true
+        type: integer
+      - description: BA Progress Data
+        in: body
+        name: progress
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BAProgressDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated BA Progress
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: BA Progress Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update BA Progress
+      tags:
+      - BAProgress
   /api/ba/filter:
     get:
       description: Filter BAs by organization ID, BA ID, and project ID
