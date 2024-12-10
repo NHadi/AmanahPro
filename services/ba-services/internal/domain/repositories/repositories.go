@@ -1,7 +1,8 @@
 package repositories
 
 type Repositories struct {
-	SpkRepository        SPKRepository
-	SpkDetailRepository  SPKDetailRepository
-	SpkSectionRepository SPKSectionRepository
+	BARepository         BARepository
+	BASectionRepository  BASectionRepository
+	BADetailRepository   BADetailRepository
+	BAProgressRepository BAProgressRepository
 }

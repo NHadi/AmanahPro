@@ -28,17 +28,18 @@ func CreateServices(
 	}
 	sphGrpcClient := protos.NewSphServiceClient(conn)
 
-	// Create the SpkService instance
-	baService := services.NewSpkService(
-		repos.SpkRepository,
-		repos.SpkSectionRepository,
-		repos.SpkDetailRepository,
+	// Create the baService instance
+	baService := services.NewBAService(
+		repos.BARepository,
+		repos.BASectionRepository,
+		repos.BADetailRepository,
+		repos.BAProgressRepository,
 		rabbitPublisher,
 		"ba_events",
-		sphGrpcClient, // Inject SPH gRPC client
+		sphGrpcClient,
 	)
 
 	return &services.Services{
-		SPKService: baService,
+		BAService: baService,
 	}
 }

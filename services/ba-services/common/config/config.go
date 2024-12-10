@@ -32,8 +32,8 @@ func LoadConfig() (*Config, error) {
 
 	// Initialize configuration
 	return &Config{
-		Port:             getEnv("SPK_SERVICES_PORT", "8085"),
-		DatabaseURL:      getEnv("DATABASE_SPK_URL", ""),
+		Port:             getEnv("BA_SERVICES_PORT", "8087"),
+		DatabaseURL:      getEnv("DATABASE_BA_URL", ""),
 		RabbitMQURL:      getEnv("RABBITMQ_URL", ""),
 		RedisURL:         getEnv("REDIS_URL", ""),
 		RedisPassword:    getEnv("REDIS_PASSWORD", ""),

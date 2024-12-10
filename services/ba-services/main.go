@@ -7,6 +7,7 @@ import (
 	"AmanahPro/services/ba-services/common/routes"
 	"AmanahPro/services/ba-services/internal/handlers" // Import the generated gRPC package
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -26,17 +27,17 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title SPK Management Services API
+// @title BA Management Services API
 // @version 1.0
-// @description This is the SPH Management Services API documentation for managing SPK, and reconciliations.
+// @description This is the SPH Management Services API documentation for managing BA, and reconciliations.
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 // @description Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"
-// @host localhost:8086
+// @host localhost:8087
 // @BasePath /
 const (
-	defaultPort = "8086"
+	defaultPort = "8087"
 	logDir      = "log"
 )
 
@@ -44,7 +45,7 @@ func main() {
 	defer recoverFromPanic()
 
 	configureLogging()
-	log.Println("Starting SPK Management Services API...")
+	log.Println("Starting BA Management Services API...")
 
 	cfg := loadConfig()
 	deps := initializeDependencies(cfg)
@@ -53,7 +54,7 @@ func main() {
 	services := factories.CreateServices(repos, deps.RabbitMQPublisher, deps.RabbitMQConsumer, deps.ElasticsearchClient, deps.RedisClient)
 
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
-		handlers.NewSpkHandler(services.SPKService),
+		handlers.NewBAHandler(services.BAService),
 	))
 	startServerWithGracefulShutdown(deps, cfg, router)
 }
@@ -122,6 +123,90 @@ func setupRouter(cfg *config.Config, deps *bootstrap.Dependencies, handlers *han
 
 	router.Use(deps.LoggerMiddleware)
 	router.Use(middleware.RequestLoggingMiddleware())
+	// Add Trace-ID middleware
+	router.Use(middleware.TraceIDMiddleware())
+
+	// Add Health Check Endpoint
+	router.GET("/health", func(c *gin.Context) {
+		// Perform health checks for dependencies
+		healthChecks := map[string]string{}
+
+		// Check database connection
+		db, err := deps.DB.DB() // Extract the underlying *sql.DB from GORM
+		if err != nil || db.Ping() != nil {
+			healthChecks["database"] = "unhealthy"
+		} else {
+			healthChecks["database"] = "healthy"
+		}
+
+		// Check RabbitMQ connection
+		if deps.RabbitMQService != nil && (deps.RabbitMQService.Conn == nil || deps.RabbitMQService.Conn.IsClosed()) {
+			healthChecks["rabbitmq"] = "unhealthy"
+		} else {
+			healthChecks["rabbitmq"] = "healthy"
+		}
+
+		if deps.ElasticsearchClient != nil {
+			// Use the Elasticsearch client to perform a health check
+			res, err := deps.ElasticsearchClient.Cluster.Health()
+			if err != nil {
+				healthChecks["elasticsearch"] = "unhealthy"
+				log.Printf("Elasticsearch health check error: %v", err)
+			} else {
+				defer res.Body.Close() // Always close the response body
+				if res.IsError() {
+					healthChecks["elasticsearch"] = "unhealthy"
+					log.Printf("Elasticsearch health check failed with status: %s", res.Status())
+				} else {
+					// Parse the response to determine the cluster health
+					var result map[string]interface{}
+					if err := json.NewDecoder(res.Body).Decode(&result); err == nil {
+						if status, ok := result["status"].(string); ok && status == "green" {
+							healthChecks["elasticsearch"] = "healthy"
+						} else {
+							healthChecks["elasticsearch"] = "degraded" // If status is "yellow" or "red"
+						}
+					} else {
+						healthChecks["elasticsearch"] = "unhealthy"
+						log.Printf("Failed to parse Elasticsearch health response: %v", err)
+					}
+				}
+			}
+		} else {
+			healthChecks["elasticsearch"] = "unhealthy"
+			log.Println("Elasticsearch client is not initialized")
+		}
+
+		// Check Redis connection
+		if deps.RedisClient != nil {
+			_, err := deps.RedisClient.Ping(context.Background()).Result()
+			if err != nil {
+				healthChecks["redis"] = "unhealthy"
+			} else {
+				healthChecks["redis"] = "healthy"
+			}
+		}
+
+		// Determine overall health
+		overallStatus := "healthy"
+		for _, status := range healthChecks {
+			if status == "unhealthy" {
+				overallStatus = "unhealthy"
+				break
+			}
+		}
+
+		// Respond with health status
+		statusCode := http.StatusOK
+		if overallStatus == "unhealthy" {
+			statusCode = http.StatusServiceUnavailable
+		}
+
+		c.JSON(statusCode, gin.H{
+			"status":  overallStatus,
+			"details": healthChecks,
+		})
+	})
 
 	api := router.Group("/api")
 	api.Use(middleware.JWTAuthMiddleware(cfg.JWTSecret))

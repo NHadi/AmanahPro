@@ -1,76 +1,84 @@
 definitions:
-  dto.SpkDTO:
+  dto.BADTO:
     properties:
-      Date:
+      BADate:
         $ref: '#/definitions/models.CustomDate'
+      BASubject:
+        type: string
+      OrganizationId:
+        type: integer
       ProjectId:
         type: integer
       ProjectName:
         type: string
       SphId:
         type: integer
-      SpkId:
-        type: integer
-      Subject:
-        type: string
-    required:
-    - ProjectId
-    - ProjectName
-    - Subject
     type: object
-  dto.SpkDetailDTO:
+  dto.BADetailDTO:
     properties:
-      Description:
-        type: string
       DetailId:
         type: integer
+      DiscountPrice:
+        type: number
+      ItemName:
+        type: string
       Quantity:
         type: number
-      TotalJasa:
-        type: number
-      TotalMaterial:
-        type: number
+      SectionID:
+        type: integer
       Unit:
         type: string
-      UnitPriceJasa:
+      UnitPrice:
         type: number
-      UnitPriceMaterial:
-        type: number
-    required:
-    - Description
-    - Quantity
-    - TotalJasa
-    - TotalMaterial
-    - Unit
-    - UnitPriceJasa
-    - UnitPriceMaterial
     type: object
-  dto.SpkSectionDTO:
+  dto.BAProgressDTO:
     properties:
-      SectionId:
+      BAProgressId:
         type: integer
-      SectionTitle:
-        type: string
-    required:
-    - SectionTitle
+      CreatedBy:
+        type: integer
+      DetailId:
+        type: integer
+      OrganizationId:
+        type: integer
+      ProgressCurrentM2:
+        type: number
+      ProgressCurrentPercentage:
+        type: number
+      ProgressPreviousM2:
+        type: number
+      ProgressPreviousPercentage:
+        type: number
+      UpdatedBy:
+        type: integer
     type: object
-  models.CustomDate:
+  dto.BASectionDTO:
     properties:
-      time.Time:
+      BAID:
+        type: integer
+      BASectionId:
+        type: integer
+      SectionName:
         type: string
     type: object
-  models.SPK:
+  models.BA:
     properties:
+      badate:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: BA Date
+      baid:
+        description: Primary key
+        type: integer
+      basubject:
+        description: BA Subject
+        type: string
       createdAt:
         description: Creation timestamp
         type: string
       createdBy:
         description: Created by user ID
         type: integer
-      date:
-        allOf:
-        - $ref: '#/definitions/models.CustomDate'
-        description: Date of SPK
       deletedAt:
         description: Deletion timestamp
         type: string
@@ -81,31 +89,22 @@ definitions:
         description: Organization ID
         type: integer
       projectId:
-        description: Foreign key to Projects
+        description: Reference to Project ID
         type: integer
       projectName:
-        description: Project name
+        description: Project Name
+        type: string
+      recepientName:
+        description: Recepient Name
         type: string
       sections:
-        description: Relations
+        description: Relationship to BASection
         items:
-          $ref: '#/definitions/models.SPKSection'
+          $ref: '#/definitions/models.BASection'
         type: array
       sphId:
-        description: Foreign key to SPH
+        description: Reference to SPH ID
         type: integer
-      baId:
-        description: Primary key
-        type: integer
-      subject:
-        description: SPK subject
-        type: string
-      totalJasa:
-        description: Total Jasa Cost
-        type: number
-      totalMaterial:
-        description: Total Material Cost
-        type: number
       updatedAt:
         description: Update timestamp
         type: string
@@ -113,7 +112,7 @@ definitions:
         description: Updated by user ID
         type: integer
     type: object
-  models.SPKDetail:
+  models.BADetail:
     properties:
       createdAt:
         description: Creation timestamp
@@ -127,38 +126,82 @@ definitions:
       deletedBy:
         description: Deleted by user ID
         type: integer
-      description:
-        description: Item description
-        type: string
       detailId:
         description: Primary key
+        type: integer
+      discountPrice:
+        description: Discounted price of the item
+        type: number
+      itemName:
+        description: Item Name
+        type: string
+      organizationId:
+        description: Organization ID
+        type: integer
+      progress:
+        description: Relationship to BAProgress
+        items:
+          $ref: '#/definitions/models.BAProgress'
+        type: array
+      quantity:
+        description: Quantity
+        type: number
+      sectionID:
+        description: Reference to Section ID
+        type: integer
+      sphItemId:
+        description: Reference to SPH Item
+        type: integer
+      unit:
+        description: Unit
+        type: string
+      unitPrice:
+        description: Unit price of the item
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+      weightPercentage:
+        description: Weight Percentage
+        type: number
+    type: object
+  models.BAProgress:
+    properties:
+      baprogressId:
+        description: Primary key
+        type: integer
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      detailId:
+        description: Reference to Detail ID
         type: integer
       organizationId:
         description: Organization ID
         type: integer
-      quantity:
-        description: Item quantity
+      progressCurrentM2:
+        description: Current progress in M2
         type: number
-      sectionId:
-        description: Foreign key to SPK Section
-        type: integer
-      sphItemId:
-        description: Reference to SPH Item (optional)
-        type: integer
-      totalJasa:
-        description: Total Jasa cost
+      progressCurrentPercentage:
+        description: Current progress percentage
         type: number
-      totalMaterial:
-        description: Total Material cost
+      progressPreviousM2:
+        description: Previous progress in M2
         type: number
-      unit:
-        description: Unit of measurement
-        type: string
-      unitPriceJasa:
-        description: Unit price for Jasa
-        type: number
-      unitPriceMaterial:
-        description: Unit price for Material
+      progressPreviousPercentage:
+        description: Previous progress percentage
         type: number
       updatedAt:
         description: Update timestamp
@@ -167,8 +210,14 @@ definitions:
         description: Updated by user ID
         type: integer
     type: object
-  models.SPKSection:
+  models.BASection:
     properties:
+      baid:
+        description: Reference to BA ID
+        type: integer
+      basectionId:
+        description: Primary key
+        type: integer
       createdAt:
         description: Creation timestamp
         type: string
@@ -182,23 +231,18 @@ definitions:
         description: Deleted by user ID
         type: integer
       details:
-        description: Relations
+        description: Relationship to BADetail
         items:
-          $ref: '#/definitions/models.SPKDetail'
+          $ref: '#/definitions/models.BADetail'
         type: array
       organizationId:
         description: Organization ID
         type: integer
-      sectionId:
-        description: Primary key
-        type: integer
-      sectionTitle:
-        description: Section title
+      sectionName:
+        description: Section Name
         type: string
       sphSectionId:
-        type: integer
-      baId:
-        description: Foreign key to SPK
+        description: Reference to SphSectionId
         type: integer
       updatedAt:
         description: Update timestamp
@@ -207,30 +251,35 @@ definitions:
         description: Updated by user ID
         type: integer
     type: object
+  models.CustomDate:
+    properties:
+      time.Time:
+        type: string
+    type: object
 info:
   contact: {}
   description: This is the SPH Management Services API documentation for managing
-    SPK, and reconciliations.
-  title: SPK Management Services API
+    BA, and reconciliations.
+  title: BA Management Services API
   version: "1.0"
 paths:
   /api/ba:
     post:
       consumes:
       - application/json
-      description: Create a new SPK
+      description: Create a new BA
       parameters:
-      - description: SPK Data
+      - description: BA Data
         in: body
         name: ba
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkDTO'
+          $ref: '#/definitions/dto.BADTO'
       produces:
       - application/json
       responses:
         "201":
-          description: Created SPK
+          description: Created BA
           schema:
             additionalProperties: true
             type: object
@@ -254,14 +303,14 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create SPK
+      summary: Create BA
       tags:
-      - SPKs
+      - BAs
   /api/ba/{ba_id}:
     delete:
-      description: Delete an SPK by ID
+      description: Delete an existing BA
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -288,7 +337,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Not Found
+          description: BA Not Found
           schema:
             additionalProperties:
               type: string
@@ -301,30 +350,30 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Delete SPK
+      summary: Delete BA
       tags:
-      - SPKs
+      - BAs
     put:
       consumes:
       - application/json
-      description: Update an existing SPK
+      description: Update an existing BA
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
         type: integer
-      - description: SPK Data
+      - description: BA Data
         in: body
         name: ba
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkDTO'
+          $ref: '#/definitions/dto.BADTO'
       produces:
       - application/json
       responses:
         "200":
-          description: Updated SPK
+          description: Updated BA
           schema:
             additionalProperties: true
             type: object
@@ -341,7 +390,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Not Found
+          description: BA Not Found
           schema:
             additionalProperties:
               type: string
@@ -354,31 +403,204 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Update SPK
+      summary: Update BA
       tags:
-      - SPKs
+      - BAs
+  /api/ba/{ba_id}/details/{detail_id}/progress:
+    post:
+      consumes:
+      - application/json
+      description: Create a new BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: BA Progress Data
+        in: body
+        name: progress
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BAProgressDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created BA Progress
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create BA Progress
+      tags:
+      - BAProgress
+  /api/ba/{ba_id}/details/{detail_id}/progress/{progress_id}:
+    delete:
+      description: Delete an existing BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: Progress ID
+        in: path
+        name: progress_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: BA Progress Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete BA Progress
+      tags:
+      - BAProgress
+    put:
+      consumes:
+      - application/json
+      description: Update an existing BA Progress entry
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: Progress ID
+        in: path
+        name: progress_id
+        required: true
+        type: integer
+      - description: BA Progress Data
+        in: body
+        name: progress
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BAProgressDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated BA Progress
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: BA Progress Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update BA Progress
+      tags:
+      - BAProgress
   /api/ba/{ba_id}/sections:
     post:
       consumes:
       - application/json
-      description: Create a new SPK Section
+      description: Create a new BA Section
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
         type: integer
-      - description: SPK Section Data
+      - description: BA Section Data
         in: body
         name: section
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkSectionDTO'
+          $ref: '#/definitions/dto.BASectionDTO'
       produces:
       - application/json
       responses:
         "201":
-          description: Created SPK Section
+          description: Created BA Section
           schema:
             additionalProperties: true
             type: object
@@ -402,14 +624,14 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create SPK Section
+      summary: Create BA Section
       tags:
-      - SPKSections
+      - BASections
   /api/ba/{ba_id}/sections/{section_id}:
     delete:
-      description: Delete an SPK Section by ID
+      description: Delete an existing BA Section
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -441,7 +663,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Section Not Found
+          description: BA Section Not Found
           schema:
             additionalProperties:
               type: string
@@ -454,15 +676,15 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Delete SPK Section
+      summary: Delete BA Section
       tags:
-      - SPKSections
+      - BASections
     put:
       consumes:
       - application/json
-      description: Update an existing SPK Section
+      description: Update an existing BA Section
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -472,17 +694,17 @@ paths:
         name: section_id
         required: true
         type: integer
-      - description: SPK Section Data
+      - description: BA Section Data
         in: body
         name: section
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkSectionDTO'
+          $ref: '#/definitions/dto.BASectionDTO'
       produces:
       - application/json
       responses:
         "200":
-          description: Updated SPK Section
+          description: Updated BA Section
           schema:
             additionalProperties: true
             type: object
@@ -499,7 +721,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Section Not Found
+          description: BA Section Not Found
           schema:
             additionalProperties:
               type: string
@@ -512,16 +734,16 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Update SPK Section
+      summary: Update BA Section
       tags:
-      - SPKSections
+      - BASections
   /api/ba/{ba_id}/sections/{section_id}/details:
     post:
       consumes:
       - application/json
-      description: Create a new SPK Detail
+      description: Create a new BA Detail
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -531,17 +753,17 @@ paths:
         name: section_id
         required: true
         type: integer
-      - description: SPK Detail Data
+      - description: BA Detail Data
         in: body
         name: detail
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkDetailDTO'
+          $ref: '#/definitions/dto.BADetailDTO'
       produces:
       - application/json
       responses:
         "201":
-          description: Created SPK Detail
+          description: Created BA Detail
           schema:
             additionalProperties: true
             type: object
@@ -565,14 +787,14 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Create SPK Detail
+      summary: Create BA Detail
       tags:
-      - SPKDetails
+      - BADetails
   /api/ba/{ba_id}/sections/{section_id}/details/{detail_id}:
     delete:
-      description: Delete an SPK Detail by ID
+      description: Delete an existing BA Detail
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -609,7 +831,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Detail Not Found
+          description: BA Detail Not Found
           schema:
             additionalProperties:
               type: string
@@ -622,15 +844,15 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Delete SPK Detail
+      summary: Delete BA Detail
       tags:
-      - SPKDetails
+      - BADetails
     put:
       consumes:
       - application/json
-      description: Update an existing SPK Detail
+      description: Update an existing BA Detail
       parameters:
-      - description: SPK ID
+      - description: BA ID
         in: path
         name: ba_id
         required: true
@@ -645,17 +867,17 @@ paths:
         name: detail_id
         required: true
         type: integer
-      - description: SPK Detail Data
+      - description: BA Detail Data
         in: body
         name: detail
         required: true
         schema:
-          $ref: '#/definitions/dto.SpkDetailDTO'
+          $ref: '#/definitions/dto.BADetailDTO'
       produces:
       - application/json
       responses:
         "200":
-          description: Updated SPK Detail
+          description: Updated BA Detail
           schema:
             additionalProperties: true
             type: object
@@ -672,7 +894,7 @@ paths:
               type: string
             type: object
         "404":
-          description: SPK Detail Not Found
+          description: BA Detail Not Found
           schema:
             additionalProperties:
               type: string
@@ -685,19 +907,19 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Update SPK Detail
+      summary: Update BA Detail
       tags:
-      - SPKDetails
+      - BADetails
   /api/ba/filter:
     get:
-      description: Filter SPKs by organization ID, SPK ID, and project ID
+      description: Filter BAs by organization ID, BA ID, and project ID
       parameters:
       - description: Organization ID
         in: query
         name: organization_id
         required: true
         type: integer
-      - description: SPK ID
+      - description: BA ID
         in: query
         name: ba_id
         type: integer
@@ -712,7 +934,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.SPK'
+              $ref: '#/definitions/models.BA'
             type: array
         "400":
           description: Bad Request
@@ -734,9 +956,9 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Filter SPKs
+      summary: Filter BAs
       tags:
-      - SPKs
+      - BAs
 securityDefinitions:
   BearerAuth:
     description: Provide your JWT token with "Bearer " prefix, e.g., "Bearer <token>"

@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [   
     {
+      "name": "Debug BA Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/services/ba-services/main.go",
+      "envFile": "${workspaceFolder}/.env.local",
+      "args": [],
+      "cwd": "${workspaceFolder}/services/ba-services"
+    },
+    {
       "name": "Debug SPK Service",
       "type": "go",
       "request": "launch",
@@ -75,7 +85,7 @@
   "compounds": [
     {
       "name": "Debug All Services",
-      "configurations": ["Debug Bank Service", "Debug Account Service", "Debug Api Gateway", "Debug Breakdown Management Service", "Debug Project Management Service", "Debug SPH Service", "Debug SPK Service"]
+      "configurations": ["Debug Bank Service", "Debug Account Service", "Debug Api Gateway", "Debug Breakdown Management Service", "Debug Project Management Service", "Debug SPH Service", "Debug SPK Service","Debug BA Service"]
     }
   ]
 }

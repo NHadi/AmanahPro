@@ -22,7 +22,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new SPK",
+                "description": "Create a new BA",
                 "consumes": [
                     "application/json"
                 ],
@@ -30,23 +30,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKs"
+                    "BAs"
                 ],
-                "summary": "Create SPK",
+                "summary": "Create BA",
                 "parameters": [
                     {
-                        "description": "SPK Data",
+                        "description": "BA Data",
                         "name": "ba",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkDTO"
+                            "$ref": "#/definitions/dto.BADTO"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created SPK",
+                        "description": "Created BA",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -89,14 +89,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Filter SPKs by organization ID, SPK ID, and project ID",
+                "description": "Filter BAs by organization ID, BA ID, and project ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "SPKs"
+                    "BAs"
                 ],
-                "summary": "Filter SPKs",
+                "summary": "Filter BAs",
                 "parameters": [
                     {
                         "type": "integer",
@@ -107,7 +107,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "query"
                     },
@@ -124,7 +124,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.SPK"
+                                "$ref": "#/definitions/models.BA"
                             }
                         }
                     },
@@ -165,7 +165,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update an existing SPK",
+                "description": "Update an existing BA",
                 "consumes": [
                     "application/json"
                 ],
@@ -173,30 +173,30 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKs"
+                    "BAs"
                 ],
-                "summary": "Update SPK",
+                "summary": "Update BA",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "SPK Data",
+                        "description": "BA Data",
                         "name": "ba",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkDTO"
+                            "$ref": "#/definitions/dto.BADTO"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated SPK",
+                        "description": "Updated BA",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -221,7 +221,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Not Found",
+                        "description": "BA Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -246,18 +246,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an SPK by ID",
+                "description": "Delete an existing BA",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "SPKs"
+                    "BAs"
                 ],
-                "summary": "Delete SPK",
+                "summary": "Delete BA",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -292,7 +292,270 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Not Found",
+                        "description": "BA Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ba/{ba_id}/details/{detail_id}/progress": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new BA Progress entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BAProgress"
+                ],
+                "summary": "Create BA Progress",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "BA ID",
+                        "name": "ba_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Detail ID",
+                        "name": "detail_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "BA Progress Data",
+                        "name": "progress",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BAProgressDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created BA Progress",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ba/{ba_id}/details/{detail_id}/progress/{progress_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing BA Progress entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BAProgress"
+                ],
+                "summary": "Update BA Progress",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "BA ID",
+                        "name": "ba_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Detail ID",
+                        "name": "detail_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Progress ID",
+                        "name": "progress_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "BA Progress Data",
+                        "name": "progress",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BAProgressDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated BA Progress",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "BA Progress Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an existing BA Progress entry",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "BAProgress"
+                ],
+                "summary": "Delete BA Progress",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "BA ID",
+                        "name": "ba_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Detail ID",
+                        "name": "detail_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Progress ID",
+                        "name": "progress_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "BA Progress Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -319,7 +582,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new SPK Section",
+                "description": "Create a new BA Section",
                 "consumes": [
                     "application/json"
                 ],
@@ -327,30 +590,30 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKSections"
+                    "BASections"
                 ],
-                "summary": "Create SPK Section",
+                "summary": "Create BA Section",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "SPK Section Data",
+                        "description": "BA Section Data",
                         "name": "section",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkSectionDTO"
+                            "$ref": "#/definitions/dto.BASectionDTO"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created SPK Section",
+                        "description": "Created BA Section",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -393,7 +656,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update an existing SPK Section",
+                "description": "Update an existing BA Section",
                 "consumes": [
                     "application/json"
                 ],
@@ -401,13 +664,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKSections"
+                    "BASections"
                 ],
-                "summary": "Update SPK Section",
+                "summary": "Update BA Section",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -420,18 +683,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "SPK Section Data",
+                        "description": "BA Section Data",
                         "name": "section",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkSectionDTO"
+                            "$ref": "#/definitions/dto.BASectionDTO"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated SPK Section",
+                        "description": "Updated BA Section",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -456,7 +719,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Section Not Found",
+                        "description": "BA Section Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -481,18 +744,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an SPK Section by ID",
+                "description": "Delete an existing BA Section",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "SPKSections"
+                    "BASections"
                 ],
-                "summary": "Delete SPK Section",
+                "summary": "Delete BA Section",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -534,7 +797,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Section Not Found",
+                        "description": "BA Section Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -561,7 +824,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new SPK Detail",
+                "description": "Create a new BA Detail",
                 "consumes": [
                     "application/json"
                 ],
@@ -569,13 +832,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKDetails"
+                    "BADetails"
                 ],
-                "summary": "Create SPK Detail",
+                "summary": "Create BA Detail",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -588,18 +851,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "SPK Detail Data",
+                        "description": "BA Detail Data",
                         "name": "detail",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkDetailDTO"
+                            "$ref": "#/definitions/dto.BADetailDTO"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created SPK Detail",
+                        "description": "Created BA Detail",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -642,7 +905,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update an existing SPK Detail",
+                "description": "Update an existing BA Detail",
                 "consumes": [
                     "application/json"
                 ],
@@ -650,13 +913,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SPKDetails"
+                    "BADetails"
                 ],
-                "summary": "Update SPK Detail",
+                "summary": "Update BA Detail",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -676,18 +939,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "SPK Detail Data",
+                        "description": "BA Detail Data",
                         "name": "detail",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SpkDetailDTO"
+                            "$ref": "#/definitions/dto.BADetailDTO"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated SPK Detail",
+                        "description": "Updated BA Detail",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -712,7 +975,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Detail Not Found",
+                        "description": "BA Detail Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -737,18 +1000,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an SPK Detail by ID",
+                "description": "Delete an existing BA Detail",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "SPKDetails"
+                    "BADetails"
                 ],
-                "summary": "Delete SPK Detail",
+                "summary": "Delete BA Detail",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SPK ID",
+                        "description": "BA ID",
                         "name": "ba_id",
                         "in": "path",
                         "required": true
@@ -797,7 +1060,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "SPK Detail Not Found",
+                        "description": "BA Detail Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -819,16 +1082,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.SpkDTO": {
+        "dto.BADTO": {
             "type": "object",
-            "required": [
-                "ProjectId",
-                "ProjectName",
-                "Subject"
-            ],
             "properties": {
-                "Date": {
+                "BADate": {
                     "$ref": "#/definitions/models.CustomDate"
+                },
+                "BASubject": {
+                    "type": "string"
+                },
+                "OrganizationId": {
+                    "type": "integer"
                 },
                 "ProjectId": {
                     "type": "integer"
@@ -838,78 +1102,100 @@ const docTemplate = `{
                 },
                 "SphId": {
                     "type": "integer"
-                },
-                "SpkId": {
-                    "type": "integer"
-                },
-                "Subject": {
-                    "type": "string"
                 }
             }
         },
-        "dto.SpkDetailDTO": {
+        "dto.BADetailDTO": {
             "type": "object",
-            "required": [
-                "Description",
-                "Quantity",
-                "TotalJasa",
-                "TotalMaterial",
-                "Unit",
-                "UnitPriceJasa",
-                "UnitPriceMaterial"
-            ],
             "properties": {
-                "Description": {
-                    "type": "string"
-                },
                 "DetailId": {
                     "type": "integer"
+                },
+                "DiscountPrice": {
+                    "type": "number"
+                },
+                "ItemName": {
+                    "type": "string"
                 },
                 "Quantity": {
                     "type": "number"
                 },
-                "TotalJasa": {
-                    "type": "number"
-                },
-                "TotalMaterial": {
-                    "type": "number"
+                "SectionID": {
+                    "type": "integer"
                 },
                 "Unit": {
                     "type": "string"
                 },
-                "UnitPriceJasa": {
-                    "type": "number"
-                },
-                "UnitPriceMaterial": {
+                "UnitPrice": {
                     "type": "number"
                 }
             }
         },
-        "dto.SpkSectionDTO": {
+        "dto.BAProgressDTO": {
             "type": "object",
-            "required": [
-                "SectionTitle"
-            ],
             "properties": {
-                "SectionId": {
+                "BAProgressId": {
                     "type": "integer"
                 },
-                "SectionTitle": {
+                "CreatedBy": {
+                    "type": "integer"
+                },
+                "DetailId": {
+                    "type": "integer"
+                },
+                "OrganizationId": {
+                    "type": "integer"
+                },
+                "ProgressCurrentM2": {
+                    "type": "number"
+                },
+                "ProgressCurrentPercentage": {
+                    "type": "number"
+                },
+                "ProgressPreviousM2": {
+                    "type": "number"
+                },
+                "ProgressPreviousPercentage": {
+                    "type": "number"
+                },
+                "UpdatedBy": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.BASectionDTO": {
+            "type": "object",
+            "properties": {
+                "BAID": {
+                    "type": "integer"
+                },
+                "BASectionId": {
+                    "type": "integer"
+                },
+                "SectionName": {
                     "type": "string"
                 }
             }
         },
-        "models.CustomDate": {
+        "models.BA": {
             "type": "object",
             "properties": {
-                "time.Time": {
+                "badate": {
+                    "description": "BA Date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "baid": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "basubject": {
+                    "description": "BA Subject",
                     "type": "string"
-                }
-            }
-        },
-        "models.SPK": {
-            "type": "object",
-            "properties": {
+                },
                 "createdAt": {
                     "description": "Creation timestamp",
                     "type": "string"
@@ -917,14 +1203,6 @@ const docTemplate = `{
                 "createdBy": {
                     "description": "Created by user ID",
                     "type": "integer"
-                },
-                "date": {
-                    "description": "Date of SPK",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/models.CustomDate"
-                        }
-                    ]
                 },
                 "deletedAt": {
                     "description": "Deletion timestamp",
@@ -939,39 +1217,27 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "projectId": {
-                    "description": "Foreign key to Projects",
+                    "description": "Reference to Project ID",
                     "type": "integer"
                 },
                 "projectName": {
-                    "description": "Project name",
+                    "description": "Project Name",
+                    "type": "string"
+                },
+                "recepientName": {
+                    "description": "Recepient Name",
                     "type": "string"
                 },
                 "sections": {
-                    "description": "Relations",
+                    "description": "Relationship to BASection",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.SPKSection"
+                        "$ref": "#/definitions/models.BASection"
                     }
                 },
                 "sphId": {
-                    "description": "Foreign key to SPH",
+                    "description": "Reference to SPH ID",
                     "type": "integer"
-                },
-                "baId": {
-                    "description": "Primary key",
-                    "type": "integer"
-                },
-                "subject": {
-                    "description": "SPK subject",
-                    "type": "string"
-                },
-                "totalJasa": {
-                    "description": "Total Jasa Cost",
-                    "type": "number"
-                },
-                "totalMaterial": {
-                    "description": "Total Material Cost",
-                    "type": "number"
                 },
                 "updatedAt": {
                     "description": "Update timestamp",
@@ -983,7 +1249,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SPKDetail": {
+        "models.BADetail": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -1002,48 +1268,108 @@ const docTemplate = `{
                     "description": "Deleted by user ID",
                     "type": "integer"
                 },
-                "description": {
-                    "description": "Item description",
-                    "type": "string"
-                },
                 "detailId": {
                     "description": "Primary key",
+                    "type": "integer"
+                },
+                "discountPrice": {
+                    "description": "Discounted price of the item",
+                    "type": "number"
+                },
+                "itemName": {
+                    "description": "Item Name",
+                    "type": "string"
+                },
+                "organizationId": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "progress": {
+                    "description": "Relationship to BAProgress",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BAProgress"
+                    }
+                },
+                "quantity": {
+                    "description": "Quantity",
+                    "type": "number"
+                },
+                "sectionID": {
+                    "description": "Reference to Section ID",
+                    "type": "integer"
+                },
+                "sphItemId": {
+                    "description": "Reference to SPH Item",
+                    "type": "integer"
+                },
+                "unit": {
+                    "description": "Unit",
+                    "type": "string"
+                },
+                "unitPrice": {
+                    "description": "Unit price of the item",
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                },
+                "weightPercentage": {
+                    "description": "Weight Percentage",
+                    "type": "number"
+                }
+            }
+        },
+        "models.BAProgress": {
+            "type": "object",
+            "properties": {
+                "baprogressId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "detailId": {
+                    "description": "Reference to Detail ID",
                     "type": "integer"
                 },
                 "organizationId": {
                     "description": "Organization ID",
                     "type": "integer"
                 },
-                "quantity": {
-                    "description": "Item quantity",
+                "progressCurrentM2": {
+                    "description": "Current progress in M2",
                     "type": "number"
                 },
-                "sectionId": {
-                    "description": "Foreign key to SPK Section",
-                    "type": "integer"
-                },
-                "sphItemId": {
-                    "description": "Reference to SPH Item (optional)",
-                    "type": "integer"
-                },
-                "totalJasa": {
-                    "description": "Total Jasa cost",
+                "progressCurrentPercentage": {
+                    "description": "Current progress percentage",
                     "type": "number"
                 },
-                "totalMaterial": {
-                    "description": "Total Material cost",
+                "progressPreviousM2": {
+                    "description": "Previous progress in M2",
                     "type": "number"
                 },
-                "unit": {
-                    "description": "Unit of measurement",
-                    "type": "string"
-                },
-                "unitPriceJasa": {
-                    "description": "Unit price for Jasa",
-                    "type": "number"
-                },
-                "unitPriceMaterial": {
-                    "description": "Unit price for Material",
+                "progressPreviousPercentage": {
+                    "description": "Previous progress percentage",
                     "type": "number"
                 },
                 "updatedAt": {
@@ -1056,9 +1382,17 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SPKSection": {
+        "models.BASection": {
             "type": "object",
             "properties": {
+                "baid": {
+                    "description": "Reference to BA ID",
+                    "type": "integer"
+                },
+                "basectionId": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
                 "createdAt": {
                     "description": "Creation timestamp",
                     "type": "string"
@@ -1076,29 +1410,22 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "details": {
-                    "description": "Relations",
+                    "description": "Relationship to BADetail",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.SPKDetail"
+                        "$ref": "#/definitions/models.BADetail"
                     }
                 },
                 "organizationId": {
                     "description": "Organization ID",
                     "type": "integer"
                 },
-                "sectionId": {
-                    "description": "Primary key",
-                    "type": "integer"
-                },
-                "sectionTitle": {
-                    "description": "Section title",
+                "sectionName": {
+                    "description": "Section Name",
                     "type": "string"
                 },
                 "sphSectionId": {
-                    "type": "integer"
-                },
-                "baId": {
-                    "description": "Foreign key to SPK",
+                    "description": "Reference to SphSectionId",
                     "type": "integer"
                 },
                 "updatedAt": {
@@ -1108,6 +1435,14 @@ const docTemplate = `{
                 "updatedBy": {
                     "description": "Updated by user ID",
                     "type": "integer"
+                }
+            }
+        },
+        "models.CustomDate": {
+            "type": "object",
+            "properties": {
+                "time.Time": {
+                    "type": "string"
                 }
             }
         }
@@ -1128,8 +1463,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "SPK Management Services API",
-	Description:      "This is the SPH Management Services API documentation for managing SPK, and reconciliations.",
+	Title:            "BA Management Services API",
+	Description:      "This is the SPH Management Services API documentation for managing BA, and reconciliations.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

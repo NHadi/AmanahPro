@@ -2,14 +2,14 @@ package handlers
 
 // Handlers aggregates all individual handlers
 type Handlers struct {
-	Spk *SpkHandler
+	BA *BAHandler
 }
 
 // NewHandlers creates a new instance of Handlers
 func NewHandlers(
-	sphHandler *SpkHandler,
+	baHandler *BAHandler,
 ) *Handlers {
 	return &Handlers{
-		Spk: sphHandler,
+		BA: baHandler,
 	}
 }

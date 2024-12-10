@@ -705,19 +705,6 @@
           }, delay);
         }
 
-        // function pollDataReload(component, interval = 1000, retries = 3) {
-        //   let attempts = 0;
-
-        //   const intervalId = setInterval(() => {
-        //     attempts++;
-        //     component.refresh(); // Reload the grid data
-
-        //     if (attempts >= retries) {
-        //       clearInterval(intervalId); // Stop polling after max retries
-        //     }
-        //   }, interval);
-        // }
-
         function formatBreakdownData(data) {
           const formattedData = [];
 
@@ -1071,7 +1058,9 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(breakdownOptions.component);
+                                              pollDataReload(
+                                                breakdownOptions.component
+                                              );
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1105,7 +1094,9 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(breakdownOptions.component);
+                                              pollDataReload(
+                                                breakdownOptions.component
+                                              );
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1136,7 +1127,9 @@
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(breakdownOptions.component);
+                                              pollDataReload(
+                                                breakdownOptions.component
+                                              );
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1820,7 +1813,7 @@
                                           .dxDataGrid({
                                             dataSource:
                                               new DevExpress.data.CustomStore({
-                                                key: "DetailId",
+                                                key: "SphDetailId",
                                                 load: function () {
                                                   return Promise.resolve(
                                                     sectionOptions.data
@@ -1828,6 +1821,25 @@
                                                   );
                                                 },
                                                 insert: function (values) {
+                                                  // Automatically calculate TotalPrice before sending to the server
+                                                  if (
+                                                    values.UnitPrice &&
+                                                    values.DiscountPrice !=
+                                                      null &&
+                                                    values.Quantity
+                                                  ) {
+                                                    const discountedPrice =
+                                                      values.UnitPrice -
+                                                      (values.UnitPrice *
+                                                        values.DiscountPrice) /
+                                                        100;
+                                                    values.TotalPrice =
+                                                      discountedPrice *
+                                                      values.Quantity;
+                                                  } else {
+                                                    values.TotalPrice = 0; // Default to 0 if required fields are missing
+                                                  }
+
                                                   DevExpress.ui.notify(
                                                     "Adding SPH Detail...",
                                                     "info",
@@ -1937,7 +1949,7 @@
                                                     });
                                                 },
                                               }),
-                                            keyExpr: "DetailId",
+                                            keyExpr: "SphDetailId",
                                             editing: {
                                               mode: "batch", // Batch mode for details
                                               allowAdding: true,
@@ -2034,6 +2046,57 @@
                                                   displayFormat: "Total: {0}",
                                                 },
                                               ],
+                                            },
+
+                                            onRowInserting: function (e) {
+                                              // Calculate TotalPrice before inserting
+                                              if (
+                                                e.data.UnitPrice &&
+                                                e.data.DiscountPrice != null &&
+                                                e.data.Quantity
+                                              ) {
+                                                const discountedPrice =
+                                                  e.data.UnitPrice -
+                                                  (e.data.UnitPrice *
+                                                    e.data.DiscountPrice) /
+                                                    100;
+                                                e.data.TotalPrice = (
+                                                  discountedPrice *
+                                                  e.data.Quantity
+                                                ).toFixed(2); // Ensure two decimal places
+                                              } else {
+                                                e.data.TotalPrice = "0.00"; // Default to "0.00" if required fields are missing
+                                              }
+                                            },
+                                            onRowUpdating: function (e) {
+                                              // Calculate TotalPrice before updating
+                                              const updatedData = {
+                                                ...e.oldData,
+                                                ...e.newData, // Merge old data with new data
+                                              };
+
+                                              if (
+                                                updatedData.UnitPrice &&
+                                                updatedData.DiscountPrice !=
+                                                  null &&
+                                                updatedData.Quantity
+                                              ) {
+                                                const discountedPrice =
+                                                  updatedData.UnitPrice -
+                                                  (updatedData.UnitPrice *
+                                                    updatedData.DiscountPrice) /
+                                                    100;
+                                                updatedData.TotalPrice = (
+                                                  discountedPrice *
+                                                  updatedData.Quantity
+                                                ).toFixed(2); // Ensure two decimal places
+                                              } else {
+                                                updatedData.TotalPrice = "0.00"; // Default to "0.00" if required fields are missing
+                                              }
+
+                                              // Update the `newData` to include the calculated TotalPrice
+                                              e.newData.TotalPrice =
+                                                updatedData.TotalPrice;
                                             },
                                           })
                                           .appendTo(sectionContainer);
@@ -2177,9 +2240,9 @@
                             keyExpr: "SpkId",
                             editing: {
                               mode: "row",
-                              allowAdding: true,
+                              allowAdding: false,
                               allowUpdating: true,
-                              allowDeleting: true,
+                              allowDeleting: false,
                             },
                             showBorders: true,
                             columnAutoWidth: true,
@@ -2325,9 +2388,9 @@
                                     keyExpr: "SectionId",
                                     editing: {
                                       mode: "row",
-                                      allowAdding: true,
+                                      allowAdding: false,
                                       allowUpdating: true,
-                                      allowDeleting: true,
+                                      allowDeleting: false,
                                     },
                                     showBorders: true,
                                     columnAutoWidth: true,
@@ -2365,15 +2428,15 @@
                                                       .Details || []
                                                   );
                                                 },
-                                                insert: function (values) {
+                                                update: function (key, values) {
                                                   DevExpress.ui.notify(
-                                                    "Adding Detail...",
+                                                    "Updating SPK Detail...",
                                                     "info",
                                                     2000
                                                   );
                                                   return $.ajax({
-                                                    url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details`,
-                                                    method: "POST",
+                                                    url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details/${key}`,
+                                                    method: "PUT",
                                                     headers: {
                                                       Authorization: `Bearer ${localStorage.getItem(
                                                         "authToken"
@@ -2387,17 +2450,17 @@
                                                   })
                                                     .done(() => {
                                                       DevExpress.ui.notify(
-                                                        "Detail added successfully!",
+                                                        "SPK Detail updated successfully!",
                                                         "success",
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        sectionOptions.component
+                                                        options.component
                                                       );
                                                     })
                                                     .fail(() => {
                                                       DevExpress.ui.notify(
-                                                        "Failed to add Detail.",
+                                                        "Failed to update SPK Detail.",
                                                         "error",
                                                         2000
                                                       );
@@ -2407,9 +2470,9 @@
                                             keyExpr: "DetailId",
                                             editing: {
                                               mode: "batch",
-                                              allowAdding: true,
+                                              allowAdding: false,
                                               allowUpdating: true,
-                                              allowDeleting: true,
+                                              allowDeleting: false,
                                             },
                                             showBorders: true,
                                             columnAutoWidth: true,

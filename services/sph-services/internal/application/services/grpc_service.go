@@ -49,6 +49,7 @@ func (s *GrpcSphService) GetSphDetails(ctx context.Context, req *pb.GetSphDetail
 				Unit:            *detail.Unit,
 				UnitPrice:       *detail.UnitPrice,
 				DiscountPrice:   *detail.DiscountPrice,
+				TotalPrice:      *detail.TotalPrice,
 			}
 			grpcSection.Details = append(grpcSection.Details, grpcDetail)
 		}
