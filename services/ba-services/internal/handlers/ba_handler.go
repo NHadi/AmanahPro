@@ -116,6 +116,46 @@ func (h *BAHandler) CreateBA(c *gin.Context) {
 	})
 }
 
+// AddBAProgress
+// @Summary Add Progress to BA
+// @Description Add default progress entries to all details under a specific BA
+// @Tags BAs
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param ba_id path int true "BA ID"
+// @Success 200 {object} map[string]interface{} "Progress added"
+// @Failure 400 {object} map[string]string "Invalid BA ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/ba/{ba_id}/progress [post]
+func (h *BAHandler) AddBAProgress(c *gin.Context) {
+	// Parse BA ID from path
+	baID, err := strconv.Atoi(c.Param("ba_id"))
+	if err != nil || baID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BA ID"})
+		return
+	}
+
+	// Extract user claims
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Call service to add default progress
+	err = h.baService.AddBAProgress(baID, &claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Progress added successfully",
+	})
+}
+
 // UpdateBA
 // @Summary Update BA
 // @Description Update an existing BA

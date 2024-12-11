@@ -37,15 +37,19 @@ func (BADetail) TableName() string {
 func (d BADetail) MarshalJSON() ([]byte, error) {
 	type Alias BADetail
 	return json.Marshal(&struct {
-		UnitPrice     string `json:"UnitPrice"`
-		DiscountPrice string `json:"DiscountPrice"`
-		TotalPrice    string `json:"TotalPrice"`
+		Quantity         string `json:"Quantity"`
+		WeightPercentage string `json:"WeightPercentage"`
+		UnitPrice        string `json:"UnitPrice"`
+		DiscountPrice    string `json:"DiscountPrice"`
+		TotalPrice       string `json:"TotalPrice"`
 		Alias
 	}{
-		UnitPrice:     formatFloat(d.UnitPrice),
-		DiscountPrice: formatFloat(d.DiscountPrice),
-		TotalPrice:    formatFloat(d.TotalPrice),
-		Alias:         (Alias)(d),
+		Quantity:         formatFloat(&d.Quantity),
+		WeightPercentage: formatFloat(d.WeightPercentage),
+		UnitPrice:        formatFloat(d.UnitPrice),
+		DiscountPrice:    formatFloat(d.DiscountPrice),
+		TotalPrice:       formatFloat(d.TotalPrice),
+		Alias:            (Alias)(d),
 	})
 }
 

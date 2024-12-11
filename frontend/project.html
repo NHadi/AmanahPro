@@ -741,80 +741,64 @@
           return formattedData;
         }
 
-        function processData(data) {
-          const flatData = [];
-          data.forEach((ba) => {
-            ba.Sections.forEach((section) => {
-              section.Details.forEach((detail) => {
-                const rowData = {
-                  RowId: `detail-${detail.DetailId}`, // Unique Row ID
-                  AreaPemasangan: section.SectionName,
-                  Quantity: detail.Quantity,
-                  Unit: detail.Unit,
-                  Progress: detail.Progress || [],
-                };
 
-                // Flatten Progress data into rowData dynamically
-                detail.Progress.forEach((progress, index) => {
-                  rowData[`Progress[${index}].ProgressPreviousM2`] =
-                    progress.ProgressPreviousM2;
-                  rowData[`Progress[${index}].ProgressPreviousPercentage`] =
-                    progress.ProgressPreviousPercentage;
-                  rowData[`Progress[${index}].ProgressCurrentM2`] =
-                    progress.ProgressCurrentM2;
-                  rowData[`Progress[${index}].ProgressCurrentPercentage`] =
-                    progress.ProgressCurrentPercentage;
+        // Utility function to generate dynamic progress columns
+        function generateDynamicProgressColumns(projectId) {
+          return $.ajax({
+            url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }).then((data) => {
+            // Collect all unique progress stages
+            const progressKeys = new Set();
+            data.forEach((ba) => {
+              ba.Sections.forEach((section) => {
+                section.Details.forEach((detail) => {
+                  if (detail.Progress) {
+                    detail.Progress.forEach((progress, index) => {
+                      progressKeys.add(`Progress ${index + 1}`); // Add "Progress X" for each stage
+                    });
+                  }
                 });
-
-                flatData.push(rowData);
               });
             });
-          });
-          console.log("Processed Data:", flatData); // Debugging
-          return flatData;
-        }
 
-        function generateDynamicProgressColumns() {
-          // Generate Progress columns based on the max number of progress entries
-          const maxProgressCount = 3; // Adjust this dynamically based on data
-          const progressColumns = [];
-          for (let i = 0; i < maxProgressCount; i++) {
-            progressColumns.push({
-              caption: `Progress ${i + 1}`,
+            // Generate dynamic columns for progress stages
+            return Array.from(progressKeys).map((key, index) => ({
+              caption: key, // Caption for the progress stage
               alignment: "center",
               columns: [
                 {
-                  dataField: `Progress[${i}].ProgressPreviousM2`,
-                  caption: "Previous M2",
+                  dataField: `Progress[${index}].ProgressCurrentM2`,
+                  caption: "M2",
+                  dataType: "number",
+                  alignment: "right",
+                  calculateCellValue: function (data) {
+                    return data.isSection
+                      ? null
+                      : data.Progress?.[index]?.ProgressCurrentM2 || 0;
+                  },
+                  allowEditing: true,
                 },
                 {
-                  dataField: `Progress[${i}].ProgressPreviousPercentage`,
-                  caption: "Previous %",
-                  format: { type: "percent", precision: 2 },
-                },
-                {
-                  dataField: `Progress[${i}].ProgressCurrentM2`,
-                  caption: "Current M2",
-                },
-                {
-                  dataField: `Progress[${i}].ProgressCurrentPercentage`,
-                  caption: "Current %",
-                  format: { type: "percent", precision: 2 },
+                  dataField: `Progress[${index}].ProgressCurrentPercentage`,
+                  caption: "%",
+                  dataType: "number",
+                  alignment: "right",
+                  calculateCellValue: function (data) {
+                    return data.isSection
+                      ? null
+                      : data.Progress?.[index]?.ProgressCurrentPercentage || 0;
+                  },
+                  allowEditing: true,
                 },
               ],
-            });
-          }
-          return progressColumns;
+            }));
+          });
         }
-
-        function formatCurrency(value) {
-          if (!value) return "Rp 0";
-          return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-          }).format(value);
-        }
-
+  
         function initializeProjectsGrid(projects) {
           $("#projects-grid").dxDataGrid({
             dataSource: new DevExpress.data.CustomStore({
@@ -1561,7 +1545,7 @@
                             }),
                             keyExpr: "SphId",
                             editing: {
-                              mode: "row",
+                              mode: "batch",
                               allowAdding: true,
                               allowUpdating: true,
                               allowDeleting: true,
@@ -1732,6 +1716,14 @@
                                   },
                                 ],
                               },
+                              {
+                                caption: "Actions",
+                                type: "buttons",
+                                buttons: [
+                                  "edit", // Include the default Edit button
+                                  "delete", // Include the default Delete button
+                                ],
+                              },
                             ],
                             masterDetail: {
                               enabled: true,
@@ -1851,7 +1843,7 @@
                                     ),
                                     keyExpr: "SphSectionId",
                                     editing: {
-                                      mode: "row",
+                                      mode: "batch",
                                       allowAdding: true,
                                       allowUpdating: true,
                                       allowDeleting: true,
@@ -2232,7 +2224,7 @@
                                     return [sectionRow, ...detailRows];
                                   }
                                 ).flat();
-                                console.log(detailData);    
+
                                 $("<div>")
                                   .dxDataGrid({
                                     dataSource: detailData,
@@ -2255,7 +2247,7 @@
                                     columns: [
                                       {
                                         dataField: "SectionName",
-                                        caption: "Area Pemasangan",
+                                        caption: "Installation Area",
                                         cellTemplate: function (
                                           container,
                                           options
@@ -2288,19 +2280,19 @@
                                       },
                                       {
                                         dataField: "UnitPriceJasa",
-                                        caption: "Harga Satuan Jasa",
+                                        caption: "Service Unit Price",
                                         dataType: "number",
                                         format: {
                                           type: "currency",
                                           currency: "IDR",
                                         },
-                                        allowEditing: function (data) {                                      
+                                        allowEditing: function (data) {
                                           return !data.isSection; // Editable only for details
                                         },
                                       },
                                       {
                                         dataField: "TotalJasa",
-                                        caption: "Total Jasa",
+                                        caption: "Total Service",
                                         dataType: "number",
                                         format: {
                                           type: "currency",
@@ -2319,7 +2311,7 @@
                                       },
                                       {
                                         dataField: "UnitPriceMaterial",
-                                        caption: "Harga Satuan Material",
+                                        caption: "Material Unit Price",
                                         dataType: "number",
                                         format: {
                                           type: "currency",
@@ -2355,7 +2347,7 @@
                                         {
                                           column: "TotalJasa",
                                           summaryType: "sum",
-                                          displayFormat: "Total Jasa: {0}",
+                                          displayFormat: "Total Service: {0}",
                                           valueFormat: {
                                             type: "currency",
                                             currency: "IDR",
@@ -2451,6 +2443,61 @@
                                 dataType: "date",
                                 format: "dd/MM/yyyy",
                               },
+                              {
+                                type: "buttons",
+                                buttons: [
+                                  "edit", // Allow Edit button
+                                  {
+                                    hint: "Delete",
+                                    icon: "trash",
+                                    onClick: function (e) {
+                                      const spkId = e.row.data.SpkId;
+                                      if (!spkId) {
+                                        DevExpress.ui.notify(
+                                          "SPK ID is missing. Cannot delete.",
+                                          "error",
+                                          2000
+                                        );
+                                        return;
+                                      }
+
+                                      DevExpress.ui.dialog
+                                        .confirm(
+                                          "Are you sure you want to delete this SPK?",
+                                          "Confirm Deletion"
+                                        )
+                                        .done((confirmed) => {
+                                          if (confirmed) {
+                                            $.ajax({
+                                              url: `${API_BASE_URL}/spk_services/api/spk/${spkId}`,
+                                              method: "DELETE",
+                                              headers: {
+                                                Authorization: `Bearer ${localStorage.getItem(
+                                                  "authToken"
+                                                )}`,
+                                              },
+                                              success: function () {
+                                                DevExpress.ui.notify(
+                                                  "SPK deleted successfully!",
+                                                  "success",
+                                                  2000
+                                                );
+                                                e.component.refresh(); // Refresh the grid
+                                              },
+                                              error: function () {
+                                                DevExpress.ui.notify(
+                                                  "Failed to delete SPK.",
+                                                  "error",
+                                                  2000
+                                                );
+                                              },
+                                            });
+                                          }
+                                        });
+                                    },
+                                  },
+                                ],
+                              },
                             ],
                           });
                         },
@@ -2458,63 +2505,222 @@
                       {
                         title: "BA",
                         template: function () {
-                          return $("<div>").dxDataGrid({
-                            dataSource: new DevExpress.data.CustomStore({
-                              key: "RowId",
-                              load: function () {
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
-                                  method: "GET",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
+                          const gridContainer = $("<div>");
+
+                          generateDynamicProgressColumns(projectId).then(
+                            (progressColumns) => {
+                              let totalBA = 0;
+
+                              const grid = gridContainer
+                                .dxDataGrid({
+                                  dataSource: new DevExpress.data.CustomStore({
+                                    key: "RowId",
+                                    load: function () {
+                                      return $.ajax({
+                                        url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
+                                        method: "GET",
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem(
+                                            "authToken"
+                                          )}`,
+                                        },
+                                      }).then((data) => {
+                                        const flatData = [];
+                                        let rowIdCounter = 0;
+
+                                        data.forEach((ba) => {
+                                          ba.Sections.forEach((section) => {
+                                            flatData.push({
+                                              RowId: `section-${rowIdCounter++}`,
+                                              BAId: ba.BAId,
+                                              SectionName: section.SectionName,
+                                              isSection: true,
+                                            });
+
+                                            section.Details.forEach(
+                                              (detail) => {
+                                                flatData.push({
+                                                  RowId: `detail-${rowIdCounter++}`,
+                                                  BAId: ba.BAId,
+                                                  ...detail,
+                                                  SectionName:
+                                                    section.SectionName,
+                                                  isSection: false,
+                                                });
+
+                                                // Accumulate the total price for all BA details
+                                                totalBA += parseFloat(
+                                                  detail.TotalPrice || 0
+                                                );
+                                              }
+                                            );
+                                          });
+                                        });
+
+                                        return flatData;
+                                      });
+                                    },
+                                  }),
+                                  keyExpr: "RowId",
+                                  showBorders: true,
+                                  columnAutoWidth: true,
+                                  wordWrapEnabled: true,
+                                  filterRow: {
+                                    visible: true,
+                                    applyFilter: "auto",
                                   },
-                                }).then((response) => processData(response));
-                              },
-                            }),
-                            keyExpr: "RowId",
-                            showBorders: true,
-                            columnAutoWidth: true,
-                            wordWrapEnabled: true,
-                            filterRow: {
-                              visible: true,
-                              applyFilter: "auto",
-                            },
-                            headerFilter: {
-                              visible: true,
-                            },
-                            scrolling: {
-                              mode: "virtual", // Enable scrollable grid
-                            },
-                            height: 600, // Set grid height
-                            columns: [
-                              {
-                                dataField: "AreaPemasangan",
-                                caption: "Breakdown",
-                              },
-                              {
-                                dataField: "Quantity",
-                                caption: "Qty",
-                                dataType: "number",
-                              },
-                              {
-                                dataField: "Unit",
-                                caption: "Unit",
-                              },
-                              {
-                                caption: "Progress",
-                                alignment: "center",
-                                columns: generateDynamicProgressColumns(),
-                              },
-                            ],
-                          });
+                                  headerFilter: {
+                                    visible: true,
+                                  },
+                                  editing: {
+                                    mode: "batch",
+                                    allowUpdating: true,
+                                    startEditAction: "click",
+                                  },
+                                  columns: [
+                                    {
+                                      dataField: "SectionName",
+                                      caption: "Installation Area",
+                                      cellTemplate: function (
+                                        container,
+                                        options
+                                      ) {
+                                        if (options.data.isSection) {
+                                          $("<div>")
+                                            .css({ fontWeight: "bold" })
+                                            .text(options.data.SectionName)
+                                            .appendTo(container);
+                                        } else {
+                                          $("<div>")
+                                            .text(options.data.ItemName || "-")
+                                            .appendTo(container);
+                                        }
+                                      },
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "Quantity",
+                                      caption: "Qty",
+                                      dataType: "number",
+                                      alignment: "right",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "Unit",
+                                      caption: "Unit",
+                                      alignment: "center",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "WeightPercentage",
+                                      caption: "Weight Percentage",
+                                      dataType: "number",
+                                      alignment: "right",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    ...progressColumns.map(
+                                      (progressCol, index) => ({
+                                        caption: progressCol.caption,
+                                        alignment: "center",
+                                        columns: [
+                                          {
+                                            dataField: `Progress[${index}].ProgressCurrentM2`,
+                                            caption: "M2",
+                                            dataType: "number",
+                                            alignment: "right",
+                                            allowEditing: true,
+                                            calculateCellValue: function (data) {
+                                              // If this is a section row, return null
+                                              if (data.isSection) {
+                                                return null;
+                                              }
+                                              return data.ProgressCurrentM2 || 0; // Default to 0 if undefined
+                                            },
+                                          },
+                                          {
+                                            dataField: `Progress[${index}].ProgressCurrentPercentage`,
+                                            caption: "%",
+                                            dataType: "number",
+                                            alignment: "right",
+                                            calculateCellValue: function (data) {
+
+
+
+                                              if (data.isSection || !data.ProgressCurrentM2) {
+                                                return 0;
+                                              }
+
+                                              
+                                              console.log(data, 'data')
+                                              console.log(data.Progress[index], 'data index')
+                                              console.log(totalBA, 'total BA')
+
+                                              // Calculate the effective price
+                                              const unitPrice = parseFloat(data.UnitPrice || 0);
+                                              const discountPrice = parseFloat(data.DiscountPrice || 0);
+                                              const effectivePrice = unitPrice - (unitPrice * discountPrice) / 100;
+
+                                              
+
+                                              // Calculate percentage
+                                              const percentage = totalBA
+                                                ? ((data.ProgressCurrentM2 * effectivePrice) / totalBA) * 100
+                                                : 0;
+                                                
+                                              console.log(percentage, 'percentage')
+                                              return parseFloat(percentage.toFixed(2)); // Return formatted percentage
+                                            },
+                                            allowEditing: false, // The percentage should be auto-calculated, not editable                                          
+                                          },
+                                        ],
+                                      })
+                                    ),
+                                  ],
+                                  summary: {
+                                    totalItems: [
+                                      {
+                                        column: "WeightPercentage",
+                                        summaryType: "sum",
+                                        displayFormat: "Total: {0}%",
+                                        valueFormat: "fixedPoint",
+                                      },
+                                      ...progressColumns.map((col) => ({
+                                        column: col.dataField,
+                                        summaryType: "sum",
+                                        displayFormat: "Total: {0}",
+                                        valueFormat: "fixedPoint",
+                                      })),
+                                    ],
+                                  },
+                                  rowPrepared: function (info) {
+                                    if (info.data && info.data.isSection) {
+                                      info.rowElement.css({
+                                        fontWeight: "bold",
+                                        backgroundColor: "#f9f9f9",
+                                      });
+                                    }
+                                  },
+                                })
+                                .dxDataGrid("instance");
+                            }
+                          );
+
+                          return gridContainer;
                         },
                       },
                     ],
                     deferRendering: false,
                     showNavButtons: true,
                     selectedIndex: 0,
+                    swipeEnabled: false, // Disable swipe gestures
                   })
                   .appendTo(container);
               },

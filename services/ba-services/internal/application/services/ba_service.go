@@ -78,7 +78,15 @@ func (s *BAService) CreateBA(ba *models.BA, sphId int32) error {
 		return fmt.Errorf("failed to fetch SPH details from gRPC: %w", err)
 	}
 
-	// Populate SPK with sections and details from SPH
+	// Calculate the total sum of TotalPrice for all details
+	var totalPriceSum float64
+	for _, grpcSection := range sphDetailsResponse.Sections {
+		for _, grpcDetail := range grpcSection.Details {
+			totalPriceSum += grpcDetail.TotalPrice
+		}
+	}
+
+	// Populate BA with sections and details from SPH
 	for _, grpcSection := range sphDetailsResponse.Sections {
 		section := models.BASection{
 			SphSectionId:   int(grpcSection.SphSectionId),
@@ -88,22 +96,26 @@ func (s *BAService) CreateBA(ba *models.BA, sphId int32) error {
 		}
 
 		for _, grpcDetail := range grpcSection.Details {
+			// Calculate WeightPercentage for the detail
+			weightPercentage := 0.0
+			if totalPriceSum > 0 {
+				weightPercentage = (grpcDetail.TotalPrice / totalPriceSum) * 100
+			}
 
 			detail := models.BADetail{
 				SphItemId: func(v int32) *int {
 					value := int(v)
 					return &value
 				}(grpcDetail.SphDetailId),
-				ItemName:      &grpcDetail.ItemDescription,
-				Quantity:      grpcDetail.Quantity,
-				Unit:          &grpcDetail.Unit,
-				UnitPrice:     &grpcDetail.UnitPrice,
-				DiscountPrice: &grpcDetail.DiscountPrice,
-
-				TotalPrice: &grpcDetail.TotalPrice,
-
-				CreatedBy:      ba.CreatedBy,
-				OrganizationId: ba.OrganizationId,
+				ItemName:         &grpcDetail.ItemDescription,
+				Quantity:         grpcDetail.Quantity,
+				Unit:             &grpcDetail.Unit,
+				UnitPrice:        &grpcDetail.UnitPrice,
+				DiscountPrice:    &grpcDetail.DiscountPrice,
+				TotalPrice:       &grpcDetail.TotalPrice,
+				WeightPercentage: &weightPercentage, // Assign calculated WeightPercentage
+				CreatedBy:        ba.CreatedBy,
+				OrganizationId:   ba.OrganizationId,
 			}
 
 			detailProgress := models.BAProgress{
@@ -116,7 +128,6 @@ func (s *BAService) CreateBA(ba *models.BA, sphId int32) error {
 			}
 
 			detail.Progress = append(detail.Progress, detailProgress)
-
 			section.Details = append(section.Details, detail)
 		}
 		ba.Sections = append(ba.Sections, section)
@@ -176,6 +187,48 @@ func (s *BAService) DeleteBA(baID int, userID int) error {
 	if err := s.rabbitPublisher.PublishEvent(s.baQueueName, event); err != nil {
 		log.Printf("TraceID: %s - Error publishing delete event for BA ID: %d, %v", "", baID, err)
 	}
+	return nil
+}
+
+// AddBAProgress adds default progress entries (all fields set to 0) for all details under a specific BA.
+func (s *BAService) AddBAProgress(baID int, createdBy *int) error {
+	log.Printf("Adding default progress to BA with ID: %d", baID)
+
+	// Fetch the BA along with its hierarchy
+	ba, err := s.GetBAByID(baID)
+	if err != nil {
+		log.Printf("Error fetching BA: %v", err)
+		return fmt.Errorf("failed to fetch BA: %w", err)
+	}
+
+	if ba == nil {
+		log.Printf("BA with ID %d not found", baID)
+		return fmt.Errorf("BA not found")
+	}
+
+	// Iterate through sections and details to add progress
+	for _, section := range ba.Sections {
+		for _, detail := range section.Details {
+			// Create a default progress entry for the detail
+			progress := &models.BAProgress{
+				DetailId:                   detail.DetailId,
+				ProgressCurrentM2:          nil,
+				ProgressCurrentPercentage:  nil,
+				ProgressPreviousM2:         nil,
+				ProgressPreviousPercentage: nil,
+				CreatedBy:                  createdBy,
+				OrganizationId:             detail.OrganizationId,
+			}
+
+			// Insert the progress into the database
+			if err := s.progressRepo.Create(progress); err != nil {
+				log.Printf("Error adding progress to detail ID %d: %v", detail.DetailId, err)
+				return fmt.Errorf("failed to add progress to detail ID %d: %w", detail.DetailId, err)
+			}
+		}
+	}
+	s.PublishFullReindexEvent(baID, "", *createdBy)
+	log.Printf("Default progress successfully added to BA with ID: %d", baID)
 	return nil
 }
 

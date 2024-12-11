@@ -11,10 +11,11 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 	// BA routes
 	bas := api.Group("/ba")
 	{
-		bas.GET("/filter", handlers.BA.FilterBAs)   // Filter BAs
-		bas.POST("", handlers.BA.CreateBA)          // Create a BA
-		bas.PUT("/:ba_id", handlers.BA.UpdateBA)    // Update a BA
-		bas.DELETE("/:ba_id", handlers.BA.DeleteBA) // Delete a BA
+		bas.GET("/filter", handlers.BA.FilterBAs)               // Filter BAs
+		bas.POST("", handlers.BA.CreateBA)                      // Create a BA
+		bas.PUT("/:ba_id", handlers.BA.UpdateBA)                // Update a BA
+		bas.DELETE("/:ba_id", handlers.BA.DeleteBA)             // Delete a BA
+		bas.POST("/:ba_id/progress", handlers.BA.AddBAProgress) // Add progress to a BA
 
 		// BA Sections
 		sections := bas.Group("/:ba_id/sections")

@@ -409,6 +409,48 @@ paths:
       summary: Update BA
       tags:
       - BAs
+  /api/ba/{ba_id}/progress:
+    post:
+      consumes:
+      - application/json
+      description: Add default progress entries to all details under a specific BA
+      parameters:
+      - description: BA ID
+        in: path
+        name: ba_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Progress added
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid BA ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add Progress to BA
+      tags:
+      - BAs
   /api/ba/{ba_id}/sections:
     post:
       consumes:
