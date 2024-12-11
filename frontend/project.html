@@ -2518,284 +2518,306 @@
                       },
 
                       {
-  title: "BA",
-  template: function () {
-    const masterGridContainer = $("<div>");
+                        title: "BA",
+                        template: function () {
+                          const masterGridContainer = $("<div>");
 
-    // Generate the Master Grid
-    const masterGrid = masterGridContainer.dxDataGrid({
-      dataSource: new DevExpress.data.CustomStore({
-        key: "ProgressId",
-        load: function () {
-          return $.ajax({
-            url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          }).then((data) => {
-            const progressStages = [];
-            let totalPriceSum = 0; // Initialize total price sum
+                          // Generate the Master Grid
+                          const masterGrid = masterGridContainer.dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "ProgressId",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                }).then((data) => {
+                                  const progressStages = [];
+                                  let totalPriceSum = 0; // Initialize total price sum
 
-            data.forEach((ba) => {
-              ba.Sections.forEach((section) => {
-                section.Details.forEach((detail) => {
-                  totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
-                })
-              })
-            });
+                                  data.forEach((ba) => {
+                                    ba.Sections.forEach((section) => {
+                                      section.Details.forEach((detail) => {
+                                        totalPriceSum +=
+                                          parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                      });
+                                    });
+                                  });
 
-            data.forEach((ba) => {
-              ba.Sections.forEach((section) => {
-                section.Details.forEach((detail) => {
-                  // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
-                  if (detail.Progress) {
-                    detail.Progress.forEach((progress, index) => {
-                      const progressId = `Progress-${index + 1}`;
-                      if (
-                        !progressStages.find(
-                          (stage) => stage.ProgressId === progressId
-                        )
-                      ) {
-                        progressStages.push({
-                          ProgressId: progressId,
-                          ProgressName: `Progress ${index + 1}`,
-                          ProgressIndex: index,
-                          TotalPriceSum: totalPriceSum, // Pass TotalPriceSum to context
-                          Sections: ba.Sections, // Pass sections to detail grid
-                        });
-                      }
-                    });
-                  }
-                });
-              });
-            });
-            return progressStages;
-          });
-        },
-      }),
-      keyExpr: "ProgressId",
-      showBorders: true,
-      columnAutoWidth: true,
-      wordWrapEnabled: true,
-      columns: [
-        {
-          dataField: "ProgressName",
-          caption: "Progress Stage",
-          alignment: "center",
-        },
-      ],
-      masterDetail: {
-        enabled: true,
-        template: function (container, options) {
-          const detailGridContainer = $("<div>").appendTo(container);
-          const progressIndex = options.data.ProgressIndex;
-          const totalPriceSum = options.data.TotalPriceSum; // Use TotalPriceSum from master grid
+                                  data.forEach((ba) => {
+                                    ba.Sections.forEach((section) => {
+                                      section.Details.forEach((detail) => {
+                                        // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                        if (detail.Progress) {
+                                          detail.Progress.forEach(
+                                            (progress, index) => {
+                                              const progressId = `Progress-${
+                                                index + 1
+                                              }`;
+                                              if (
+                                                !progressStages.find(
+                                                  (stage) =>
+                                                    stage.ProgressId ===
+                                                    progressId
+                                                )
+                                              ) {
+                                                progressStages.push({
+                                                  ProgressId: progressId,
+                                                  ProgressName: `Progress ${
+                                                    index + 1
+                                                  }`,
+                                                  ProgressIndex: index,
+                                                  TotalPriceSum: totalPriceSum, // Pass TotalPriceSum to context
+                                                  Sections: ba.Sections, // Pass sections to detail grid
+                                                });
+                                              }
+                                            }
+                                          );
+                                        }
+                                      });
+                                    });
+                                  });
+                                  return progressStages;
+                                });
+                              },
+                            }),
+                            keyExpr: "ProgressId",
+                            showBorders: true,
+                            columnAutoWidth: true,
+                            wordWrapEnabled: true,
+                            columns: [
+                              {
+                                dataField: "ProgressName",
+                                caption: "Progress Stage",
+                                alignment: "center",
+                              },
+                            ],
+                            masterDetail: {
+                              enabled: true,
+                              template: function (container, options) {
+                                const detailGridContainer =
+                                  $("<div>").appendTo(container);
+                                const progressIndex =
+                                  options.data.ProgressIndex;
+                                const totalPriceSum =
+                                  options.data.TotalPriceSum; // Use TotalPriceSum from master grid
 
-          const detailData = [];
-          let rowIdCounter = 0; // Initialize counter for unique RowId
+                                const detailData = [];
+                                let rowIdCounter = 0; // Initialize counter for unique RowId
 
-          options.data.Sections.forEach((section) => {
-            detailData.push({
-              RowId: `section-${rowIdCounter++}`, // Assign unique RowId for section rows
-              SectionName: section.SectionName,
-              isSection: true,
-            });
-            section.Details.forEach((detail) => {
-              if (detail.Progress?.[progressIndex]) {
-                const progress = detail.Progress[progressIndex];
-                detailData.push({
-                  RowId: `detail-${rowIdCounter++}`, // Assign unique RowId for detail rows
-                  ...detail,
-                  ProgressCurrentM2: progress.ProgressCurrentM2,
-                  ProgressCurrentPercentage: progress.ProgressCurrentPercentage,
-                });
-              }
-            });
-          });
+                                options.data.Sections.forEach((section) => {
+                                  detailData.push({
+                                    RowId: `section-${rowIdCounter++}`, // Assign unique RowId for section rows
+                                    SectionName: section.SectionName,
+                                    isSection: true,
+                                  });
+                                  section.Details.forEach((detail) => {
+                                    if (detail.Progress?.[progressIndex]) {
+                                      const progress =
+                                        detail.Progress[progressIndex];
+                                      detailData.push({
+                                        RowId: `detail-${rowIdCounter++}`, // Assign unique RowId for detail rows
+                                        ...detail,
+                                        ProgressCurrentM2:
+                                          progress.ProgressCurrentM2,
+                                        ProgressCurrentPercentage:
+                                          progress.ProgressCurrentPercentage,
+                                      });
+                                    }
+                                  });
+                                });
 
+                                // Render the Detail Grid
+                                detailGridContainer.dxDataGrid({
+                                  dataSource: detailData,
+                                  keyExpr: "RowId",
+                                  showBorders: true,
+                                  columnAutoWidth: true,
+                                  wordWrapEnabled: true,
+                                  editing: {
+                                    mode: "batch",
+                                    allowUpdating: true,
+                                    startEditAction: "click",
+                                  },
+                                  columns: [
+                                    {
+                                      dataField: "SectionName",
+                                      caption: "Installation Area",
+                                      cellTemplate: function (
+                                        container,
+                                        options
+                                      ) {
+                                        if (options.data.isSection) {
+                                          $("<div>")
+                                            .css({ fontWeight: "bold" })
+                                            .text(options.data.SectionName)
+                                            .appendTo(container);
+                                        } else {
+                                          $("<div>")
+                                            .text(options.data.ItemName || "-")
+                                            .appendTo(container);
+                                        }
+                                      },
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "Quantity",
+                                      caption: "Qty",
+                                      dataType: "number",
+                                      alignment: "right",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "Unit",
+                                      caption: "Unit",
+                                      alignment: "center",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    {
+                                      dataField: "WeightPercentage",
+                                      caption: "Weight Percentage",
+                                      dataType: "number",
+                                      alignment: "right",
+                                      allowEditing: false,
+                                      fixed: true,
+                                      fixedPosition: "left",
+                                    },
+                                    ...(progressIndex > 0
+                                      ? [
+                                          {
+                                            caption: "Previous Progress",
+                                            alignment: "center",
+                                            columns: [
+                                              {
+                                                dataField: "ProgressPreviousM2",
+                                                caption: "M2",
+                                                dataType: "number",
+                                                alignment: "right",
+                                                allowEditing: false,
+                                              },
+                                              {
+                                                dataField:
+                                                  "ProgressPreviousPercentage",
+                                                caption: "%",
+                                                dataType: "number",
+                                                alignment: "right",
+                                                allowEditing: false,
+                                              },
+                                            ],
+                                          },
+                                        ]
+                                      : []),
+                                    {
+                                      caption: "Current Progress",
+                                      alignment: "center",
+                                      columns: [
+                                        {
+                                          dataField: "ProgressCurrentM2",
+                                          caption: "M2",
+                                          dataType: "number",
+                                          alignment: "right",
+                                          allowEditing: true,
+                                        },
+                                        {
+                                          dataField:
+                                            "ProgressCurrentPercentage",
+                                          caption: "%",
+                                          dataType: "number",
+                                          alignment: "right",
+                                          allowEditing: false,
+                                          calculateCellValue: function (data) {
+                                            if (
+                                              data.isSection ||
+                                              totalPriceSum === 0
+                                            ) {
+                                              return 0; // Avoid NaN and handle sections
+                                            }
 
-          // Render the Detail Grid
-          detailGridContainer.dxDataGrid({
-            dataSource: detailData,
-            keyExpr: "RowId",
-            showBorders: true,
-            columnAutoWidth: true,
-            wordWrapEnabled: true,
-            editing: {
-              mode: "batch",
-              allowUpdating: true,
-              startEditAction: "click",
-            },
-            columns: [
-              {
-                dataField: "SectionName",
-                caption: "Installation Area",
-                cellTemplate: function (container, options) {
-                  if (options.data.isSection) {
-                    $("<div>")
-                      .css({ fontWeight: "bold" })
-                      .text(options.data.SectionName)
-                      .appendTo(container);
-                  } else {
-                    $("<div>")
-                      .text(options.data.ItemName || "-")
-                      .appendTo(container);
-                  }
-                },
-                allowEditing: false,
-                fixed: true,
-                fixedPosition: "left",
-              },
-              {
-                dataField: "Quantity",
-                caption: "Qty",
-                dataType: "number",
-                alignment: "right",
-                allowEditing: false,
-                fixed: true,
-                fixedPosition: "left",
-              },
-              {
-                dataField: "Unit",
-                caption: "Unit",
-                alignment: "center",
-                allowEditing: false,
-                fixed: true,
-                fixedPosition: "left",
-              },
-              {
-                dataField: "WeightPercentage",
-                caption: "Weight Percentage",
-                dataType: "number",
-                alignment: "right",
-                allowEditing: false,
-                fixed: true,
-                fixedPosition: "left",
-              },
-              ...(progressIndex > 0
-                ? [
-                    {
-                      caption: "Previous Progress",
-                      alignment: "center",
-                      columns: [
-                        {
-                          dataField: "ProgressPreviousM2",
-                          caption: "M2",
-                          dataType: "number",
-                          alignment: "right",
-                          allowEditing: false,
+                                            const discountedPrice =
+                                              data.UnitPrice -
+                                              (data.UnitPrice *
+                                                data.DiscountPrice) /
+                                                100;
+                                                
+                                            const percentage =
+                                              ((data.ProgressCurrentM2 *
+                                                discountedPrice) /
+                                                totalPriceSum) *
+                                              100;
+
+                                            return isNaN(percentage)
+                                              ? 0
+                                              : percentage.toFixed(2); // Ensure valid output
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                  summary: {
+                                    totalItems: [
+                                      {
+                                        column: "WeightPercentage",
+                                        summaryType: "sum",
+                                        displayFormat: "Total: {0}%",
+                                        valueFormat: "fixedPoint",
+                                      },
+                                      ...(progressIndex > 0
+                                        ? [
+                                            {
+                                              column: "ProgressPreviousM2",
+                                              summaryType: "sum",
+                                              displayFormat: "Total: {0}",
+                                              valueFormat: "fixedPoint",
+                                            },
+                                            {
+                                              column:
+                                                "ProgressPreviousPercentage",
+                                              summaryType: "sum",
+                                              displayFormat: "Total: {0}%",
+                                              valueFormat: "fixedPoint",
+                                            },
+                                          ]
+                                        : []),
+                                      {
+                                        column: "ProgressCurrentM2",
+                                        summaryType: "sum",
+                                        displayFormat: "Total: {0}",
+                                        valueFormat: "fixedPoint",
+                                      },
+                                      {
+                                        column: "ProgressCurrentPercentage",
+                                        summaryType: "sum",
+                                        displayFormat: "Total: {0}%",
+                                        valueFormat: "fixedPoint",
+                                      },
+                                    ],
+                                  },
+                                  rowPrepared: function (info) {
+                                    if (info.data && info.data.isSection) {
+                                      info.rowElement.css({
+                                        fontWeight: "bold",
+                                        backgroundColor: "#f9f9f9",
+                                      });
+                                    }
+                                  },
+                                });
+                              },
+                            },
+                          });
+
+                          return masterGridContainer;
                         },
-                        {
-                          dataField: "ProgressPreviousPercentage",
-                          caption: "%",
-                          dataType: "number",
-                          alignment: "right",
-                          allowEditing: false,
-                        },
-                      ],
-                    },
-                  ]
-                : []),
-              {
-                caption: "Current Progress",
-                alignment: "center",
-                columns: [
-                  {
-                    dataField: "ProgressCurrentM2",
-                    caption: "M2",
-                    dataType: "number",
-                    alignment: "right",
-                    allowEditing: true,
-                  },
-                  {
-                    dataField: "ProgressCurrentPercentage",
-                    caption: "%",
-                    dataType: "number",
-                    alignment: "right",
-                    allowEditing: false,
-                    calculateCellValue: function (data) {
-                      if (data.isSection || totalPriceSum === 0) {
-                        return 0; // Avoid NaN and handle sections
-                      }
-
-                      console.log(data.UnitPrice,'UnitPrice');
-                      console.log(data.DiscountPrice, 'data.DiscountPrice')
-                      console.log(totalPriceSum, 'totalPriceSum')
-       
-
-                      const discountedPrice =
-                        data.UnitPrice -
-                        (data.UnitPrice * data.DiscountPrice) / 100;
-
-                        console.log(discountedPrice,'discountedPrice');
-
-                      const percentage =
-                        (data.ProgressCurrentM2 * discountedPrice) /
-                        totalPriceSum *
-                        100;
-
-                      return isNaN(percentage) ? 0 : percentage.toFixed(2); // Ensure valid output
-                    },
-                  },
-                ],
-              },
-            ],
-            summary: {
-              totalItems: [
-                {
-                  column: "WeightPercentage",
-                  summaryType: "sum",
-                  displayFormat: "Total: {0}%",
-                  valueFormat: "fixedPoint",
-                },
-                ...(progressIndex > 0
-                  ? [
-                      {
-                        column: "ProgressPreviousM2",
-                        summaryType: "sum",
-                        displayFormat: "Total: {0}",
-                        valueFormat: "fixedPoint",
                       },
-                      {
-                        column: "ProgressPreviousPercentage",
-                        summaryType: "sum",
-                        displayFormat: "Total: {0}%",
-                        valueFormat: "fixedPoint",
-                      },
-                    ]
-                  : []),
-                {
-                  column: "ProgressCurrentM2",
-                  summaryType: "sum",
-                  displayFormat: "Total: {0}",
-                  valueFormat: "fixedPoint",
-                },
-                {
-                  column: "ProgressCurrentPercentage",
-                  summaryType: "sum",
-                  displayFormat: "Total: {0}%",
-                  valueFormat: "fixedPoint",
-                },
-              ],
-            },
-            rowPrepared: function (info) {
-              if (info.data && info.data.isSection) {
-                info.rowElement.css({
-                  fontWeight: "bold",
-                  backgroundColor: "#f9f9f9",
-                });
-              }
-            },
-          });
-        },
-      },
-    });
-
-    return masterGridContainer;
-  },
-}
-
                     ],
                     deferRendering: false,
                     showNavButtons: true,
