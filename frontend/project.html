@@ -1773,12 +1773,13 @@
                                             data: JSON.stringify(values),
                                           })
                                             .done(() => {
+                                              pollDataReload(sphOptions.component);
                                               DevExpress.ui.notify(
                                                 "SPH Section added successfully!",
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                       
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1807,12 +1808,13 @@
                                             data: JSON.stringify(values),
                                           })
                                             .done(() => {
+                                              pollDataReload(sphOptions.component);
                                               DevExpress.ui.notify(
                                                 "SPH Section updated successfully!",
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                           
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1838,12 +1840,13 @@
                                             },
                                           })
                                             .done(() => {
+                                              pollDataReload(sphOptions.component);
                                               DevExpress.ui.notify(
                                                 "SPH Section deleted successfully!",
                                                 "success",
                                                 2000
                                               );
-                                              pollDataReload(options.component);
+                                           
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1946,7 +1949,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        options.component
+                                                        sectionOptions.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1978,14 +1981,15 @@
                                                     ),
                                                   })
                                                     .done(() => {
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
                                                       DevExpress.ui.notify(
                                                         "SPH Detail updated successfully!",
                                                         "success",
                                                         2000
                                                       );
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
+                                                     
                                                     })
                                                     .fail(() => {
                                                       DevExpress.ui.notify(
@@ -2017,7 +2021,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        options.component
+                                                        sectionOptions.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -2127,25 +2131,20 @@
                                                 },
                                               ],
                                             },
-
                                             onRowInserting: function (e) {
-                                              // Calculate TotalPrice before inserting
-                                              if (
-                                                e.data.UnitPrice &&
-                                                e.data.DiscountPrice != null &&
-                                                e.data.Quantity
-                                              ) {
-                                                const discountedPrice =
-                                                  e.data.UnitPrice -
-                                                  (e.data.UnitPrice *
-                                                    e.data.DiscountPrice) /
-                                                    100;
-                                                e.data.TotalPrice = (
-                                                  discountedPrice *
-                                                  e.data.Quantity
-                                                ).toFixed(2); // Ensure two decimal places
+                                              // Extract values with fallback defaults to prevent undefined or null issues
+                                              const unitPrice = e.data.UnitPrice || 0; // Default to 0 if undefined or null
+                                              const discountPrice = e.data.DiscountPrice || 0; // Default to 0
+                                              const quantity = e.data.Quantity || 0; // Default to 0
+
+                                              if (unitPrice > 0 && quantity > 0) {
+                                                // Calculate discounted price
+                                                const discountedPrice = unitPrice - (unitPrice * discountPrice) / 100;
+                                                // Calculate total price and ensure it's a float
+                                                e.data.TotalPrice = parseFloat((discountedPrice * quantity).toFixed(2));
                                               } else {
-                                                e.data.TotalPrice = "0.00"; // Default to "0.00" if required fields are missing
+                                                // Default to 0 if calculation cannot be performed
+                                                e.data.TotalPrice = 0;
                                               }
                                             },
                                             onRowUpdating: function (e) {
@@ -2155,29 +2154,24 @@
                                                 ...e.newData, // Merge old data with new data
                                               };
 
-                                              if (
-                                                updatedData.UnitPrice &&
-                                                updatedData.DiscountPrice !=
-                                                  null &&
-                                                updatedData.Quantity
-                                              ) {
-                                                const discountedPrice =
-                                                  updatedData.UnitPrice -
-                                                  (updatedData.UnitPrice *
-                                                    updatedData.DiscountPrice) /
-                                                    100;
-                                                updatedData.TotalPrice = (
-                                                  discountedPrice *
-                                                  updatedData.Quantity
-                                                ).toFixed(2); // Ensure two decimal places
+                                              const unitPrice = updatedData.UnitPrice || 0;
+                                              const discountPrice = updatedData.DiscountPrice || 0;
+                                              const quantity = updatedData.Quantity || 0;
+
+                                              if (unitPrice && quantity) {
+                                                const discountedPrice = unitPrice - (unitPrice * discountPrice) / 100;
+                                                updatedData.TotalPrice = parseFloat((discountedPrice * quantity).toFixed(2));
                                               } else {
-                                                updatedData.TotalPrice = "0.00"; // Default to "0.00" if required fields are missing
+                                                updatedData.TotalPrice = 0; // Default to 0 if required fields are missing
                                               }
 
                                               // Update the `newData` to include the calculated TotalPrice
-                                              e.newData.TotalPrice =
-                                                updatedData.TotalPrice;
+                                              e.newData = {
+                                                ...e.newData,
+                                                TotalPrice: updatedData.TotalPrice,
+                                              };
                                             },
+
                                           })
                                           .appendTo(sectionContainer);
                                       },
@@ -2428,6 +2422,7 @@
                                         data: JSON.stringify(values),
                                       })
                                         .done(() => {
+                                          pollDataReload(options.component);
                                           DevExpress.ui.notify(
                                             "Item updated successfully!",
                                             "success",
@@ -2491,12 +2486,13 @@
                                                 )}`,
                                               },
                                               success: function () {
+                                                pollDataReload(options.component);
                                                 DevExpress.ui.notify(
                                                   "SPK deleted successfully!",
                                                   "success",
                                                   2000
                                                 );
-                                                e.component.refresh(); // Refresh the grid
+                                                
                                               },
                                               error: function () {
                                                 DevExpress.ui.notify(
@@ -2748,7 +2744,7 @@
                                               (data.UnitPrice *
                                                 data.DiscountPrice) /
                                                 100;
-                                                
+
                                             const percentage =
                                               ((data.ProgressCurrentM2 *
                                                 discountedPrice) /
