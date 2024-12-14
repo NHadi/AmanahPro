@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"gorm.io/gorm"
@@ -88,6 +89,19 @@ func (r *breakdownRepositoryImpl) FilterBreakdowns(organizationID int, breakdown
 	breakdowns, err := helpers.ParseResponse[models.Breakdown](res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Elasticsearch response: %w", err)
+	}
+
+	// Sort Sections and Items within each Breakdown
+	for bIdx := range breakdowns {
+		sort.Slice(breakdowns[bIdx].Sections, func(i, j int) bool {
+			return breakdowns[bIdx].Sections[i].Sort < breakdowns[bIdx].Sections[j].Sort
+		})
+
+		for sIdx := range breakdowns[bIdx].Sections {
+			sort.Slice(breakdowns[bIdx].Sections[sIdx].Items, func(i, j int) bool {
+				return breakdowns[bIdx].Sections[sIdx].Items[i].Sort < breakdowns[bIdx].Sections[sIdx].Items[j].Sort
+			})
+		}
 	}
 
 	log.Printf("Found %d breakdowns for OrganizationID: %d", len(breakdowns), organizationID)

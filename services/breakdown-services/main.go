@@ -55,6 +55,7 @@ func main() {
 
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
 		handlers.NewBreakdownHandler(services.BreakdownService),
+		handlers.NewMstBreakdownHandler(services.BreakdownService),
 	))
 	startServerWithGracefulShutdown(deps, cfg, router)
 }

@@ -14,4 +14,5 @@ type BreakdownSectionRepository interface {
 	// Delete removes a BreakdownSection record from the database
 	Delete(sectionID int) error
 	GetByIDAndBreakdownID(sectionID int, breakdownID int) (*models.BreakdownSection, error)
+	GetBreakdownSectionsByBreakdownId(breakdownId int) ([]models.BreakdownSection, error)
 }

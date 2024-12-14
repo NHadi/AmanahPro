@@ -3,7 +3,7 @@ module AmanahPro/services/spk-services
 go 1.23.2
 
 require (
-	github.com/NHadi/AmanahPro-common v0.3.7
+	github.com/NHadi/AmanahPro-common v0.4.0
 	github.com/elastic/go-elasticsearch/v8 v8.16.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5

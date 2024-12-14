@@ -7,15 +7,18 @@ import (
 
 // Handlers aggregates all individual handlers
 type Handlers struct {
-	Breakdown *BreakdownHandler
+	Breakdown    *BreakdownHandler
+	MstBreakdown *MstBreakdownHandler
 }
 
 // NewHandlers creates a new instance of Handlers
 func NewHandlers(
 	breakdownHandler *BreakdownHandler,
+	mstBreakdownHandler *MstBreakdownHandler,
 ) *Handlers {
 	return &Handlers{
-		Breakdown: breakdownHandler,
+		Breakdown:    breakdownHandler,
+		MstBreakdown: mstBreakdownHandler,
 	}
 }
 

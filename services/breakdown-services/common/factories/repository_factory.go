@@ -10,8 +10,10 @@ import (
 
 func CreateRepositories(db *gorm.DB, esClient *elasticsearch.Client) *domainRepo.Repositories {
 	return &domainRepo.Repositories{
-		BreakdownItemRepository:    repositories.NewBreakdownItemRepository(db),
-		BreakdownSectionRepository: repositories.NewBreakdownSectionRepository(db),
-		BreakdownRepository:        repositories.NewBreakdownRepository(db, esClient, "breakdowns"),
+		BreakdownItemRepository:       repositories.NewBreakdownItemRepository(db),
+		BreakdownSectionRepository:    repositories.NewBreakdownSectionRepository(db),
+		MstBreakdownItemRepository:    repositories.NewMstBreakdownItemRepository(db),
+		MstBreakdownSectionRepository: repositories.NewMstBreakdownSectionRepository(db),
+		BreakdownRepository:           repositories.NewBreakdownRepository(db, esClient, "breakdowns"),
 	}
 }

@@ -26,6 +26,47 @@ func NewBreakdownHandler(breakdownService *services.BreakdownService) *Breakdown
 
 // Breakdown CRUD
 
+// SyncBreakdownWithMaster
+// @Summary Sync Breakdown with Master
+// @Description Synchronize BreakdownSections and BreakdownItems with their Master data
+// @Tags Breakdown
+// @Security BearerAuth
+// @Param breakdown_id path int true "Breakdown ID"
+// @Produce json
+// @Success 200 {object} map[string]string "Synchronization successful"
+// @Failure 400 {object} map[string]string "Invalid Breakdown ID"
+// @Failure 404 {object} map[string]string "Breakdown not found"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/breakdowns/{breakdown_id}/sync [post]
+func (h *BreakdownHandler) SyncBreakdownWithMaster(c *gin.Context) {
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		// Error already handled in the helper
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+
+	// Parse the Breakdown ID from the path
+	breakdownIdStr := c.Param("breakdown_id")
+	breakdownId, err := strconv.Atoi(breakdownIdStr)
+	if err != nil || breakdownId <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Breakdown ID"})
+		return
+	}
+
+	// Perform the synchronization
+	err = h.breakdownService.SyncBreakdown(breakdownId, &organizationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return success message
+	c.JSON(http.StatusOK, gin.H{"message": "Breakdown successfully synchronized with master data"})
+}
+
 // FilterBreakdowns
 // @Summary Filter Breakdowns
 // @Description Filter breakdowns by organization ID, breakdown ID, and project ID

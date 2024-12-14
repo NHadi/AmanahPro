@@ -13,6 +13,15 @@ type breakdownItemRepositoryImpl struct {
 	db *gorm.DB
 }
 
+// GetBreakdownItemsBySectionId retrieves all items for a given section ID
+func (r *breakdownItemRepositoryImpl) GetBreakdownItemsBySectionId(sectionId int) ([]models.BreakdownItem, error) {
+	var items []models.BreakdownItem
+	if err := r.db.Where("SectionId = ?", sectionId).Find(&items).Error; err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 // GetByID retrieves a BreakdownItem by its ID
 func (r *breakdownItemRepositoryImpl) GetByID(id int) (*models.BreakdownItem, error) {
 	log.Printf("Retrieving BreakdownItem with ID: %d", id)

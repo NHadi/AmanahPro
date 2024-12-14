@@ -7,6 +7,7 @@ type BreakdownItem struct {
 	BreakdownItemId int        `gorm:"primaryKey;column:BreakdownItemId;autoIncrement"` // Primary key
 	SectionId       int        `gorm:"column:SectionId;not null"`                       // Foreign key to BreakdownSections
 	Description     string     `gorm:"column:Description;type:varchar(255);not null"`   // Description of the item
+	Sort            int        `gorm:"column:Sort;not null"`                            // Sort
 	UnitPrice       float64    `gorm:"column:UnitPrice;type:decimal(15,2);not null"`    // Unit price
 	CreatedBy       *int       `gorm:"column:CreatedBy;null"`                           // Created by user ID
 	CreatedAt       *time.Time `gorm:"column:CreatedAt;autoCreateTime"`                 // Creation timestamp

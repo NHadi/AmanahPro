@@ -18,6 +18,15 @@ func NewBreakdownSectionRepository(db *gorm.DB) repositories.BreakdownSectionRep
 	return &breakdownSectionRepositoryImpl{db: db}
 }
 
+// GetBreakdownSectionsByBreakdownId retrieves all breakdown sections for a specific breakdown ID
+func (r *breakdownSectionRepositoryImpl) GetBreakdownSectionsByBreakdownId(breakdownId int) ([]models.BreakdownSection, error) {
+	var sections []models.BreakdownSection
+	if err := r.db.Preload("Items").Where("BreakdownId = ?", breakdownId).Find(&sections).Error; err != nil {
+		return nil, err
+	}
+	return sections, nil
+}
+
 // GetByIDAndBreakdownID retrieves a BreakdownSection by its ID and associated Breakdown ID
 func (r *breakdownSectionRepositoryImpl) GetByIDAndBreakdownID(sectionID int, breakdownID int) (*models.BreakdownSection, error) {
 	log.Printf("Querying BreakdownSection with SectionID: %d and BreakdownID: %d", sectionID, breakdownID)

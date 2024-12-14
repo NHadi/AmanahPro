@@ -15,4 +15,5 @@ type BreakdownItemRepository interface {
 	Delete(itemID int) error
 
 	GetByID(id int) (*models.BreakdownItem, error)
+	GetBreakdownItemsBySectionId(sectionId int) ([]models.BreakdownItem, error)
 }

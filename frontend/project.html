@@ -633,22 +633,22 @@
             const selectedData = grid.getSelectedRowsData();
 
             contentElement.append(`
-          <div>
-            <label><b>SPH:</b></label>
-            <span id="sphInfo">${
-              selectedData[0]?.Subject || "No Selection"
-            }</span>
-          </div>
-          <div>
-            <label><b>Subject:</b></label>
-            <span id="subjectInfo">${
-              selectedData[0]?.Subject || "No Selection"
-            }</span>
-          </div>
-          <div style="margin-top: 20px;">
-            <dx-button id="confirmGenerateSpk" text="Generate" type="success"></dx-button>
-          </div>
-        `);
+                <div>
+                  <label><b>SPH:</b></label>
+                  <span id="sphInfo">${
+                    selectedData[0]?.Subject || "No Selection"
+                  }</span>
+                </div>
+                <div>
+                  <label><b>Subject:</b></label>
+                  <span id="subjectInfo">${
+                    selectedData[0]?.Subject || "No Selection"
+                  }</span>
+                </div>
+                <div style="margin-top: 20px;">
+                  <dx-button id="confirmGenerateSpk" text="Generate" type="success"></dx-button>
+                </div>
+              `);
 
             // Add Generate SPK button action
             $("#confirmGenerateSpk").dxButton({
@@ -815,8 +815,8 @@
             columnAutoWidth: true,
             showBorders: true,
             searchPanel: { visible: true, placeholder: "Search..." },
-            headerFilter: { visible: true },
-            filterRow: { visible: true, applyFilter: "auto" },
+            headerFilter: { visible: false }, // Ensure header filter is disabled
+            filterRow: { visible: false }, // Disable the filter row
             paging: { pageSize: 10 },
             editing: {
               mode: "form", // Use Form editing mode
@@ -982,7 +982,7 @@
                             }),
                             keyExpr: "BreakdownId",
                             editing: {
-                              mode: "row",
+                              mode: "batch",
                               allowAdding: true,
                               allowUpdating: true,
                               allowDeleting: true,
@@ -990,13 +990,12 @@
                             showBorders: true,
                             columnAutoWidth: true, // Auto-resize columns
                             wordWrapEnabled: true, // Wrap text in cells
-                            filterRow: {
+                            searchPanel: {
                               visible: true,
-                              applyFilter: "auto",
+                              placeholder: "Search...",
                             },
-                            headerFilter: {
-                              visible: true,
-                            },
+                            headerFilter: { visible: false }, // Ensure header filter is disabled
+                            filterRow: { visible: false }, // Disable the filter row
                             columns: [
                               {
                                 dataField: "Subject",
@@ -1013,6 +1012,64 @@
                                 dataField: "Date",
                                 caption: "Date",
                                 dataType: "date",
+                              },
+                              {
+                                caption: "Sync",
+                                type: "buttons",
+                                buttons: [
+                                  {
+                                    hint: "Sync Breakdown",
+                                    icon: "refresh", // Use a predefined DevExtreme refresh icon
+                                    onClick: function (e) {
+                                      const data = e.row.data;
+
+                                      // API Request to Sync Breakdown
+                                      $.ajax({
+                                        url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${data.BreakdownId}/sync`,
+                                        method: "POST",
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem(
+                                            "authToken"
+                                          )}`,
+                                        },
+                                        success: function () {
+
+                                          pollDataReload(
+                                                options.component
+                                              );
+
+                                          DevExpress.ui.notify(
+                                            "Breakdown synced successfully!",
+                                            "success",
+                                            2000
+                                          );
+                                         
+                                          
+                                        },
+                                        error: function (err) {
+                                          console.error(
+                                            "Failed to sync breakdown:",
+                                            err
+                                          );
+                                          DevExpress.ui.notify(
+                                            "Failed to sync breakdown.",
+                                            "error",
+                                            2000
+                                          );
+                                        },
+                                      });
+                                    },
+                                  },
+                                ],
+                              },
+
+                              {
+                                caption: "Actions",
+                                type: "buttons",
+                                buttons: [
+                                  "edit", // Include the default Edit button
+                                  "delete", // Include the default Delete button
+                                ],
                               },
                             ],
                             masterDetail: {
@@ -1143,7 +1200,7 @@
                                     ),
                                     keyExpr: "BreakdownSectionId",
                                     editing: {
-                                      mode: "row",
+                                      mode: "batch",
                                       allowAdding: true,
                                       allowUpdating: true,
                                       allowDeleting: true,
@@ -1152,13 +1209,12 @@
                                     columnAutoWidth: true,
                                     wordWrapEnabled: true,
                                     showColumnHeaders: false, // Hide the column headers
-                                    filterRow: {
-                                      visible: true, // Show the filter row
-                                      applyFilter: "auto",
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
                                     },
-                                    headerFilter: {
-                                      visible: false, // Disable header filters
-                                    },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
                                     columns: [
                                       {
                                         dataField: "SectionTitle",
@@ -1308,13 +1364,12 @@
                                             showBorders: true,
                                             columnAutoWidth: true,
                                             wordWrapEnabled: true,
-                                            filterRow: {
+                                            searchPanel: {
                                               visible: true,
-                                              applyFilter: "auto",
+                                              placeholder: "Search...",
                                             },
-                                            headerFilter: {
-                                              visible: true,
-                                            },
+                                            headerFilter: { visible: false }, // Ensure header filter is disabled
+                                            filterRow: { visible: false }, // Disable the filter row
                                             columns: [
                                               {
                                                 dataField: "Description",
@@ -1495,13 +1550,12 @@
                             showBorders: true,
                             columnAutoWidth: true, // Auto-resize columns
                             wordWrapEnabled: true, // Wrap text in cells
-                            filterRow: {
+                            searchPanel: {
                               visible: true,
-                              applyFilter: "auto",
+                              placeholder: "Search...",
                             },
-                            headerFilter: {
-                              visible: true,
-                            },
+                            headerFilter: { visible: false }, // Ensure header filter is disabled
+                            filterRow: { visible: false }, // Disable the filter row
                             columns: [
                               {
                                 dataField: "Subject",
@@ -1553,20 +1607,20 @@
 
                                             // Display SPH and Subject information
                                             formContainer.append(`
-                <div style="padding: 20px;">
-                  <div>
-                    <label><b>SPH:</b></label>
-                    <span>${data.Subject}</span>
-                  </div>
-                  <div style="margin-top: 10px;">
-                    <label><b>Recipient Name:</b></label>
-                    <span>${data.RecepientName}</span>
-                  </div>
-                  <div style="margin-top: 20px;">
-                    <label><b>Description:</b></label>
-                  </div>
-                </div>
-              `);
+                      <div style="padding: 20px;">
+                        <div>
+                          <label><b>SPH:</b></label>
+                          <span>${data.Subject}</span>
+                        </div>
+                        <div style="margin-top: 10px;">
+                          <label><b>Recipient Name:</b></label>
+                          <span>${data.RecepientName}</span>
+                        </div>
+                        <div style="margin-top: 20px;">
+                          <label><b>Description:</b></label>
+                        </div>
+                      </div>
+                    `);
 
                                             // Add TextArea for user input
                                             const textArea = $("<div>")
@@ -1617,6 +1671,9 @@
                                                       )}`,
                                                     },
                                                     success: function () {
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
                                                       DevExpress.ui.notify(
                                                         "SPK generated successfully!",
                                                         "success",
@@ -1799,13 +1856,12 @@
                                     showBorders: true,
                                     columnAutoWidth: true,
                                     wordWrapEnabled: true,
-                                    filterRow: {
+                                    searchPanel: {
                                       visible: true,
-                                      applyFilter: "auto",
+                                      placeholder: "Search...",
                                     },
-                                    headerFilter: {
-                                      visible: true,
-                                    },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
                                     columns: [
                                       {
                                         dataField: "SectionTitle",
@@ -1835,10 +1891,39 @@
                                                   );
                                                 },
                                                 insert: function (values) {
+                                                  // Ensure numeric values are converted from strings
+                                                  if (
+                                                    values.UnitPrice !==
+                                                    undefined
+                                                  ) {
+                                                    values.UnitPrice =
+                                                      parseFloat(
+                                                        values.UnitPrice
+                                                      ) || 0; // Convert to float or default to 0
+                                                  }
+                                                  if (
+                                                    values.DiscountPrice !==
+                                                    undefined
+                                                  ) {
+                                                    values.DiscountPrice =
+                                                      parseFloat(
+                                                        values.DiscountPrice
+                                                      ) || 0;
+                                                  }
+                                                  if (
+                                                    values.Quantity !==
+                                                    undefined
+                                                  ) {
+                                                    values.Quantity =
+                                                      parseFloat(
+                                                        values.Quantity
+                                                      ) || 0;
+                                                  }
+
                                                   // Automatically calculate TotalPrice before sending to the server
                                                   if (
                                                     values.UnitPrice &&
-                                                    values.DiscountPrice !=
+                                                    values.DiscountPrice !==
                                                       null &&
                                                     values.Quantity
                                                   ) {
@@ -1859,6 +1944,7 @@
                                                     "info",
                                                     2000
                                                   );
+
                                                   return $.ajax({
                                                     url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details`,
                                                     method: "POST",
@@ -1871,7 +1957,7 @@
                                                     },
                                                     data: JSON.stringify(
                                                       values
-                                                    ),
+                                                    ), // Send the processed values
                                                   })
                                                     .done(() => {
                                                       DevExpress.ui.notify(
@@ -1891,12 +1977,60 @@
                                                       );
                                                     });
                                                 },
+
                                                 update: function (key, values) {
                                                   DevExpress.ui.notify(
                                                     "Updating SPH Detail...",
                                                     "info",
                                                     2000
                                                   );
+
+                                                  // Ensure numeric values are converted from strings
+                                                  if (
+                                                    values.UnitPrice !==
+                                                    undefined
+                                                  ) {
+                                                    values.UnitPrice =
+                                                      parseFloat(
+                                                        values.UnitPrice
+                                                      ) || 0; // Convert to float or default to 0
+                                                  }
+                                                  if (
+                                                    values.DiscountPrice !==
+                                                    undefined
+                                                  ) {
+                                                    values.DiscountPrice =
+                                                      parseFloat(
+                                                        values.DiscountPrice
+                                                      ) || 0;
+                                                  }
+                                                  if (
+                                                    values.Quantity !==
+                                                    undefined
+                                                  ) {
+                                                    values.Quantity =
+                                                      parseFloat(
+                                                        values.Quantity
+                                                      ) || 0;
+                                                  }
+
+                                                  // Recalculate TotalPrice if necessary fields are present
+                                                  if (
+                                                    values.UnitPrice &&
+                                                    values.DiscountPrice !==
+                                                      null &&
+                                                    values.Quantity
+                                                  ) {
+                                                    const discountedPrice =
+                                                      values.UnitPrice -
+                                                      (values.UnitPrice *
+                                                        values.DiscountPrice) /
+                                                        100;
+                                                    values.TotalPrice =
+                                                      discountedPrice *
+                                                      values.Quantity;
+                                                  }
+
                                                   return $.ajax({
                                                     url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
                                                     method: "PUT",
@@ -1909,7 +2043,7 @@
                                                     },
                                                     data: JSON.stringify(
                                                       values
-                                                    ),
+                                                    ), // Send the processed values
                                                   })
                                                     .done(() => {
                                                       pollDataReload(
@@ -1929,6 +2063,7 @@
                                                       );
                                                     });
                                                 },
+
                                                 remove: function (key) {
                                                   DevExpress.ui.notify(
                                                     "Deleting SPH Detail...",
@@ -1973,13 +2108,12 @@
                                             showBorders: true,
                                             columnAutoWidth: true,
                                             wordWrapEnabled: true,
-                                            filterRow: {
+                                            searchPanel: {
                                               visible: true,
-                                              applyFilter: "auto",
+                                              placeholder: "Search...",
                                             },
-                                            headerFilter: {
-                                              visible: true,
-                                            },
+                                            headerFilter: { visible: false }, // Ensure header filter is disabled
+                                            filterRow: { visible: false }, // Disable the filter row
                                             columns: [
                                               {
                                                 dataField: "ItemDescription",
@@ -2161,6 +2295,12 @@
                             showBorders: true,
                             columnAutoWidth: true,
                             wordWrapEnabled: true,
+                            searchPanel: {
+                              visible: true,
+                              placeholder: "Search...",
+                            },
+                            headerFilter: { visible: false }, // Ensure header filter is disabled
+                            filterRow: { visible: false }, // Disable the filter row
                             masterDetail: {
                               enabled: true,
                               template: function (container, options) {
@@ -2327,10 +2467,11 @@
                                       ],
                                     },
                                     onRowUpdating: function (e) {
+                                      // Merge old and new data
                                       e.newData = {
                                         ...e.oldData,
                                         ...e.newData,
-                                      }; // Merge old and new data
+                                      };
 
                                       // Skip updates for section rows
                                       if (e.oldData.isSection) {
@@ -2359,11 +2500,57 @@
                                         return;
                                       }
 
+                                      // Convert string fields to numbers (if they exist)
+                                      if (values.Quantity !== undefined) {
+                                        values.Quantity =
+                                          parseFloat(values.Quantity) || 0; // Convert or default to 0
+                                      }
+                                      if (values.UnitPriceJasa !== undefined) {
+                                        values.UnitPriceJasa =
+                                          parseFloat(values.UnitPriceJasa) || 0;
+                                      }
+                                      if (values.TotalJasa !== undefined) {
+                                        values.TotalJasa =
+                                          parseFloat(values.TotalJasa) || 0;
+                                      }
+                                      if (
+                                        values.UnitPriceMaterial !== undefined
+                                      ) {
+                                        values.UnitPriceMaterial =
+                                          parseFloat(
+                                            values.UnitPriceMaterial
+                                          ) || 0;
+                                      }
+                                      if (values.TotalMaterial !== undefined) {
+                                        values.TotalMaterial =
+                                          parseFloat(values.TotalMaterial) || 0;
+                                      }
+
+                                      // Optional: Recalculate totals if needed
+                                      if (
+                                        values.Quantity &&
+                                        values.UnitPriceJasa
+                                      ) {
+                                        values.TotalJasa =
+                                          values.Quantity *
+                                          values.UnitPriceJasa;
+                                      }
+                                      if (
+                                        values.Quantity &&
+                                        values.UnitPriceMaterial
+                                      ) {
+                                        values.TotalMaterial =
+                                          values.Quantity *
+                                          values.UnitPriceMaterial;
+                                      }
+
+                                      // Notify the user and send the update request
                                       DevExpress.ui.notify(
                                         "Updating item...",
                                         "info",
                                         2000
                                       );
+
                                       return $.ajax({
                                         url: `${API_BASE_URL}/spk_services/api/spk/${spkId}/sections/${sectionId}/details/${key}`,
                                         method: "PUT",
@@ -2490,48 +2677,52 @@
                                   const progressStages = [];
                                   let totalPriceSum = 0; // Initialize total price sum
 
-                                  data.forEach((ba) => {
-                                    ba.Sections.forEach((section) => {
-                                      section.Details.forEach((detail) => {
-                                        totalPriceSum +=
-                                          parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                  if (data) {
+                                    data.forEach((ba) => {
+                                      ba.Sections.forEach((section) => {
+                                        section.Details.forEach((detail) => {
+                                          totalPriceSum +=
+                                            parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                        });
                                       });
                                     });
-                                  });
 
-                                  data.forEach((ba) => {
-                                    ba.Sections.forEach((section) => {
-                                      section.Details.forEach((detail) => {
-                                        // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
-                                        if (detail.Progress) {
-                                          detail.Progress.forEach(
-                                            (progress, index) => {
-                                              const progressId = `Progress-${
-                                                index + 1
-                                              }`;
-                                              if (
-                                                !progressStages.find(
-                                                  (stage) =>
-                                                    stage.ProgressId ===
-                                                    progressId
-                                                )
-                                              ) {
-                                                progressStages.push({
-                                                  ProgressId: progressId,
-                                                  ProgressName: `Progress ${
-                                                    index + 1
-                                                  }`,
-                                                  ProgressIndex: index,
-                                                  TotalPriceSum: totalPriceSum, // Pass TotalPriceSum to context
-                                                  Sections: ba.Sections, // Pass sections to detail grid
-                                                });
+                                    data.forEach((ba) => {
+                                      ba.Sections.forEach((section) => {
+                                        section.Details.forEach((detail) => {
+                                          // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                          if (detail.Progress) {
+                                            detail.Progress.forEach(
+                                              (progress, index) => {
+                                                const progressId = `Progress-${
+                                                  index + 1
+                                                }`;
+                                                if (
+                                                  !progressStages.find(
+                                                    (stage) =>
+                                                      stage.ProgressId ===
+                                                      progressId
+                                                  )
+                                                ) {
+                                                  progressStages.push({
+                                                    ProgressId: progressId,
+                                                    ProgressName: `Progress ${
+                                                      index + 1
+                                                    }`,
+                                                    ProgressIndex: index,
+                                                    TotalPriceSum:
+                                                      totalPriceSum, // Pass TotalPriceSum to context
+                                                    Sections: ba.Sections, // Pass sections to detail grid
+                                                  });
+                                                }
                                               }
-                                            }
-                                          );
-                                        }
+                                            );
+                                          }
+                                        });
                                       });
                                     });
-                                  });
+                                  }
+
                                   return progressStages;
                                 });
                               },
@@ -2726,24 +2917,32 @@
                                       ...e.newData, // Merge old data with new data
                                     };
 
-                                    const unitPrice = updatedData.UnitPrice || 0;
-                                    const discountPrice = updatedData.DiscountPrice || 0;
-                                    const progressCurrentM2 = updatedData.ProgressCurrentM2 || 0;
+                                    const unitPrice =
+                                      updatedData.UnitPrice || 0;
+                                    const discountPrice =
+                                      updatedData.DiscountPrice || 0;
+                                    const progressCurrentM2 =
+                                      updatedData.ProgressCurrentM2 || 0;
 
                                     const discountedPrice =
-                                      unitPrice - (unitPrice * discountPrice) / 100;
+                                      unitPrice -
+                                      (unitPrice * discountPrice) / 100;
 
                                     const percentage =
-                                      ((progressCurrentM2 * discountedPrice) / totalPriceSum) * 100;
+                                      ((progressCurrentM2 * discountedPrice) /
+                                        totalPriceSum) *
+                                      100;
 
-                                    updatedData.ProgressCurrentPercentage = isNaN(percentage)
-                                      ? 0
-                                      : parseFloat(percentage.toFixed(2));
+                                    updatedData.ProgressCurrentPercentage =
+                                      isNaN(percentage)
+                                        ? 0
+                                        : parseFloat(percentage.toFixed(2));
 
                                     // Update the `newData` to include the calculated ProgressCurrentPercentage
                                     e.newData = {
                                       ...e.newData,
-                                      ProgressCurrentPercentage: updatedData.ProgressCurrentPercentage,
+                                      ProgressCurrentPercentage:
+                                        updatedData.ProgressCurrentPercentage,
                                     };
 
                                     // API update logic

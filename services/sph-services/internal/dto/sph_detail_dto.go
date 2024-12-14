@@ -3,7 +3,7 @@ package dto
 import "AmanahPro/services/sph-services/internal/domain/models"
 
 type SphDetailDTO struct {
-	SphDetailId     int      `json:"SphDetailId,omitempty"`
+	// SphDetailId     int      `json:"SphDetailId,omitempty"`
 	ItemDescription *string  `json:"ItemDescription"`
 	Quantity        *float64 `json:"Quantity"`
 	Unit            *string  `json:"Unit"`
@@ -15,7 +15,7 @@ type SphDetailDTO struct {
 // ToModel maps the DTO to the domain model
 func (dto *SphDetailDTO) ToModel(sectionID int, userID int) *models.SphDetail {
 	return &models.SphDetail{
-		SphDetailId:     dto.SphDetailId,
+		// SphDetailId:     dto.SphDetailId,
 		SectionId:       sectionID,
 		ItemDescription: dto.ItemDescription,
 		Quantity:        dto.Quantity,

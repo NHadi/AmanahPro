@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // SPK represents the SPK table in the database
 type SPK struct {
@@ -27,4 +30,15 @@ type SPK struct {
 // TableName specifies the table name for SPK
 func (SPK) TableName() string {
 	return "SPK"
+}
+
+func (b SPK) MarshalJSON() ([]byte, error) {
+	type Alias SPK
+	return json.Marshal(&struct {
+		Sections []SPKSection `json:"Sections"`
+		Alias
+	}{
+		Sections: b.Sections, // `BASection` handles its own custom marshaling
+		Alias:    (Alias)(b),
+	})
 }

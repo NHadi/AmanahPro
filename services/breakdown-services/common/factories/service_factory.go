@@ -18,6 +18,6 @@ func CreateServices(
 	redisClient *redis.Client,
 ) *services.Services {
 	return &services.Services{
-		BreakdownService: services.NewBreakdownService(repos.BreakdownRepository, repos.BreakdownSectionRepository, repos.BreakdownItemRepository, rabbitPublisher, "breakdown_events"),
+		BreakdownService: services.NewBreakdownService(repos.BreakdownRepository, repos.BreakdownSectionRepository, repos.BreakdownItemRepository, repos.MstBreakdownSectionRepository, repos.MstBreakdownItemRepository, rabbitPublisher, "breakdown_events"),
 	}
 }

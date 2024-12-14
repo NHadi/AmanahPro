@@ -7,6 +7,7 @@ type BreakdownSection struct {
 	BreakdownSectionId int        `gorm:"primaryKey;column:BreakdownSectionId;autoIncrement"` // Primary key
 	BreakdownId        int        `gorm:"column:BreakdownId;not null"`                        // Foreign key to Breakdowns
 	SectionTitle       string     `gorm:"column:SectionTitle;type:varchar(255);not null"`     // Section title
+	Sort               int        `gorm:"column:Sort;not null"`                               // Sort
 	CreatedBy          *int       `gorm:"column:CreatedBy;null"`                              // Created by user ID
 	CreatedAt          *time.Time `gorm:"column:CreatedAt;autoCreateTime"`                    // Creation timestamp
 	UpdatedBy          *int       `gorm:"column:UpdatedBy;null"`                              // Updated by user ID

@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 // SPKDetail represents the SPK Details table in the database
 type SPKDetail struct {
@@ -26,4 +30,31 @@ type SPKDetail struct {
 // TableName specifies the table name for SPKDetail
 func (SPKDetail) TableName() string {
 	return "SPKDetails"
+}
+
+func (d SPKDetail) MarshalJSON() ([]byte, error) {
+	type Alias SPKDetail
+	return json.Marshal(&struct {
+		Quantity          string `json:"Quantity"`
+		UnitPriceJasa     string `json:"UnitPriceJasa"`
+		TotalJasa         string `json:"TotalJasa"`
+		UnitPriceMaterial string `json:"UnitPriceMaterial"`
+		TotalMaterial     string `json:"TotalMaterial"`
+		Alias
+	}{
+		Quantity:          formatFloat(&d.Quantity),
+		UnitPriceJasa:     formatFloat(&d.UnitPriceJasa),
+		TotalJasa:         formatFloat(&d.TotalJasa),
+		UnitPriceMaterial: formatFloat(&d.UnitPriceMaterial),
+		TotalMaterial:     formatFloat(&d.TotalMaterial),
+		Alias:             (Alias)(d),
+	})
+}
+
+// Helper function to format float64 values with two decimal places
+func formatFloat(value *float64) string {
+	if value == nil {
+		return "0.00"
+	}
+	return fmt.Sprintf("%.2f", *value)
 }

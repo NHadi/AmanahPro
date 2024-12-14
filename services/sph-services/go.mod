@@ -3,13 +3,12 @@ module AmanahPro/services/sph-services
 go 1.23.2
 
 require (
-	github.com/NHadi/AmanahPro-common v0.3.9
+	github.com/NHadi/AmanahPro-common v0.4.0
 	github.com/elastic/go-elasticsearch/v8 v8.16.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/shopspring/decimal v1.4.0
 	github.com/streadway/amqp v1.1.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
