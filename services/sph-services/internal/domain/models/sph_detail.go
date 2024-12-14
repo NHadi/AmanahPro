@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 // SphDetail represents the SPHDetails table in the database
 type SphDetail struct {
@@ -24,4 +28,29 @@ type SphDetail struct {
 // TableName specifies the table name for SphDetail
 func (SphDetail) TableName() string {
 	return "SphDetails"
+}
+
+func (d SphDetail) MarshalJSON() ([]byte, error) {
+	type Alias SphDetail
+	return json.Marshal(&struct {
+		Quantity      string `json:"Quantity"`
+		UnitPrice     string `json:"UnitPrice"`
+		DiscountPrice string `json:"DiscountPrice"`
+		TotalPrice    string `json:"TotalPrice"`
+		Alias
+	}{
+		Quantity:      formatFloat(d.Quantity),
+		UnitPrice:     formatFloat(d.UnitPrice),
+		DiscountPrice: formatFloat(d.DiscountPrice),
+		TotalPrice:    formatFloat(d.TotalPrice),
+		Alias:         (Alias)(d),
+	})
+}
+
+// Helper function to format float64 values with two decimal places
+func formatFloat(value *float64) string {
+	if value == nil {
+		return "0.00"
+	}
+	return fmt.Sprintf("%.2f", *value)
 }

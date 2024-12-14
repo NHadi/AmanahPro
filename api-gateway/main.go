@@ -258,14 +258,19 @@ func TraceIDMiddleware() gin.HandlerFunc {
 }
 
 // determineEnvFilePath determines the correct .env file path based on runtime environment
-func determineEnvFilePath(localEnvPath string) string {
-	if isDockerEnvironment() {
-		return "/app/.env" // Docker container path
+func determineEnvFilePath(defaultpath string) string {
+	// Default to production environment
+	if fileExists("/root/AmanahPro/.env") {
+		return "/root/AmanahPro/.env"
 	}
-	if fileExists(localEnvPath) {
-		return localEnvPath
+
+	// Default to Docker environment if Docker-specific path exists
+	if fileExists("/app/.env") {
+		return "/app/.env"
 	}
-	return "/root/AmanahPro/.env" // Production path
+
+	// Development fallback
+	return defaultpath
 }
 
 // isDockerEnvironment checks if the application is running inside Docker

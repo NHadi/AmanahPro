@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Sph represents the SPH table in the database
 type Sph struct {
@@ -26,4 +29,15 @@ type Sph struct {
 // TableName specifies the table name for Sph
 func (Sph) TableName() string {
 	return "Sph"
+}
+
+func (b Sph) MarshalJSON() ([]byte, error) {
+	type Alias Sph
+	return json.Marshal(&struct {
+		Sections []SphSection `json:"Sections"`
+		Alias
+	}{
+		Sections: b.Sections, // `BASection` handles its own custom marshaling
+		Alias:    (Alias)(b),
+	})
 }

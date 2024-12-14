@@ -53,6 +53,7 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 	// List of queues to declare
 	queueNames := []string{
 		"breakdown_events",
+		"project_events_breakdown",
 	}
 
 	// Initialize RabbitMQ service
@@ -74,7 +75,7 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 	rabbitService.SetOnReconnect(func() {
 		log.Println("RabbitMQ reconnected. Reinitializing consumers...")
 		for queueName, consumer := range consumers {
-			go func(c *services.ConsumerService, q string) {
+			go func(c services.Consumer, q string) { // Use the Consumer interface
 				for {
 					channel, err := rabbitService.NewChannel()
 					if err != nil {
@@ -83,14 +84,14 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 						continue
 					}
 
-					if err := c.StartConsumer(channel, 5); err != nil {
+					if err := c.StartConsumer(channel, 5); err != nil { // Use the Consumer interface method
 						log.Printf("Consumer for queue '%s' exited with error: %v. Restarting...", q, err)
 						time.Sleep(5 * time.Second)
 					} else {
 						break
 					}
 				}
-			}(consumer, queueName)
+			}(consumer, queueName) // Pass the Consumer interface and queue name
 		}
 	})
 
@@ -117,14 +118,14 @@ func InitDependencies(cfg *config.Config) (*Dependencies, error) {
 }
 
 // startConsumers starts RabbitMQ consumers for the provided queues.
-func startConsumers(cfg *config.Config, consumers map[string]*services.ConsumerService, rabbitService *messagebroker.RabbitMQService) {
+func startConsumers(cfg *config.Config, consumers map[string]services.Consumer, rabbitService *messagebroker.RabbitMQService) {
 	concurrency, err := strconv.Atoi(cfg.CONCURRENCY)
 	if err != nil || concurrency == 0 {
 		concurrency = 5
 	}
 
 	for queueName, consumer := range consumers {
-		go func(c *services.ConsumerService, q string) {
+		go func(c services.Consumer, q string) {
 			for {
 				log.Printf("Starting consumer for queue: %s", q)
 

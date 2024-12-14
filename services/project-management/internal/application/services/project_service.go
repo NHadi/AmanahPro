@@ -94,6 +94,10 @@ func (s *ProjectService) UpdateProject(project *models.Project, traceID string) 
 		log.Printf("TraceID: %s - Error publishing update event for ProjectID: %d, %v", traceID, project.ProjectID, err)
 	}
 
+	if err := s.rabbitPublisher.PublishEvent(fmt.Sprintf("%s_breakdown", s.queueName), event); err != nil {
+		log.Printf("TraceID: %s - Error publishing update event for ProjectID: %d, %v", traceID, project.ProjectID, err)
+	}
+
 	log.Printf("TraceID: %s - Successfully updated project: %+v", traceID, project)
 	return nil
 }

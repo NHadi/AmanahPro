@@ -741,78 +741,6 @@
           return formattedData;
         }
 
-        // Utility function to generate dynamic progress columns
-        function generateDynamicProgressColumns(projectId) {
-          return $.ajax({
-            url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          }).then((data) => {
-            const progressKeys = new Set(); // Collect unique progress stages
-
-            data.forEach((ba) => {
-              ba.Sections.forEach((section) => {
-                section.Details.forEach((detail) => {
-                  if (detail.Progress) {
-                    detail.Progress.forEach((_, index) => {
-                      progressKeys.add(`Progress ${index + 1}`);
-                    });
-                  }
-                });
-              });
-            });
-
-            // Generate dynamic columns for each progress stage
-            return Array.from(progressKeys).map((key, index) => ({
-              caption: key,
-              alignment: "center",
-              columns: [
-                {
-                  dataField: `Progress[${index}].ProgressCurrentM2`,
-                  caption: "M2",
-                  dataType: "number",
-                  alignment: "right",
-                  allowEditing: true,
-                  calculateCellValue: function (data) {
-                    if (data.isSection) {
-                      return null; // Skip calculation for section rows
-                    }
-                    return data.Progress?.[index]?.ProgressCurrentM2 || 0; // Default to 0 if undefined
-                  },
-                },
-                {
-                  dataField: `Progress[${index}].ProgressCurrentPercentage`,
-                  caption: "%",
-                  dataType: "number",
-                  alignment: "right",
-                  allowEditing: false,
-                  calculateCellValue: function (data) {
-                    if (data.isSection || !data.ProgressCurrentM2) {
-                      return 0; // Return 0 for sections or if no progress data
-                    }
-
-                    // Perform calculation for percentage
-                    const totalBA = data.TotalBA || 0; // Ensure totalBA is available
-                    const unitPrice = parseFloat(data.UnitPrice || 0);
-                    const discountPrice = parseFloat(data.DiscountPrice || 0);
-                    const effectivePrice =
-                      unitPrice - (unitPrice * discountPrice) / 100;
-
-                    const percentage = totalBA
-                      ? ((data.ProgressCurrentM2 * effectivePrice) / totalBA) *
-                        100
-                      : 0;
-
-                    return parseFloat(percentage.toFixed(2)); // Format percentage
-                  },
-                },
-              ],
-            }));
-          });
-        }
-
         function initializeProjectsGrid(projects) {
           $("#projects-grid").dxDataGrid({
             dataSource: new DevExpress.data.CustomStore({
@@ -1287,7 +1215,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        sectionOptions.component
+                                                        options.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1325,7 +1253,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        sectionOptions.component
+                                                        options.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1358,7 +1286,7 @@
                                                         2000
                                                       );
                                                       pollDataReload(
-                                                        sectionOptions.component
+                                                        options.component
                                                       );
                                                     })
                                                     .fail(() => {
@@ -1773,13 +1701,14 @@
                                             data: JSON.stringify(values),
                                           })
                                             .done(() => {
-                                              pollDataReload(sphOptions.component);
+                                              pollDataReload(
+                                                sphOptions.component
+                                              );
                                               DevExpress.ui.notify(
                                                 "SPH Section added successfully!",
                                                 "success",
                                                 2000
                                               );
-                                       
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1808,13 +1737,14 @@
                                             data: JSON.stringify(values),
                                           })
                                             .done(() => {
-                                              pollDataReload(sphOptions.component);
+                                              pollDataReload(
+                                                sphOptions.component
+                                              );
                                               DevExpress.ui.notify(
                                                 "SPH Section updated successfully!",
                                                 "success",
                                                 2000
                                               );
-                                           
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1840,13 +1770,14 @@
                                             },
                                           })
                                             .done(() => {
-                                              pollDataReload(sphOptions.component);
+                                              pollDataReload(
+                                                sphOptions.component
+                                              );
                                               DevExpress.ui.notify(
                                                 "SPH Section deleted successfully!",
                                                 "success",
                                                 2000
                                               );
-                                           
                                             })
                                             .fail(() => {
                                               DevExpress.ui.notify(
@@ -1989,7 +1920,6 @@
                                                         "success",
                                                         2000
                                                       );
-                                                     
                                                     })
                                                     .fail(() => {
                                                       DevExpress.ui.notify(
@@ -2133,15 +2063,28 @@
                                             },
                                             onRowInserting: function (e) {
                                               // Extract values with fallback defaults to prevent undefined or null issues
-                                              const unitPrice = e.data.UnitPrice || 0; // Default to 0 if undefined or null
-                                              const discountPrice = e.data.DiscountPrice || 0; // Default to 0
-                                              const quantity = e.data.Quantity || 0; // Default to 0
+                                              const unitPrice =
+                                                e.data.UnitPrice || 0; // Default to 0 if undefined or null
+                                              const discountPrice =
+                                                e.data.DiscountPrice || 0; // Default to 0
+                                              const quantity =
+                                                e.data.Quantity || 0; // Default to 0
 
-                                              if (unitPrice > 0 && quantity > 0) {
+                                              if (
+                                                unitPrice > 0 &&
+                                                quantity > 0
+                                              ) {
                                                 // Calculate discounted price
-                                                const discountedPrice = unitPrice - (unitPrice * discountPrice) / 100;
+                                                const discountedPrice =
+                                                  unitPrice -
+                                                  (unitPrice * discountPrice) /
+                                                    100;
                                                 // Calculate total price and ensure it's a float
-                                                e.data.TotalPrice = parseFloat((discountedPrice * quantity).toFixed(2));
+                                                e.data.TotalPrice = parseFloat(
+                                                  (
+                                                    discountedPrice * quantity
+                                                  ).toFixed(2)
+                                                );
                                               } else {
                                                 // Default to 0 if calculation cannot be performed
                                                 e.data.TotalPrice = 0;
@@ -2154,13 +2097,24 @@
                                                 ...e.newData, // Merge old data with new data
                                               };
 
-                                              const unitPrice = updatedData.UnitPrice || 0;
-                                              const discountPrice = updatedData.DiscountPrice || 0;
-                                              const quantity = updatedData.Quantity || 0;
+                                              const unitPrice =
+                                                updatedData.UnitPrice || 0;
+                                              const discountPrice =
+                                                updatedData.DiscountPrice || 0;
+                                              const quantity =
+                                                updatedData.Quantity || 0;
 
                                               if (unitPrice && quantity) {
-                                                const discountedPrice = unitPrice - (unitPrice * discountPrice) / 100;
-                                                updatedData.TotalPrice = parseFloat((discountedPrice * quantity).toFixed(2));
+                                                const discountedPrice =
+                                                  unitPrice -
+                                                  (unitPrice * discountPrice) /
+                                                    100;
+                                                updatedData.TotalPrice =
+                                                  parseFloat(
+                                                    (
+                                                      discountedPrice * quantity
+                                                    ).toFixed(2)
+                                                  );
                                               } else {
                                                 updatedData.TotalPrice = 0; // Default to 0 if required fields are missing
                                               }
@@ -2168,10 +2122,10 @@
                                               // Update the `newData` to include the calculated TotalPrice
                                               e.newData = {
                                                 ...e.newData,
-                                                TotalPrice: updatedData.TotalPrice,
+                                                TotalPrice:
+                                                  updatedData.TotalPrice,
                                               };
                                             },
-
                                           })
                                           .appendTo(sectionContainer);
                                       },
@@ -2486,13 +2440,14 @@
                                                 )}`,
                                               },
                                               success: function () {
-                                                pollDataReload(options.component);
+                                                pollDataReload(
+                                                  options.component
+                                                );
                                                 DevExpress.ui.notify(
                                                   "SPK deleted successfully!",
                                                   "success",
                                                   2000
                                                 );
-                                                
                                               },
                                               error: function () {
                                                 DevExpress.ui.notify(
@@ -2589,7 +2544,6 @@
                               {
                                 dataField: "ProgressName",
                                 caption: "Progress Stage",
-                                alignment: "center",
                               },
                             ],
                             masterDetail: {
@@ -2612,6 +2566,9 @@
                                     isSection: true,
                                   });
                                   section.Details.forEach((detail) => {
+                                    console.log(detail, "detail");
+                                    console.log(section, "detail");
+
                                     if (detail.Progress?.[progressIndex]) {
                                       const progress =
                                         detail.Progress[progressIndex];
@@ -2622,6 +2579,9 @@
                                           progress.ProgressCurrentM2,
                                         ProgressCurrentPercentage:
                                           progress.ProgressCurrentPercentage,
+                                        SectionID: section.BASectionId,
+                                        BAID: section.BAID, // Include BAID from context
+                                        ProgressID: progress.BAProgressId, // Progress ID
                                       });
                                     }
                                   });
@@ -2759,6 +2719,87 @@
                                       ],
                                     },
                                   ],
+                                  onRowUpdating: function (e) {
+                                    // Calculate TotalPrice before updating
+                                    const updatedData = {
+                                      ...e.oldData,
+                                      ...e.newData, // Merge old data with new data
+                                    };
+
+                                    const unitPrice = updatedData.UnitPrice || 0;
+                                    const discountPrice = updatedData.DiscountPrice || 0;
+                                    const progressCurrentM2 = updatedData.ProgressCurrentM2 || 0;
+
+                                    const discountedPrice =
+                                      unitPrice - (unitPrice * discountPrice) / 100;
+
+                                    const percentage =
+                                      ((progressCurrentM2 * discountedPrice) / totalPriceSum) * 100;
+
+                                    updatedData.ProgressCurrentPercentage = isNaN(percentage)
+                                      ? 0
+                                      : parseFloat(percentage.toFixed(2));
+
+                                    // Update the `newData` to include the calculated ProgressCurrentPercentage
+                                    e.newData = {
+                                      ...e.newData,
+                                      ProgressCurrentPercentage: updatedData.ProgressCurrentPercentage,
+                                    };
+
+                                    // API update logic
+                                    const baId = e.oldData.BAID;
+                                    const sectionId = e.oldData.SectionID;
+                                    const detailId = e.oldData.DetailId;
+                                    const progressId = e.oldData.ProgressID;
+
+                                    if (
+                                      !baId ||
+                                      !sectionId ||
+                                      !detailId ||
+                                      !progressId
+                                    ) {
+                                      DevExpress.ui.notify(
+                                        "Failed to update: Required IDs are missing.",
+                                        "error",
+                                        2000
+                                      );
+                                      e.cancel = true;
+                                      return;
+                                    }
+
+                                    DevExpress.ui.notify(
+                                      "Updating item...",
+                                      "info",
+                                      2000
+                                    );
+
+                                    return $.ajax({
+                                      url: `${API_BASE_URL}/ba_services/api/ba/${baId}/sections/${sectionId}/details/${detailId}/progress/${progressId}`,
+                                      method: "PUT",
+                                      headers: {
+                                        Authorization: `Bearer ${localStorage.getItem(
+                                          "authToken"
+                                        )}`,
+                                        "Content-Type": "application/json",
+                                      },
+                                      data: JSON.stringify(e.newData),
+                                    })
+                                      .done(() => {
+                                        DevExpress.ui.notify(
+                                          "Item updated successfully!",
+                                          "success",
+                                          2000
+                                        );
+                                      })
+                                      .fail(() => {
+                                        DevExpress.ui.notify(
+                                          "Failed to update item.",
+                                          "error",
+                                          2000
+                                        );
+                                      });
+                                  },
+
                                   summary: {
                                     totalItems: [
                                       {
