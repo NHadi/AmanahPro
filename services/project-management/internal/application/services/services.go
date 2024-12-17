@@ -1,5 +1,6 @@
 package services
 
 type Services struct {
-	ProjectService *ProjectService
+	ProjectService          *ProjectService
+	ProjectFinancialService *ProjectFinancialService
 }

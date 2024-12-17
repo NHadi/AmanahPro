@@ -206,3 +206,190 @@ func (h *ProjectHandler) SearchProjectsByOrganization(c *gin.Context) {
 
 	c.JSON(http.StatusOK, projects)
 }
+
+// SearchProjectUsersByProject handles the request to search projects
+// @Summary Search Project Users
+// @Description Search project Users by Project ID
+// @Tags Projects
+// @Security BearerAuth
+// @Param project_id query int true "project_id ID"
+// @Produce json
+// @Success 200 {array} models.ProjectUser
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/projects/{project_id}/users [get]
+func (h *ProjectHandler) SearchProjectUsersByProject(c *gin.Context) {
+	idStr := c.Param("project_id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		// Error already handled inside the helper
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+
+	projects, err := h.projectService.SearchProjectUsersByProject(id, organizationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, projects)
+}
+
+// AssignUser
+// @Summary Assign User to Project
+// @Description Assign a user (with or without UserID) to a project
+// @Tags Projects
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param project_id path int true "Project ID"
+// @Param assignUser body dto.ProjectUserDTO true "User Data"
+// @Success 200 {object} map[string]interface{} "User assigned successfully"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/projects/{project_id}/assign-user [post]
+func (h *ProjectHandler) AssignUser(c *gin.Context) {
+	idStr := c.Param("project_id")
+	projectID, err := strconv.Atoi(idStr)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+
+	var userDTO dto.ProjectUserDTO
+	if err := c.ShouldBindJSON(&userDTO); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+
+	if err := h.projectService.AssignUser(projectID, userDTO.UserID, userDTO.UserName, userDTO.Role, claims.UserID, organizationID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User assigned successfully"})
+}
+
+// UnAssignUser
+// @Summary Unassign User from Project
+// @Description Remove a user from a project by UserName
+// @Tags Projects
+// @Security BearerAuth
+// @Param project_id path int true "Project ID"
+// @Param user_name query string true "User Name to Unassign"
+// @Produce json
+// @Success 200 {object} map[string]interface{} "User unassigned successfully"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/projects/{project_id}/unassign-user [delete]
+func (h *ProjectHandler) UnAssignUser(c *gin.Context) {
+	idStr := c.Param("project_id")
+	projectID, err := strconv.Atoi(idStr)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+
+	// Parse user ID from the query parameter
+	userIDStr := c.Query("user_name")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	if err := h.projectService.UnAssignUser(projectID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User unassigned successfully"})
+}
+
+// ChangeUser
+// @Summary Change Assigned User
+// @Description Update a user's role or name in a project
+// @Tags Projects
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param project_id path int true "Project ID"
+// @Param user_id path int true "User ID"
+// @Param changeUser body dto.ProjectUserDTO true "Updated User Data (UserName, Role)"
+// @Success 200 {object} map[string]interface{} "User updated successfully"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "User not found"
+// @Failure 500 {object} map[string]string
+// @Router /api/projects/{project_id}/change-user/{user_id} [put]
+func (h *ProjectHandler) ChangeUser(c *gin.Context) {
+	// Parse project ID from the path
+	projectIDStr := c.Param("project_id")
+	projectID, err := strconv.Atoi(projectIDStr)
+	if err != nil || projectID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+		return
+	}
+
+	// Parse user ID from the path
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Parse the user input DTO
+	var userDTO dto.ProjectUserDTO
+	if err := c.ShouldBindJSON(&userDTO); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Extract claims for auditing
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		return
+	}
+
+	// Retrieve existing ProjectUser by ID
+	projectUser, err := h.projectService.SearchProjectUsersById(userID, *claims.OrganizationId)
+	if err != nil || projectUser == nil || projectUser.ProjectID != projectID {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found in the specified project"})
+		return
+	}
+
+	// Update allowed fields
+	if userDTO.UserName != "" {
+		projectUser.UserName = userDTO.UserName
+	}
+	if userDTO.Role != "" {
+		projectUser.Role = userDTO.Role
+	}
+	projectUser.UpdatedBy = &claims.UserID
+
+	// Call the service to save updates
+	if err := h.projectService.UpdateProjectUser(projectUser); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+}

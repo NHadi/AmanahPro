@@ -10,8 +10,9 @@ import (
 
 func CreateRepositories(db *gorm.DB, esClient *elasticsearch.Client) *domainRepo.Repositories {
 	return &domainRepo.Repositories{
-		ProjectRecapRepository: repositories.NewProjectRecapRepository(db),
-		ProjectRepository:      repositories.NewProjectRepository(db, esClient, "projects"),
-		ProjectUserRepository:  repositories.NewProjectUserRepository(db),
+		ProjectRecapRepository:     repositories.NewProjectRecapRepository(db),
+		ProjectRepository:          repositories.NewProjectRepository(db, esClient, "projects"),
+		ProjectUserRepository:      repositories.NewProjectUserRepository(db),
+		ProjectFinancialRepository: repositories.NewProjectFinancialRepository(db),
 	}
 }

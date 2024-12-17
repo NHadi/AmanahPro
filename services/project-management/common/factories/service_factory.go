@@ -18,6 +18,7 @@ func CreateServices(
 	redisClient *redis.Client,
 ) *services.Services {
 	return &services.Services{
-		ProjectService: services.NewProjectService(repos.ProjectRepository, rabbitPublisher, "project_events"),
+		ProjectService:          services.NewProjectService(repos.ProjectRepository, repos.ProjectUserRepository, rabbitPublisher, "project_events"),
+		ProjectFinancialService: services.NewProjectFinancialService(repos.ProjectFinancialRepository),
 	}
 }

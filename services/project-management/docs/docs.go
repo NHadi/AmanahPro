@@ -15,6 +15,348 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/project-financial": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all financial records for a given ProjectID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectFinancial"
+                ],
+                "summary": "Get All Financial Records",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ProjectFinancial"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new financial record for a project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectFinancial"
+                ],
+                "summary": "Create Financial Record",
+                "parameters": [
+                    {
+                        "description": "Financial Record Data",
+                        "name": "financial",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProjectFinancialDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/project-financial/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve financial record by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectFinancial"
+                ],
+                "summary": "Get Financial Record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Financial Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProjectFinancial"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing financial record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectFinancial"
+                ],
+                "summary": "Update Financial Record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Financial Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Financial Record Data",
+                        "name": "financial",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ProjectFinancialDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a financial record by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProjectFinancial"
+                ],
+                "summary": "Delete Financial Record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Financial Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/projects": {
             "post": {
                 "security": [
@@ -311,9 +653,6 @@ const docTemplate = `{
     "definitions": {
         "dto.ProjectDTO": {
             "type": "object",
-            "required": [
-                "ProjectName"
-            ],
             "properties": {
                 "Description": {
                     "description": "Project Description",
@@ -343,10 +682,353 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ProjectFinancialDTO": {
+            "type": "object",
+            "properties": {
+                "Amount": {
+                    "description": "Amount (Required)",
+                    "type": "number"
+                },
+                "Category": {
+                    "description": "Category (BB, Operational, General)",
+                    "type": "string"
+                },
+                "CreatedAt": {
+                    "description": "Created Date",
+                    "type": "string"
+                },
+                "Description": {
+                    "description": "Financial Record Description (Required)",
+                    "type": "string"
+                },
+                "ID": {
+                    "description": "Financial Record ID",
+                    "type": "integer"
+                },
+                "ProjectID": {
+                    "description": "Project ID (Required)",
+                    "type": "integer"
+                },
+                "ProjectUserID": {
+                    "description": "User ID (Optional)",
+                    "type": "integer"
+                },
+                "TransactionDate": {
+                    "description": "Transaction Date (Required)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "TransactionType": {
+                    "description": "Transaction Type (In/Out)",
+                    "type": "string"
+                },
+                "UpdatedAt": {
+                    "description": "Updated Date",
+                    "type": "string"
+                }
+            }
+        },
         "models.CustomDate": {
             "type": "object",
             "properties": {
                 "time.Time": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Project": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Created at",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deleted at",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description",
+                    "type": "string"
+                },
+                "endDate": {
+                    "description": "End date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "location": {
+                    "description": "Location",
+                    "type": "string"
+                },
+                "organizationID": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "projectID": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "projectName": {
+                    "description": "Project name",
+                    "type": "string"
+                },
+                "projectRecap": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProjectRecap"
+                    }
+                },
+                "projectUsers": {
+                    "description": "One-to-Many relationship with ProjectUser",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProjectUser"
+                    }
+                },
+                "startDate": {
+                    "description": "Start date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Updated at",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProjectFinancial": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Amount (income/expense)",
+                    "type": "number"
+                },
+                "category": {
+                    "description": "Category",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "description": "Created timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Soft delete timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Transaction description",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "organizationID": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "project": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    ]
+                },
+                "projectID": {
+                    "description": "Foreign key to Projects table",
+                    "type": "integer"
+                },
+                "projectUser": {
+                    "description": "Relationship to ProjectUser table",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ProjectUser"
+                        }
+                    ]
+                },
+                "projectUserID": {
+                    "description": "Nullable foreign key to ProjectUser",
+                    "type": "integer"
+                },
+                "transactionDate": {
+                    "description": "Transaction date",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.CustomDate"
+                        }
+                    ]
+                },
+                "transactionType": {
+                    "description": "Income or Expense",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Updated timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProjectRecap": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Deletion timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "margin": {
+                    "description": "Margin value",
+                    "type": "number"
+                },
+                "marginPercentage": {
+                    "description": "Margin percentage",
+                    "type": "number"
+                },
+                "organizationID": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "project": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    ]
+                },
+                "projectID": {
+                    "description": "Foreign key to Projects",
+                    "type": "integer"
+                },
+                "totalOpname": {
+                    "description": "Total opname",
+                    "type": "number"
+                },
+                "totalPengeluaran": {
+                    "description": "Total expenditure",
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "description": "Update timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProjectUser": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Created timestamp",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "Created by user ID",
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "description": "Soft delete timestamp",
+                    "type": "string"
+                },
+                "deletedBy": {
+                    "description": "Deleted by user ID",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "Primary key",
+                    "type": "integer"
+                },
+                "organizationID": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "project": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    ]
+                },
+                "projectID": {
+                    "description": "Foreign key to Projects",
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "Role",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Updated timestamp",
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "Updated by user ID",
+                    "type": "integer"
+                },
+                "userID": {
+                    "description": "User ID (nullable)",
+                    "type": "integer"
+                },
+                "userName": {
+                    "description": "User name",
                     "type": "string"
                 }
             }

@@ -14,4 +14,5 @@ type ProjectUserRepository interface {
 	// Delete removes a project user from the database by ID
 	Delete(id int) error
 	GetByID(id int) (*models.ProjectUser, error)
+	GetByProjectID(projectID int) ([]models.ProjectUser, error)
 }

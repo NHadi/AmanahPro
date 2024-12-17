@@ -57,6 +57,7 @@ func main() {
 
 	router := setupRouter(cfg, deps, handlers.NewHandlers(
 		handlers.NewProjectHandler(services.ProjectService),
+		handlers.NewProjectFinancialHandler(services.ProjectFinancialService),
 	))
 	startServerWithGracefulShutdown(deps, cfg, router)
 }

@@ -12,17 +12,20 @@ import (
 
 type ProjectService struct {
 	projectRepo     repositories.ProjectRepository
+	projectUserRepo repositories.ProjectUserRepository
 	rabbitPublisher *messagebroker.RabbitMQPublisher
 	queueName       string
 }
 
 func NewProjectService(
 	projectRepo repositories.ProjectRepository,
+	projectUserRepo repositories.ProjectUserRepository,
 	rabbitPublisher *messagebroker.RabbitMQPublisher,
 	queueName string,
 ) *ProjectService {
 	return &ProjectService{
 		projectRepo:     projectRepo,
+		projectUserRepo: projectUserRepo,
 		rabbitPublisher: rabbitPublisher,
 		queueName:       queueName,
 	}
@@ -141,4 +144,145 @@ func (s *ProjectService) SearchProjectsByOrganization(organizationID int, query 
 	}
 
 	return projects, nil
+}
+
+func (s *ProjectService) SearchProjectUsersByProject(projectID int, organizationID int) ([]models.ProjectUser, error) {
+	log.Printf("Searching project users for projectID %d", projectID)
+
+	projects, err := s.projectUserRepo.GetByProjectID(projectID)
+	if err != nil {
+		log.Printf("Error searching projects: %v", err)
+		return nil, err
+	}
+
+	return projects, nil
+}
+
+func (s *ProjectService) SearchProjectUsersById(ID int, organizationID int) (*models.ProjectUser, error) {
+	log.Printf("Searching project user with ID %d and OrganizationID %d", ID, organizationID)
+
+	// Retrieve the project user by ID
+	projectUser, err := s.projectUserRepo.GetByID(ID)
+	if err != nil {
+		log.Printf("Error fetching project user by ID %d: %v", ID, err)
+		return nil, fmt.Errorf("failed to fetch project user: %w", err)
+	}
+
+	// Check if the retrieved user belongs to the specified organization
+	if projectUser == nil || (projectUser.OrganizationID != nil && *projectUser.OrganizationID != organizationID) {
+		log.Printf("Project user ID %d does not belong to OrganizationID %d", ID, organizationID)
+		return nil, fmt.Errorf("project user not found or does not belong to the organization")
+	}
+
+	log.Printf("Successfully retrieved project user ID %d for OrganizationID %d", ID, organizationID)
+	return projectUser, nil
+}
+
+// AssignUser adds a user to a project
+func (s *ProjectService) AssignUser(projectID int, userID *int, userName, role string, assignedBy, organizationID int) error {
+	log.Printf("Assigning User '%s' with UserID: %v to ProjectID: %d", userName, userID, projectID)
+
+	projectUser := &models.ProjectUser{
+		ProjectID:      projectID,
+		UserID:         userID,
+		UserName:       userName,
+		Role:           role,
+		CreatedBy:      &assignedBy,
+		OrganizationID: &organizationID,
+	}
+
+	if err := s.projectUserRepo.Create(projectUser); err != nil {
+		log.Printf("Failed to assign user: %v", err)
+		return fmt.Errorf("failed to assign user to project: %w", err)
+	}
+
+	log.Printf("Successfully assigned User '%s' with UserID: %v to ProjectID: %d", userName, userID, projectID)
+	return nil
+}
+
+// UnAssignUser removes a user from a project
+func (s *ProjectService) UnAssignUser(projectID int, userID int) error {
+	log.Printf("Unassigning User ID '%d' from ProjectID: %d", userID, projectID)
+
+	// Fetch users assigned to the project
+	projectUsers, err := s.projectUserRepo.GetByProjectID(projectID)
+	if err != nil {
+		log.Printf("Failed to fetch users for unassigning: %v", err)
+		return fmt.Errorf("failed to fetch users: %w", err)
+	}
+
+	// Find the user to remove by UserID
+	var userToRemove *models.ProjectUser
+	for _, pu := range projectUsers {
+		if pu.ID == userID { // Compare UserID (integer)
+			userToRemove = &pu
+			break
+		}
+	}
+
+	// Check if user was found
+	if userToRemove == nil {
+		return fmt.Errorf("user ID '%d' not assigned to the project", userID)
+	}
+
+	// Perform the delete operation
+	if err := s.projectUserRepo.Delete(userToRemove.ID); err != nil {
+		log.Printf("Failed to unassign user ID '%d': %v", userID, err)
+		return fmt.Errorf("failed to unassign user ID '%d' from project: %w", userID, err)
+	}
+
+	log.Printf("Successfully unassigned User ID '%d' from ProjectID: %d", userID, projectID)
+	return nil
+}
+
+// ChangeUser updates an assigned user's details
+func (s *ProjectService) ChangeUser(projectID int, oldUserName, newUserName, role string, updatedBy int) error {
+	log.Printf("Changing User '%s' to '%s' for ProjectID %d", oldUserName, newUserName, projectID)
+
+	// Fetch users assigned to the project
+	projectUsers, err := s.projectUserRepo.GetByProjectID(projectID)
+	if err != nil {
+		log.Printf("Failed to fetch users for change: %v", err)
+		return fmt.Errorf("failed to fetch users: %w", err)
+	}
+
+	// Find the user to update
+	var userToUpdate *models.ProjectUser
+	for _, pu := range projectUsers {
+		if pu.UserName == oldUserName {
+			userToUpdate = &pu
+			break
+		}
+	}
+
+	if userToUpdate == nil {
+		return fmt.Errorf("user '%s' not found in the project", oldUserName)
+	}
+
+	// Update user details
+	userToUpdate.UserName = newUserName
+	userToUpdate.Role = role
+	userToUpdate.UpdatedBy = &updatedBy
+
+	if err := s.projectUserRepo.Update(userToUpdate); err != nil {
+		log.Printf("Failed to change user: %v", err)
+		return fmt.Errorf("failed to update user assignment: %w", err)
+	}
+
+	log.Printf("Successfully changed User '%s' to '%s' for ProjectID %d", oldUserName, newUserName, projectID)
+	return nil
+}
+
+// UpdateProject updates an existing project
+func (s *ProjectService) UpdateProjectUser(project *models.ProjectUser) error {
+	log.Printf("Updating project User: %+v", project)
+
+	// Update in the database
+	if err := s.projectUserRepo.Update(project); err != nil {
+		log.Printf("Error updating project user: %v", err)
+		return fmt.Errorf("error updating project: %w", err)
+	}
+
+	log.Printf("Successfully updated project user: %+v", project)
+	return nil
 }

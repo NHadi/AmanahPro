@@ -20,12 +20,247 @@ definitions:
       Status:
         description: Project Status
         type: string
-    required:
-    - ProjectName
+    type: object
+  dto.ProjectFinancialDTO:
+    properties:
+      Amount:
+        description: Amount (Required)
+        type: number
+      Category:
+        description: Category (BB, Operational, General)
+        type: string
+      CreatedAt:
+        description: Created Date
+        type: string
+      Description:
+        description: Financial Record Description (Required)
+        type: string
+      ID:
+        description: Financial Record ID
+        type: integer
+      ProjectID:
+        description: Project ID (Required)
+        type: integer
+      ProjectUserID:
+        description: User ID (Optional)
+        type: integer
+      TransactionDate:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Transaction Date (Required)
+      TransactionType:
+        description: Transaction Type (In/Out)
+        type: string
+      UpdatedAt:
+        description: Updated Date
+        type: string
     type: object
   models.CustomDate:
     properties:
       time.Time:
+        type: string
+    type: object
+  models.Project:
+    properties:
+      createdAt:
+        description: Created at
+        type: string
+      createdBy:
+        description: Created by
+        type: integer
+      deletedAt:
+        description: Deleted at
+        type: string
+      deletedBy:
+        description: Deleted by
+        type: integer
+      description:
+        description: Description
+        type: string
+      endDate:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: End date
+      location:
+        description: Location
+        type: string
+      organizationID:
+        description: Organization ID
+        type: integer
+      projectID:
+        description: Primary key
+        type: integer
+      projectName:
+        description: Project name
+        type: string
+      projectRecap:
+        description: Relationships
+        items:
+          $ref: '#/definitions/models.ProjectRecap'
+        type: array
+      projectUsers:
+        description: One-to-Many relationship with ProjectUser
+        items:
+          $ref: '#/definitions/models.ProjectUser'
+        type: array
+      startDate:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Start date
+      status:
+        description: Status
+        type: string
+      updatedAt:
+        description: Updated at
+        type: string
+      updatedBy:
+        description: Updated by
+        type: integer
+    type: object
+  models.ProjectFinancial:
+    properties:
+      amount:
+        description: Amount (income/expense)
+        type: number
+      category:
+        description: Category
+        type: string
+      createdAt:
+        description: Created timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Soft delete timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      description:
+        description: Transaction description
+        type: string
+      id:
+        description: Primary key
+        type: integer
+      organizationID:
+        description: Organization ID
+        type: integer
+      project:
+        allOf:
+        - $ref: '#/definitions/models.Project'
+        description: Relationships
+      projectID:
+        description: Foreign key to Projects table
+        type: integer
+      projectUser:
+        allOf:
+        - $ref: '#/definitions/models.ProjectUser'
+        description: Relationship to ProjectUser table
+      projectUserID:
+        description: Nullable foreign key to ProjectUser
+        type: integer
+      transactionDate:
+        allOf:
+        - $ref: '#/definitions/models.CustomDate'
+        description: Transaction date
+      transactionType:
+        description: Income or Expense
+        type: string
+      updatedAt:
+        description: Updated timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.ProjectRecap:
+    properties:
+      createdAt:
+        description: Creation timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Deletion timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      id:
+        description: Primary key
+        type: integer
+      margin:
+        description: Margin value
+        type: number
+      marginPercentage:
+        description: Margin percentage
+        type: number
+      organizationID:
+        description: Organization ID
+        type: integer
+      project:
+        allOf:
+        - $ref: '#/definitions/models.Project'
+        description: Relationships
+      projectID:
+        description: Foreign key to Projects
+        type: integer
+      totalOpname:
+        description: Total opname
+        type: number
+      totalPengeluaran:
+        description: Total expenditure
+        type: number
+      updatedAt:
+        description: Update timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+    type: object
+  models.ProjectUser:
+    properties:
+      createdAt:
+        description: Created timestamp
+        type: string
+      createdBy:
+        description: Created by user ID
+        type: integer
+      deletedAt:
+        description: Soft delete timestamp
+        type: string
+      deletedBy:
+        description: Deleted by user ID
+        type: integer
+      id:
+        description: Primary key
+        type: integer
+      organizationID:
+        description: Organization ID
+        type: integer
+      project:
+        allOf:
+        - $ref: '#/definitions/models.Project'
+        description: Relationships
+      projectID:
+        description: Foreign key to Projects
+        type: integer
+      role:
+        description: Role
+        type: string
+      updatedAt:
+        description: Updated timestamp
+        type: string
+      updatedBy:
+        description: Updated by user ID
+        type: integer
+      userID:
+        description: User ID (nullable)
+        type: integer
+      userName:
+        description: User name
         type: string
     type: object
 info:
@@ -35,6 +270,227 @@ info:
   title: Project Management Services API
   version: "1.0"
 paths:
+  /api/project-financial:
+    get:
+      description: Retrieve all financial records for a given ProjectID
+      parameters:
+      - description: Project ID
+        in: query
+        name: project_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ProjectFinancial'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get All Financial Records
+      tags:
+      - ProjectFinancial
+    post:
+      consumes:
+      - application/json
+      description: Add a new financial record for a project
+      parameters:
+      - description: Financial Record Data
+        in: body
+        name: financial
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProjectFinancialDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Financial Record
+      tags:
+      - ProjectFinancial
+  /api/project-financial/{id}:
+    delete:
+      description: Remove a financial record by ID
+      parameters:
+      - description: Financial Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Financial Record
+      tags:
+      - ProjectFinancial
+    get:
+      description: Retrieve financial record by ID
+      parameters:
+      - description: Financial Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProjectFinancial'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Financial Record
+      tags:
+      - ProjectFinancial
+    put:
+      consumes:
+      - application/json
+      description: Update an existing financial record
+      parameters:
+      - description: Financial Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Financial Record Data
+        in: body
+        name: financial
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProjectFinancialDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Financial Record
+      tags:
+      - ProjectFinancial
   /api/projects:
     post:
       consumes:

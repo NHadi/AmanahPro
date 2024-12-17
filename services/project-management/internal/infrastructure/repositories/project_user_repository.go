@@ -76,3 +76,17 @@ func (r *projectUserRepositoryImpl) GetByID(userID int) (*models.ProjectUser, er
 	log.Printf("Successfully retrieved ProjectUser: %+v", user)
 	return &user, nil
 }
+
+// GetByProjectID retrieves all ProjectUser records for a specific ProjectID
+func (r *projectUserRepositoryImpl) GetByProjectID(projectID int) ([]models.ProjectUser, error) {
+	log.Printf("Retrieving ProjectUsers for ProjectID: %d", projectID)
+
+	var users []models.ProjectUser
+	if err := r.db.Where("ProjectID = ?", projectID).Find(&users).Error; err != nil {
+		log.Printf("Failed to retrieve ProjectUsers for ProjectID %d: %v", projectID, err)
+		return nil, fmt.Errorf("failed to retrieve ProjectUsers: %w", err)
+	}
+
+	log.Printf("Successfully retrieved %d ProjectUsers for ProjectID: %d", len(users), projectID)
+	return users, nil
+}
