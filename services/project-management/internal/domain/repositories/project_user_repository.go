@@ -15,4 +15,5 @@ type ProjectUserRepository interface {
 	Delete(id int) error
 	GetByID(id int) (*models.ProjectUser, error)
 	GetByProjectID(projectID int) ([]models.ProjectUser, error)
+	UpdateCategoryByProjectUser(projectID int, projectUserID int, userName string) error
 }

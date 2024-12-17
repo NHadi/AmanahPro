@@ -90,3 +90,28 @@ func (r *projectUserRepositoryImpl) GetByProjectID(projectID int) ([]models.Proj
 	log.Printf("Successfully retrieved %d ProjectUsers for ProjectID: %d", len(users), projectID)
 	return users, nil
 }
+
+// UpdateCategoryByProjectUser updates the Category in ProjectFinancial where ProjectUserID and ProjectID match
+func (r *projectUserRepositoryImpl) UpdateCategoryByProjectUser(projectID int, projectUserID int, userName string) error {
+	log.Printf("Updating Category in ProjectFinancial for ProjectID: %d, ProjectUserID: %d to UserName: %s", projectID, projectUserID, userName)
+
+	// Perform the update in the database
+	result := r.db.Model(&models.ProjectFinancial{}).
+		Where("ProjectID = ? AND ProjectUserID = ?", projectID, projectUserID).
+		Update("Category", userName)
+
+	// Check for errors during the update
+	if result.Error != nil {
+		log.Printf("Error updating Category: %v", result.Error)
+		return fmt.Errorf("failed to update Category: %w", result.Error)
+	}
+
+	// Check if any rows were affected
+	if result.RowsAffected == 0 {
+		log.Printf("No records updated for ProjectID: %d, ProjectUserID: %d", projectID, projectUserID)
+		return fmt.Errorf("no matching records found to update")
+	}
+
+	log.Printf("Successfully updated Category to '%s' for ProjectID: %d, ProjectUserID: %d", userName, projectID, projectUserID)
+	return nil
+}

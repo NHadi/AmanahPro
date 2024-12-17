@@ -283,6 +283,12 @@ func (s *ProjectService) UpdateProjectUser(project *models.ProjectUser) error {
 		return fmt.Errorf("error updating project: %w", err)
 	}
 
+	// Step 2: Update the Category in ProjectFinancial for matching ProjectUserID and ProjectID
+	if err := s.projectUserRepo.UpdateCategoryByProjectUser(project.ProjectID, project.ID, project.UserName); err != nil {
+		log.Printf("Error updating financial categories for ProjectUserID %d: %v", project.ID, err)
+		return fmt.Errorf("error updating financial categories: %w", err)
+	}
+
 	log.Printf("Successfully updated project user: %+v", project)
 	return nil
 }
