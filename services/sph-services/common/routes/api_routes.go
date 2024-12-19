@@ -11,8 +11,9 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 	// SPH routes
 	sphs := api.Group("/sph")
 	{
-		sphs.GET("/filter", handlers.Sph.FilterSphs)    // Filter SPHs
-		sphs.POST("", handlers.Sph.CreateSph)           // Create an SPH
+		sphs.GET("/filter", handlers.Sph.FilterSphs) // Filter SPHs
+		sphs.POST("", handlers.Sph.CreateSph)        // Create an SPH
+		sphs.POST("/import", handlers.Sph.ImportSphFromExcel)
 		sphs.PUT("/:sph_id", handlers.Sph.UpdateSph)    // Update an SPH
 		sphs.DELETE("/:sph_id", handlers.Sph.DeleteSph) // Delete an SPH
 

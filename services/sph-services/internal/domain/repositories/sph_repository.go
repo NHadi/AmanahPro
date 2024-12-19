@@ -17,4 +17,9 @@ type SphRepository interface {
 	GetByID(sphID int) (*models.Sph, error)
 
 	Filter(organizationID int, sphID *int, projectID *int) ([]models.Sph, error)
+
+	// Transaction management
+	Begin() (SphRepository, error)
+	Commit() error
+	Rollback() error
 }

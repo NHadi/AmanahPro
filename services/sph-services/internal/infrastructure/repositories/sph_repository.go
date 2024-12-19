@@ -28,6 +28,25 @@ func NewSphRepository(db *gorm.DB, esClient *elasticsearch.Client, esIndex strin
 	}
 }
 
+// Begin starts a transaction
+func (r *sphRepositoryImpl) Begin() (repositories.SphRepository, error) {
+	tx := r.db.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return &sphRepositoryImpl{db: tx}, nil
+}
+
+// Commit commits the transaction
+func (r *sphRepositoryImpl) Commit() error {
+	return r.db.Commit().Error
+}
+
+// Rollback rolls back the transaction
+func (r *sphRepositoryImpl) Rollback() error {
+	return r.db.Rollback().Error
+}
+
 // FilterSPHs retrieves SPHs from Elasticsearch by organization ID with optional filters
 func (r *sphRepositoryImpl) Filter(organizationID int, sphID *int, projectID *int) ([]models.Sph, error) {
 	log.Printf("Filtering SPHs from Elasticsearch by OrganizationID: %d, SphID: %v, ProjectID: %v", organizationID, sphID, projectID)

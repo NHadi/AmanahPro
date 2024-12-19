@@ -4,6 +4,7 @@ import (
 	"AmanahPro/services/sph-services/internal/application/services"
 	"AmanahPro/services/sph-services/internal/domain/models"
 	"AmanahPro/services/sph-services/internal/dto"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -529,4 +530,59 @@ func (h *SphHandler) DeleteSphDetail(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// ImportSphFromExcel
+// @Summary Import SPH data from an Excel file
+// @Description Import SPH data along with metadata
+// @Tags SPHs
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param ProjectName formData string true "Project Name"
+// @Param Location formData string true "Location"
+// @Param Date formData string true "Date (yyyy-MM-dd)"
+// @Param RecepientName formData string true "Recepient Name"
+// @Param file formData file true "Excel File"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/sph/import [post]
+func (h *SphHandler) ImportSphFromExcel(c *gin.Context) {
+	var metadata dto.SphImportDTO
+
+	// Bind form fields to metadata
+	if err := c.ShouldBind(&metadata); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metadata"})
+		return
+	}
+
+	// Parse the file from the request
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File upload failed"})
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
+		return
+	}
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		return
+	}
+
+	// Call the service to process the file
+	err = h.sphService.ImportSphFromExcel(metadata, fileBytes, *claims.OrganizationId, claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Excel imported successfully"})
 }
