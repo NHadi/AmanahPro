@@ -100,7 +100,7 @@ func (s *projectFinancialRepositoryImpl) GetProjectFinancialSummary(organization
         SELECT 
             p.ProjectID,
             p.ProjectName,
-            p.StartDate AS Tanggal,
+            p.PO_SPHDate AS Tanggal,
             p.SPH AS PO_SPH,
             p.Termin AS Termin,
             ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) AS Operational,
@@ -122,7 +122,7 @@ func (s *projectFinancialRepositoryImpl) GetProjectFinancialSummary(organization
         GROUP BY 
             p.ProjectID, 
             p.ProjectName, 
-            p.StartDate, 
+            p.PO_SPHDate, 
             p.SPH, 
             p.Termin, 
             p.TotalSPK
