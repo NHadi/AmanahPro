@@ -3,6 +3,7 @@ package services
 import (
 	"AmanahPro/services/project-management/internal/domain/models"
 	"AmanahPro/services/project-management/internal/domain/repositories"
+	"AmanahPro/services/project-management/internal/dto"
 	"fmt"
 	"log"
 )
@@ -17,6 +18,20 @@ func NewProjectFinancialService(
 	return &ProjectFinancialService{
 		projectFinancialRepo: projectFinancialRepo,
 	}
+}
+
+// GetProjectFinancialSummary retrieves financial summary data for all projects by OrganizationID
+func (s *ProjectFinancialService) GetProjectFinancialSummary(organizationID int) ([]dto.ProjectFinancialSummaryDTO, error) {
+	var summaries []dto.ProjectFinancialSummaryDTO
+
+	summaries, err := s.projectFinancialRepo.GetProjectFinancialSummary(organizationID)
+	if err != nil {
+		log.Printf("Error fetching project financial summary: %v", err)
+		return nil, fmt.Errorf("failed to fetch records: %w", err)
+	}
+
+	log.Println("Successfully retrieved project financial summary")
+	return summaries, nil
 }
 
 // CreateProjectFinancial creates a new financial record

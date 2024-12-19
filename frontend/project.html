@@ -1033,18 +1033,13 @@
                                           )}`,
                                         },
                                         success: function () {
-
-                                          pollDataReload(
-                                                options.component
-                                              );
+                                          pollDataReload(options.component);
 
                                           DevExpress.ui.notify(
                                             "Breakdown synced successfully!",
                                             "success",
                                             2000
                                           );
-                                         
-                                          
                                         },
                                         error: function (err) {
                                           console.error(
@@ -3053,123 +3048,176 @@
                         },
                       },
                       {
-  title: "Users",
-  template: function () {
-    return $("<div>").dxDataGrid({
-      dataSource: new DevExpress.data.CustomStore({
-        key: "ID", // Assuming ID is the primary key for users
-        load: function () {
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          });
-        },
-        insert: function (values) {
-          DevExpress.ui.notify("Assigning user...", "info", 2000);
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/assign-user`,
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              "Content-Type": "application/json",
-            },
-            data: JSON.stringify({
-              UserName: values.UserName,
-              Role: values.Role,
-            }),
-          })
-            .done(() => {
-              DevExpress.ui.notify("User assigned successfully!", "success", 2000);
-              pollDataReload(this);
-            })
-            .fail(() => {
-              DevExpress.ui.notify("Failed to assign user.", "error", 2000);
-            });
-        },
-        update: function (key, values) {
-  DevExpress.ui.notify("Changing user...", "info", 2000);
-  return $.ajax({
-    url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/change-user/${key}`,
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      "Content-Type": "application/json",
-    },
-    data: JSON.stringify({
-      UserName: values.UserName || null, // New UserName if provided
-      Role: values.Role || null,        // New Role if provided
-    }),
-  })
-    .done(() => {
-      DevExpress.ui.notify("User updated successfully!", "success", 2000);
-      pollDataReload(this); // Reload grid data
-    })
-    .fail((error) => {
-      DevExpress.ui.notify(
-        error.responseJSON?.error || "Failed to update user.",
-        "error",
-        2000
-      );
-    });
-},
+                        title: "Users",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "ID", // Assuming ID is the primary key for users
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                });
+                              },
+                              insert: function (values) {
+                                DevExpress.ui.notify(
+                                  "Assigning user...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/assign-user`,
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    UserName: values.UserName,
+                                    Role: values.Role,
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "User assigned successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(this);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to assign user.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              update: function (key, values) {
+                                DevExpress.ui.notify(
+                                  "Changing user...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/change-user/${key}`,
+                                  method: "PUT",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    UserName: values.UserName || null, // New UserName if provided
+                                    Role: values.Role || null, // New Role if provided
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "User updated successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(this); // Reload grid data
+                                  })
+                                  .fail((error) => {
+                                    DevExpress.ui.notify(
+                                      error.responseJSON?.error ||
+                                        "Failed to update user.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
 
-        remove: function (key) {
-          DevExpress.ui.notify("Unassigning user...", "info", 2000);
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/unassign-user?user_name=${key}`,
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          })
-            .done(() => {
-              DevExpress.ui.notify("User unassigned successfully!", "success", 2000);
-              pollDataReload(this);
-            })
-            .fail(() => {
-              DevExpress.ui.notify("Failed to unassign user.", "error", 2000);
-            });
-        },
-      }),
-      keyExpr: "UserName", // Use UserName as a unique identifier
-      editing: {
-        mode: "batch",
-        allowAdding: true,
-        allowUpdating: true,
-        allowDeleting: true,
-      },
-      showBorders: true,
-      columnAutoWidth: true,
-      searchPanel: { visible: true, placeholder: "Search Users..." },
-      headerFilter: { visible: false },
-      filterRow: { visible: false },
-      columns: [
-        {
-          dataField: "UserName",
-          caption: "User Name",
-          validationRules: [{ type: "required", message: "User Name is required" }],
-        },
-        {
-          dataField: "Role",
-          caption: "Role",
-          validationRules: [{ type: "required", message: "Role is required" }],
-        },
-        {
-          caption: "Actions",
-          type: "buttons",
-          buttons: [
-            "edit", // Default Edit button
-            "delete", // Default Delete button
-          ],
-        },
-      ],
-    });
-  },
-},
-
+                              remove: function (key) {
+                                DevExpress.ui.notify(
+                                  "Unassigning user...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/unassign-user?user_name=${key}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "User unassigned successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(this);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to unassign user.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                            }),
+                            keyExpr: "UserName", // Use UserName as a unique identifier
+                            editing: {
+                              mode: "batch",
+                              allowAdding: true,
+                              allowUpdating: true,
+                              allowDeleting: true,
+                            },
+                            showBorders: true,
+                            columnAutoWidth: true,
+                            searchPanel: {
+                              visible: true,
+                              placeholder: "Search Users...",
+                            },
+                            headerFilter: { visible: false },
+                            filterRow: { visible: false },
+                            columns: [
+                              {
+                                dataField: "UserName",
+                                caption: "User Name",
+                                validationRules: [
+                                  {
+                                    type: "required",
+                                    message: "User Name is required",
+                                  },
+                                ],
+                              },
+                              {
+                                dataField: "Role",
+                                caption: "Role",
+                                validationRules: [
+                                  {
+                                    type: "required",
+                                    message: "Role is required",
+                                  },
+                                ],
+                              },
+                              {
+                                caption: "Actions",
+                                type: "buttons",
+                                buttons: [
+                                  "edit", // Default Edit button
+                                  "delete", // Default Delete button
+                                ],
+                              },
+                            ],
+                          });
+                        },
+                      },
                     ],
                     deferRendering: false,
                     showNavButtons: true,

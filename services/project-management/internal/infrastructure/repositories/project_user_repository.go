@@ -109,7 +109,7 @@ func (r *projectUserRepositoryImpl) UpdateCategoryByProjectUser(projectID int, p
 	// Check if any rows were affected
 	if result.RowsAffected == 0 {
 		log.Printf("No records updated for ProjectID: %d, ProjectUserID: %d", projectID, projectUserID)
-		return fmt.Errorf("no matching records found to update")
+		return nil
 	}
 
 	log.Printf("Successfully updated Category to '%s' for ProjectID: %d, ProjectUserID: %d", userName, projectID, projectUserID)

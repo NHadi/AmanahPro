@@ -3,6 +3,7 @@ package repositories
 import (
 	"AmanahPro/services/project-management/internal/domain/models"
 	"AmanahPro/services/project-management/internal/domain/repositories"
+	"AmanahPro/services/project-management/internal/dto"
 	"fmt"
 	"log"
 
@@ -89,4 +90,50 @@ func (r *projectFinancialRepositoryImpl) GetAllByProjectID(projectID int) ([]mod
 
 	log.Printf("Successfully retrieved ProjectFinancial records for ProjectID: %d", projectID)
 	return financials, nil
+}
+
+// GetProjectFinancialSummary retrieves financial summary data for all projects by OrganizationID
+func (s *projectFinancialRepositoryImpl) GetProjectFinancialSummary(organizationID int) ([]dto.ProjectFinancialSummaryDTO, error) {
+	var summaries []dto.ProjectFinancialSummaryDTO
+
+	query := `
+        SELECT 
+            p.ProjectID,
+            p.ProjectName,
+            p.StartDate AS Tanggal,
+            p.SPH AS PO_SPH,
+            p.Termin AS Termin,
+            ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) AS Operational,
+            (p.Termin - ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0)) AS Deviden,
+            p.TotalSPK AS SPKMandor,
+            ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) AS BayarMandor,
+            (p.TotalSPK - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0)) AS SisaBayar,
+            ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) AS BB,
+            ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) AS OPR,
+            (
+                ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) -- Operational (Total Income)
+                - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) -- Bayar Mandor
+                - ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) -- BB
+                - ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) -- OPR
+            ) AS Saldo
+        FROM Projects p
+        LEFT JOIN ProjectFinancial pf ON p.ProjectID = pf.ProjectID
+        WHERE p.OrganizationID = ?
+        GROUP BY 
+            p.ProjectID, 
+            p.ProjectName, 
+            p.StartDate, 
+            p.SPH, 
+            p.Termin, 
+            p.TotalSPK
+    `
+
+	// Execute the query with the OrganizationID as a filter
+	if err := s.db.Raw(query, organizationID).Scan(&summaries).Error; err != nil {
+		log.Printf("Error fetching project financial summary: %v", err)
+		return nil, err
+	}
+
+	log.Println("Successfully retrieved project financial summary")
+	return summaries, nil
 }

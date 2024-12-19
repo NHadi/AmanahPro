@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"AmanahPro/services/project-management/internal/domain/models"
+	"AmanahPro/services/project-management/internal/dto"
 )
 
 type ProjectFinancialRepository interface {
@@ -10,4 +11,5 @@ type ProjectFinancialRepository interface {
 	Delete(id int) error
 	GetByID(id int) (*models.ProjectFinancial, error)
 	GetAllByProjectID(projectID int) ([]models.ProjectFinancial, error)
+	GetProjectFinancialSummary(organizationID int) ([]dto.ProjectFinancialSummaryDTO, error)
 }

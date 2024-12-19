@@ -172,3 +172,33 @@ func (h *ProjectFinancialHandler) GetAllFinancialByProjectID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, records)
 }
+
+// GetProjectFinancialSummary
+// @Summary Get Project Financial Summary
+// @Description Get summarized financial data for all projects by Organization ID
+// @Tags Projects
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {array} dto.ProjectFinancialSummaryDTO
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/project-financials/financial-summary [get]
+func (h *ProjectFinancialHandler) GetProjectFinancialSummary(c *gin.Context) {
+	// Extract claims for OrganizationID
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	organizationID := *claims.OrganizationId
+
+	// Call the service to fetch the summary
+	summary, err := h.service.GetProjectFinancialSummary(organizationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
+}

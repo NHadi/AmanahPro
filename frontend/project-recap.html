@@ -382,9 +382,9 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-uppercase font-weight-bold">
-                        Total Active Projects
+                        Total Budget
                       </p>
-                      <h5 class="font-weight-bolder" id="active-projects-count">
+                      <h5 class="font-weight-bolder" id="total-budget-card">
                         0
                       </h5>
                     </div>
@@ -410,12 +410,9 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-uppercase font-weight-bold">
-                        Completed Projects
+                        Remaining Budget
                       </p>
-                      <h5
-                        class="font-weight-bolder"
-                        id="completed-projects-count"
-                      >
+                      <h5 class="font-weight-bolder" id="remaining-budget-card">
                         0
                       </h5>
                     </div>
@@ -441,12 +438,9 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-uppercase font-weight-bold">
-                        Pending Documents
+                        Pending Payments
                       </p>
-                      <h5
-                        class="font-weight-bolder"
-                        id="pending-documents-count"
-                      >
+                      <h5 class="font-weight-bolder" id="pending-payment-card">
                         0
                       </h5>
                     </div>
@@ -472,9 +466,9 @@
                   <div class="col-8">
                     <div class="numbers">
                       <p class="text-sm mb-0 text-uppercase font-weight-bold">
-                        Budget Overview
+                        Total Expenses
                       </p>
-                      <h5 class="font-weight-bolder" id="budget-overview">
+                      <h5 class="font-weight-bolder" id="total-expenses-card">
                         IDR 0
                       </h5>
                     </div>
@@ -539,8 +533,6 @@
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script src="global.js"></script>
     <script>
-    
-
       $(document).ready(function () {
         $("#username-display").html(localStorage.getItem("user"));
 
@@ -560,67 +552,8 @@
         // Fetch projects data from the API
         function fetchProjects() {
           return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/search`,
+            url: `${API_BASE_URL}/project_management_services/api/project-financials/financial-summary`,
             method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-          });
-        }
-
-        // Add new project
-        function addProject(project) {
-          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-          if (project.StartDate) {
-            const startDate = new Date(project.StartDate);
-            project.StartDate = startDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
-          }
-
-          if (project.EndDate) {
-            const endDate = new Date(project.EndDate);
-            project.EndDate = endDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
-          }
-
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects`,
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              "Content-Type": "application/json",
-            },
-            data: JSON.stringify(project),
-          });
-        }
-
-        // Update project
-        function updateProject(projectID, project) {
-          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-          if (project.StartDate) {
-            const startDate = new Date(project.StartDate);
-            project.StartDate = startDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
-          }
-
-          if (project.EndDate) {
-            const endDate = new Date(project.EndDate);
-            project.EndDate = endDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
-          }
-
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              "Content-Type": "application/json",
-            },
-            data: JSON.stringify(project),
-          });
-        }
-
-        // Delete project
-        function deleteProject(projectID) {
-          return $.ajax({
-            url: `${API_BASE_URL}/project_management_services/api/projects/${projectID}`,
-            method: "DELETE",
             headers: {
               Authorization: `Bearer ${localStorage.getItem("authToken")}`,
             },
@@ -629,16 +562,33 @@
 
         // Update summary counts
         function updateSummaryCounts(data) {
-          const activeProjects = data.filter(
-            (p) => p.Status === "In Progress"
-          ).length;
-          const completedProjects = data.filter(
-            (p) => p.Status === "Completed"
-          ).length;
-          $("#active-projects-count").text(activeProjects);
-          $("#completed-projects-count").text(completedProjects);
-          $("#pending-documents-count").text(2); // Example static count for pending documents
-          $("#budget-overview").text("IDR 500,000,000"); // Example static budget overview
+          let totalBudget = 0; // Total PO_SPH
+          let remainingBudget = 0; // Saldo
+          let pendingPayments = 0; // Sisa Bayar
+          let totalExpenses = 0; // Total of BayarMandor + BB + OPR
+
+          // Iterate through data to calculate totals
+          data.forEach((project) => {
+            totalBudget += project.PO_SPH || 0;
+            remainingBudget += project.Saldo || 0;
+            pendingPayments += project.SisaBayar || 0;
+            totalExpenses +=
+              (project.BayarMandor || 0) +
+              (project.BB || 0) +
+              (project.OPR || 0);
+          });
+
+          // Update DOM elements
+          $("#total-budget-card").text(`IDR ${totalBudget.toLocaleString()}`);
+          $("#remaining-budget-card").text(
+            `IDR ${remainingBudget.toLocaleString()}`
+          );
+          $("#pending-payment-card").text(
+            `IDR ${pendingPayments.toLocaleString()}`
+          );
+          $("#total-expenses-card").text(
+            `IDR ${totalExpenses.toLocaleString()}`
+          );
         }
 
         function pollDataReload(component, delay = 1000) {
@@ -646,6 +596,17 @@
           component.refreshTimeout = setTimeout(() => {
             component.refresh(); // Refresh the grid data after the delay
           }, delay);
+        }
+
+        // Fetch users dynamically
+        function fetchProjectUsers(projectId) {
+          return $.ajax({
+            url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          });
         }
 
         function initializeProjectsGrid(projects) {
@@ -658,75 +619,64 @@
                   return data;
                 });
               },
-              insert: function (values) {
-                DevExpress.ui.notify("Adding project...", "info", 2000);
-                return addProject(values)
-                  .done(() => {
-                    DevExpress.ui.notify(
-                      "Project added successfully!",
-                      "success",
-                      2000
-                    );
-                    const grid = $("#projects-grid").dxDataGrid("instance");
-                    setTimeout(() => {
-                      grid.refresh(); // Refresh the grid after a 1-second delay
-                    }, 1000);
-                  })
-                  .fail(() => {
-                    DevExpress.ui.notify(
-                      "Failed to add project.",
-                      "error",
-                      2000
-                    );
-                  });
-              },
               update: function (key, values) {
-                DevExpress.ui.notify("Updating project...", "info", 2000);
-                return updateProject(key, values)
-                  .done(() => {
-                    DevExpress.ui.notify(
-                      "Project updated successfully!",
-                      "success",
-                      2000
-                    );
-                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
+                const formatDate = (date) => {
+                  if (!date) return null;
+                  const parsedDate = new Date(date);
+                  return parsedDate.toISOString().split("T")[0]; // Format to "yyyy-MM-dd"
+                };
+
+                console.log(values);
+
+                const payload = {};
+
+                if (values.Tanggal) {
+                  payload.PO_SPHDate = formatDate(values.Tanggal);
+                }
+                if (values.PO_SPH) {
+                  payload.SPH = parseFloat(values.PO_SPH);
+                }
+                if (values.Termin) {
+                  payload.Termin = parseFloat(values.Termin);
+                }
+                if (values.TotalSPK) {
+                  payload.TotalSPK = parseFloat(values.TotalSPK);
+                }
+
+                return fetch(
+                  `${API_BASE_URL}/project_management_services/api/projects/${key}`,
+                  {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${localStorage.getItem(
+                        "authToken"
+                      )}`,
+                    },
+                    body: JSON.stringify(payload),
+                  }
+                )
+                  .then((response) => {
+                    if (!response.ok) {
+                      throw new Error("Failed to update project.");
+                    }
+                    return response.json();
                   })
-                  .fail(() => {
-                    DevExpress.ui.notify(
-                      "Failed to update project.",
-                      "error",
-                      2000
-                    );
-                  });
-              },
-              remove: function (key) {
-                DevExpress.ui.notify("Deleting project...", "info", 2000);
-                return deleteProject(key)
-                  .done(() => {
-                    DevExpress.ui.notify(
-                      "Project deleted successfully!",
-                      "success",
-                      2000
-                    );
-                    pollDataReload($("#projects-grid").dxDataGrid("instance")); // Reload grid
-                  })
-                  .fail(() => {
-                    DevExpress.ui.notify(
-                      "Failed to delete project.",
-                      "error",
-                      2000
-                    );
+                  .catch((error) => {
+                    DevExpress.ui.notify(error.message, "error", 3000);
+                    throw error;
                   });
               },
             }),
-            columnAutoWidth: true,
             showBorders: true,
+            columnAutoWidth: true,
+            wordWrapEnabled: true,
             searchPanel: { visible: true, placeholder: "Search..." },
             headerFilter: { visible: false }, // Ensure header filter is disabled
             filterRow: { visible: false }, // Disable the filter row
             paging: { pageSize: 10 },
             editing: {
-              mode: "form", // Use Form editing mode
+              mode: "batch", // Use Form editing mode
               allowAdding: true,
               allowUpdating: true,
               allowDeleting: true,
@@ -736,20 +686,99 @@
             },
             columns: [
               {
+                caption: "Nama Project",
                 dataField: "ProjectName",
-                caption: "Project Name",
-                validationRules: [{ type: "required" }],
+                width: 200,
+                allowEditing: false, // Non-editable column
               },
-              { dataField: "Location", caption: "Location" },
               {
-                dataField: "StartDate",
-                caption: "Start Date",
-                dataType: "date",
+                caption: "DATA PROYEK PAM",
+                alignment: "center",
+                columns: [
+                  {
+                    dataField: "Tanggal",
+                    caption: "TANGGAL",
+                    dataType: "date",
+                    format: "dd-MMM-yyyy",
+                    width: 100,
+                    allowEditing: true, // Non-editable column
+                  },
+                  {
+                    dataField: "PO_SPH",
+                    caption: "PO / SPH",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: true, // Editable column
+                  },
+                  {
+                    dataField: "Termin",
+                    caption: "TERMIN",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: true, // Editable column
+                  },
+                  {
+                    dataField: "Deviden",
+                    caption: "DEVIDEN",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                  {
+                    dataField: "Operational",
+                    caption: "OPERASIONAL",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                ],
               },
-              { dataField: "EndDate", caption: "End Date", dataType: "date" },
-              { dataField: "Description", caption: "Description" },
-              { dataField: "Status", caption: "Status" },
+              {
+                caption: "MANDOR",
+                alignment: "center",
+                columns: [
+                  {
+                    dataField: "SPKMandor",
+                    caption: "SPK MANDOR",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                  {
+                    dataField: "BayarMandor",
+                    caption: "BAYAR MANDOR",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                  {
+                    dataField: "SisaBayar",
+                    caption: "SISA BAYAR",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                ],
+              },
+              {
+                caption: "DATA BAHAN BANTU & OPR",
+                alignment: "center",
+                columns: [
+                  {
+                    dataField: "BB",
+                    caption: "BB",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                  {
+                    dataField: "OPR",
+                    caption: "OPR",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
+                ],
+              },
+              {
+                dataField: "Saldo",
+                caption: "Saldo",
+                format: { type: "currency", currency: "IDR" },
+                allowEditing: false, // Non-editable column
+              },
             ],
+
             masterDetail: {
               enabled: true,
               template: function (container, options) {
@@ -761,11 +790,14 @@
                   { ID: null, UserName: "BB" },
                 ];
 
+                let categories = []; // To store categories dynamically
+
                 // Fetch Users for Lookup
                 $.ajax({
                   url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
                   method: "GET",
                   success: function (response) {
+                    categories = response.map((user) => user.UserName);
                     categoryLookupData = categoryLookupData.concat(
                       response.map((user) => ({
                         ID: user.ID,
@@ -793,7 +825,12 @@
                       .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
                     const totalBayar = financialData
-                      .filter((item) => item.TransactionType === "Expense" && (item.Category !== "Operational" && item.Category !== "BB" ))
+                      .filter(
+                        (item) =>
+                          item.TransactionType === "Expense" &&
+                          item.Category !== "Operational" &&
+                          item.Category !== "BB"
+                      )
                       .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
                     const sisaBayar = totalSPH - totalBayar;
@@ -807,7 +844,7 @@
                         <div class="row">
                             <div class="col-8">
                                 <div class="numbers">
-                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Total SPH</p>
+                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Total SPK</p>
                                     <h5 class="font-weight-bolder">IDR ${totalSPH.toLocaleString()}</h5>
                                 </div>
                             </div>
@@ -861,15 +898,6 @@
         </div>`;
                     $(summaryCards).appendTo(container);
 
-                    // Prepare Dynamic Columns (Categories)
-                    const categories = [
-                      ...new Set(
-                        financialData
-                          .map((item) => item.Category)
-                          .filter(Boolean)
-                      ),
-                    ];
-
                     const dynamicColumns = categories.map((col) => ({
                       caption: col,
                       calculateCellValue: (rowData) =>
@@ -894,7 +922,10 @@
                                 keyExpr: "ID",
                                 showBorders: true,
                                 columnAutoWidth: true,
-                                searchPanel: { visible: true, placeholder: "Search..." },
+                                searchPanel: {
+                                  visible: true,
+                                  placeholder: "Search...",
+                                },
                                 headerFilter: { visible: false }, // Ensure header filter is disabled
                                 filterRow: { visible: false }, // Disable the filter row
                                 editing: {
@@ -1011,9 +1042,21 @@
                                           ? baseUrl
                                           : `${baseUrl}/${change.key}`;
 
+                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                      if (change.data.TransactionDate) {
+                                        const TransactionDate = new Date(
+                                          change.data.TransactionDate
+                                        );
+                                        change.data.TransactionDate =
+                                          TransactionDate.toISOString().split(
+                                            "T"
+                                          )[0]; // Format to "yyyy-MM-dd"
+                                      }
+
                                       // Prepare the payload
                                       const payload = {
-                                        Amount: change.data.Amount || 0,
+                                        Amount:
+                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
                                         Category: change.data.Category,
                                         Description: change.data.Description,
                                         ProjectID: projectId,

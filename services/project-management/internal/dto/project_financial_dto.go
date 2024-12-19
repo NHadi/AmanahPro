@@ -7,14 +7,13 @@ import (
 
 // ProjectFinancialDTO represents the Data Transfer Object for ProjectFinancial entity
 type ProjectFinancialDTO struct {
-	ID              int                `json:"ID,omitempty"`            // Financial Record ID
 	ProjectID       int                `json:"ProjectID"`               // Project ID (Required)
 	ProjectUserID   *int               `json:"ProjectUserID,omitempty"` // User ID (Optional)
 	TransactionDate *models.CustomDate `json:"TransactionDate"`         // Transaction Date (Required)
 	Description     *string            `json:"Description"`             // Financial Record Description (Required)
 	Amount          float64            `json:"Amount"`                  // Amount (Required)
 	TransactionType string             `json:"TransactionType"`         // Transaction Type (In/Out)
-	Category        string             `json:"Category"`                // Category (BB, Operational, General)
+	Category        *string            `json:"Category"`                // Category (BB, Operational, General)
 	CreatedAt       *time.Time         `json:"CreatedAt,omitempty"`     // Created Date
 	UpdatedAt       *time.Time         `json:"UpdatedAt,omitempty"`     // Updated Date
 }
@@ -28,9 +27,14 @@ func (dto *ProjectFinancialDTO) ToModel(userID int, organizationID int) *models.
 		Description:     *dto.Description,
 		Amount:          dto.Amount,
 		TransactionType: dto.TransactionType,
-		Category:        dto.Category,
-		CreatedBy:       &userID,
-		OrganizationID:  &organizationID,
+		Category: func() string {
+			if dto.Category != nil {
+				return *dto.Category
+			}
+			return "" // Default empty string if nil
+		}(),
+		CreatedBy:      &userID,
+		OrganizationID: &organizationID,
 	}
 }
 
@@ -55,8 +59,8 @@ func (dto *ProjectFinancialDTO) ToModelForUpdate(existing *models.ProjectFinanci
 	if dto.TransactionType != "" {
 		existing.TransactionType = dto.TransactionType
 	}
-	if dto.Category != "" {
-		existing.Category = dto.Category
+	if dto.Category != nil {
+		existing.Category = *dto.Category
 	}
 
 	existing.UpdatedBy = &userID

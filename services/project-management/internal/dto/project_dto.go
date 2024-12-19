@@ -11,8 +11,12 @@ type ProjectDTO struct {
 	Location    *string            `json:"Location,omitempty"`  // Project Location
 	StartDate   *models.CustomDate `json:"StartDate,omitempty"`
 	EndDate     *models.CustomDate `json:"EndDate,omitempty"`
-	Description *string            `json:"Description,omitempty"` // Project Description
-	Status      *string            `json:"Status,omitempty"`      // Project Status
+	Description *string            `json:"Description,omitempty"`             // Project Description
+	Status      *string            `json:"Status,omitempty"`                  // Project Status
+	PO_SPHDate  *models.CustomDate `gorm:"column:PO_SPHDate;type:date;null"`  // PO/SPH date
+	SPH         *float64           `gorm:"column:SPH;type:decimal(18,2;null"` // SPH
+	Termin      *float64           `gorm:"column:Termin;decimal(18,2;null"`   // Termin
+	TotalSPK    *float64           `gorm:"column:TotalSPK;type:decimal(18,2);null"`
 }
 
 // ToModel maps the DTO to the domain model for creation
@@ -27,6 +31,10 @@ func (dto *ProjectDTO) ToModel(userID int, organizationID int) *models.Project {
 		Status:         dto.Status,
 		CreatedBy:      &userID,
 		OrganizationID: &organizationID,
+		PO_SPHDate:     dto.PO_SPHDate,
+		SPH:            dto.SPH,
+		Termin:         dto.Termin,
+		TotalSPK:       dto.TotalSPK,
 	}
 
 	return project
@@ -51,6 +59,22 @@ func (dto *ProjectDTO) ToModelForUpdate(existing *models.Project, userID int) *m
 	}
 	if dto.Status != nil {
 		existing.Status = dto.Status
+	}
+
+	if dto.Termin != nil {
+		existing.Termin = dto.Termin
+	}
+
+	if dto.PO_SPHDate != nil {
+		existing.PO_SPHDate = dto.PO_SPHDate
+	}
+
+	if dto.TotalSPK != nil {
+		existing.TotalSPK = dto.TotalSPK
+	}
+
+	if dto.SPH != nil {
+		existing.SPH = dto.SPH
 	}
 
 	existing.UpdatedBy = &userID
