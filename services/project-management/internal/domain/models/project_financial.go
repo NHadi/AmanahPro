@@ -11,6 +11,7 @@ type ProjectFinancial struct {
 	TransactionDate CustomDate `gorm:"column:TransactionDate;type:date;not null"`         // Transaction date
 	Description     string     `gorm:"column:Descrtiption;type:nvarchar(255);not null"`   // Transaction description
 	Amount          float64    `gorm:"column:Amount;type:decimal(18,2);not null"`         // Amount (income/expense)
+	AmountDeviden   *float64   `gorm:"column:AmountDeviden;type:decimal(18,2);null"`      // Amount (income/expense)
 	TransactionType string     `gorm:"column:TransactionType;type:nvarchar(50);not null"` // Income or Expense
 	Category        string     `gorm:"column:Category;type:nvarchar(255);not null"`       // Category
 	CreatedAt       *time.Time `gorm:"column:CreatedAt"`                                  // Created timestamp

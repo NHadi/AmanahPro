@@ -12,6 +12,7 @@ type ProjectFinancialDTO struct {
 	TransactionDate *models.CustomDate `json:"TransactionDate"`         // Transaction Date (Required)
 	Description     *string            `json:"Description"`             // Financial Record Description (Required)
 	Amount          float64            `json:"Amount"`                  // Amount (Required)
+	AmountDeviden   *float64           `json:"AmountDeviden,omitempty"` // Amount (Required)
 	TransactionType string             `json:"TransactionType"`         // Transaction Type (In/Out)
 	Category        *string            `json:"Category"`                // Category (BB, Operational, General)
 	CreatedAt       *time.Time         `json:"CreatedAt,omitempty"`     // Created Date
@@ -26,6 +27,7 @@ func (dto *ProjectFinancialDTO) ToModel(userID int, organizationID int) *models.
 		TransactionDate: *dto.TransactionDate,
 		Description:     *dto.Description,
 		Amount:          dto.Amount,
+		AmountDeviden:   dto.AmountDeviden,
 		TransactionType: dto.TransactionType,
 		Category: func() string {
 			if dto.Category != nil {
@@ -61,6 +63,9 @@ func (dto *ProjectFinancialDTO) ToModelForUpdate(existing *models.ProjectFinanci
 	}
 	if dto.Category != nil {
 		existing.Category = *dto.Category
+	}
+	if dto.AmountDeviden != nil {
+		existing.AmountDeviden = dto.AmountDeviden
 	}
 
 	existing.UpdatedBy = &userID

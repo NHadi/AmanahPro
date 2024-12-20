@@ -1490,7 +1490,7 @@
                                 key: "SphId",
                                 load: function () {
                                   return $.ajax({
-                                    url: `http://localhost:8080/sph_services/api/sph/filter?project_id=${projectId}`,
+                                    url: `${API_BASE_URL}/sph_services/api/sph/filter?project_id=${projectId}`,
                                     method: "GET",
                                     headers: {
                                       Authorization: `Bearer ${localStorage.getItem(
