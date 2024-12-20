@@ -843,7 +843,15 @@
               { dataField: "Description", caption: "Description" },
               { dataField: "Status", caption: "Status" },
             ],
-
+            onCellPrepared: function (e) {
+              if (e.rowType === "data" && e.column.allowEditing === false) {
+                // Apply custom style to non-editable cells
+                e.cellElement.css({
+                  backgroundColor: "#f5f5f5", // Light gray background
+                  color: "#999", // Light text color
+                });
+              }
+            },
             masterDetail: {
               enabled: true,
               template: function (container, options) {
@@ -1067,6 +1075,18 @@
                                 ],
                               },
                             ],
+                            onCellPrepared: function (e) {
+                              if (
+                                e.rowType === "data" &&
+                                e.column.allowEditing === false
+                              ) {
+                                // Apply custom style to non-editable cells
+                                e.cellElement.css({
+                                  backgroundColor: "#f5f5f5", // Light gray background
+                                  color: "#999", // Light text color
+                                });
+                              }
+                            },
                             masterDetail: {
                               enabled: true,
                               template: function (
@@ -1091,7 +1111,7 @@
 
                                       const itemRows = (
                                         section.Items || []
-                                      ).map((item, index) => ({
+                                      ).map((item) => ({
                                         ...item,
                                         DetailId: item.BreakdownItemId, // Use the actual ItemId as the unique ID
                                         BreakdownSectionId:
@@ -1099,10 +1119,68 @@
                                         isSection: false, // Mark this row as an item
                                       }));
 
-                                      return [sectionRow, ...itemRows];
+                                      // Calculate total for this section
+                                      const sectionTotal =
+                                        section.Items?.reduce(
+                                          (sum, item) =>
+                                            sum + (item.UnitPrice || 0),
+                                          0
+                                        );
+
+                                      // Append a row for the section total
+                                      const sectionTotalRow = {
+                                        DetailId: `total-${section.BreakdownSectionId}`,
+                                        BreakdownSectionId:
+                                          section.BreakdownSectionId,
+                                        isSection: false,
+                                        isTotal: true,
+                                        SectionTitle: "Total",
+                                        UnitPrice: sectionTotal,
+                                      };
+
+                                      return [
+                                        sectionRow,
+                                        ...itemRows,
+                                        sectionTotalRow,
+                                      ];
                                     }
                                   );
 
+                                // Calculate Grand Total
+                                const grandTotal = detailData.reduce(
+                                  (sum, row) => {
+                                    if (!row.isSection && !row.isTotal) {
+                                      return sum + (row.UnitPrice || 0); // Sum only item rows
+                                    }
+                                    return sum;
+                                  },
+                                  0
+                                );
+
+                                // Render Summary Cards in a Single Row with Improved Design
+                                const summaryCards = `
+    <div class="row mb-4 gx-3 gy-3">
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-sm text-muted mb-1 text-uppercase font-weight-bold">Grand Total</p>
+                        <h5 class="font-weight-bolder mb-0">IDR ${grandTotal.toLocaleString(
+                          "id-ID"
+                        )}</h5>
+                    </div>
+                    <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                        <i class="ni ni-money-coins text-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+                                // Append the summary cards to the container
+                                $(summaryCards).appendTo(breakdownContainer);
+
+                                // Render the Data Grid
                                 $("<div>")
                                   .dxDataGrid({
                                     dataSource: detailData,
@@ -1122,6 +1200,18 @@
                                     paging: {
                                       enabled: false, // Disable pagination
                                     },
+                                    onCellPrepared: function (e) {
+                                      if (
+                                        e.rowType === "data" &&
+                                        e.column.allowEditing === false
+                                      ) {
+                                        // Apply custom style to non-editable cells
+                                        e.cellElement.css({
+                                          backgroundColor: "#f5f5f5", // Light gray background
+                                          color: "#999", // Light text color
+                                        });
+                                      }
+                                    },
                                     columns: [
                                       {
                                         dataField: "Sort",
@@ -1129,9 +1219,10 @@
                                         width: 50,
                                         alignment: "center",
                                         calculateCellValue: function (rowData) {
-                                          return rowData.isSection
-                                            ? rowData.Sort
-                                            : "";
+                                          if (rowData.isSection)
+                                            return rowData.Sort;
+                                          if (rowData.isTotal) return ""; // For total row
+                                          return "";
                                         },
                                       },
                                       {
@@ -1155,6 +1246,11 @@
                                               })
                                               .text(options.value)
                                               .appendTo(container);
+                                          } else if (options.data.isTotal) {
+                                            $("<div>")
+                                              .css({ "font-weight": "bold" })
+                                              .text(options.value)
+                                              .appendTo(container);
                                           } else {
                                             $("<div>")
                                               .text(options.value)
@@ -1172,28 +1268,21 @@
                                           currency: "IDR",
                                         },
                                         allowEditing: function (rowData) {
-                                          return !rowData.isSection; // Editable only for item rows
+                                          return (
+                                            !rowData.isSection &&
+                                            !rowData.isTotal
+                                          ); // Editable only for item rows
                                         },
                                       },
                                     ],
-                                    summary: {
-                                      totalItems: [
-                                        {
-                                          column: "UnitPrice",
-                                          summaryType: "sum",
-                                          displayFormat: "Grand Total: Rp {0}",
-                                          valueFormat: {
-                                            type: "currency",
-                                            currency: "IDR",
-                                          },
-                                        },
-                                      ],
-                                    },
+
                                     onSaved: function (e) {
                                       const changes = e.changes
                                         .filter(
-                                          (change) => !change.data.isSection
-                                        ) // Filter out section rows
+                                          (change) =>
+                                            !change.data.isSection &&
+                                            !change.data.isTotal
+                                        ) // Filter out section and total rows
                                         .map((change) => ({
                                           UnitPrice: change.data.UnitPrice,
                                           SectionId:
@@ -1208,7 +1297,6 @@
                                           2000
                                         );
 
-                                        // Iterate through each change and make an API call
                                         const promises = changes.map((update) =>
                                           $.ajax({
                                             url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${update.SectionId}/items/${update.Key}`,
@@ -1226,9 +1314,9 @@
                                           })
                                         );
 
-                                        // Wait for all API calls to complete
                                         Promise.all(promises)
                                           .then(() => {
+                                            pollDataReload(options.component);
                                             DevExpress.ui.notify(
                                               "All changes saved successfully!",
                                               "success",
@@ -1244,16 +1332,23 @@
                                           });
                                       }
                                     },
-
                                     onRowPrepared: function (e) {
                                       if (
                                         e.rowType === "data" &&
                                         e.data.isSection
                                       ) {
-                                        // Style section rows
                                         e.rowElement.css({
                                           "background-color": "#f9f9f9",
                                           "font-weight": "bold",
+                                        });
+                                      } else if (
+                                        e.rowType === "data" &&
+                                        e.data.isTotal
+                                      ) {
+                                        e.rowElement.css({
+                                          "background-color": "#f2f2f2",
+                                          "font-weight": "bold",
+                                          "font-style": "italic",
                                         });
                                       }
                                     },
@@ -1267,198 +1362,333 @@
                       {
                         title: "SPH",
                         template: function () {
-                          return $("<div>").dxDataGrid({
-                            dataSource: new DevExpress.data.CustomStore({
-                              key: "SphId",
-                              load: function () {
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/sph_services/api/sph/filter?project_id=${projectId}`,
-                                  method: "GET",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                  },
-                                });
-                              },
-                              insert: function (values) {
-                                if (values.Date) {
-                                  const date = new Date(values.Date);
-                                  values.Date = date
-                                    .toISOString()
-                                    .split("T")[0];
-                                }
-                                DevExpress.ui.notify(
-                                  "Adding SPH...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/sph_services/api/sph`,
+                          // Add Upload button and container for grid
+                          const container = $("<div>")
+                            .append(
+                              $(
+                                "<button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#uploadModal'>"
+                              ).text("Upload SPH")
+                            )
+                            .append($("<div>").attr("id", "grid-container"));
+
+                          // Bootstrap Modal for Upload SPH
+                          const modalHtml = `
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form class="upload-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadModalLabel">Upload SPH</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="subject" class="form-label">Subject</label>
+            <input type="text" class="form-control subject-input" required />
+          </div>
+          <div class="mb-3">
+            <label for="recipientName" class="form-label">Recipient Name</label>
+            <input type="text" class="form-control recipient-name-input" />
+          </div>
+          <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" class="form-control location-input" />
+          </div>
+          <div class="mb-3">
+            <label for="fileUpload" class="form-label">File</label>
+            <input type="file" class="form-control file-upload-input" accept=".xlsx" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>`;
+
+                          $(modalHtml).appendTo("body");
+
+                          // Handle form submission using event delegation for dynamic forms
+                          $(document)
+                            .off("submit", ".upload-form")
+                            .on("submit", ".upload-form", function (e) {
+                              e.preventDefault();
+
+                              // Collect form data
+                              const form = $(this);
+                              const subject = form.find(".subject-input").val();
+                              const recipientName = form
+                                .find(".recipient-name-input")
+                                .val();
+                              const location = form
+                                .find(".location-input")
+                                .val();
+                              const fileInput =
+                                form.find(".file-upload-input")[0].files[0];
+
+                              if (!fileInput) {
+                                alert("Please select a file to upload.");
+                                return;
+                              }
+
+                              // Create FormData
+                              const uploadData = new FormData();
+                              uploadData.append(
+                                "Date",
+                                new Date().toISOString().split("T")[0]
+                              );
+                              uploadData.append("ProjectId", projectId);
+                              uploadData.append("Subject", subject);
+                              uploadData.append("RecepientName", recipientName);
+                              uploadData.append("Location", location);
+                              uploadData.append("file", fileInput);
+
+                              // Perform the upload
+                              fetch(
+                                `${API_BASE_URL}/sph_services/api/sph/import`,
+                                {
                                   method: "POST",
+                                  body: uploadData,
                                   headers: {
                                     Authorization: `Bearer ${localStorage.getItem(
                                       "authToken"
                                     )}`,
-                                    "Content-Type": "application/json",
                                   },
-                                  data: JSON.stringify({
+                                }
+                              )
+                                .then((response) => {
+                                  if (!response.ok) {
+                                    throw new Error("Upload failed");
+                                  }
+                                  return response.json();
+                                })
+                                .then((data) => {
+                                  
+                                  pollDataReload(options.component);
+                                  DevExpress.ui.notify(
+                                    "SPH uploaded successfully!",
+                                    "success",
+                                    2000
+                                  );
+
+                                  const modal = bootstrap.Modal.getInstance(
+                                    document.getElementById("uploadModal")
+                                  );
+                                  modal.hide();
+                                })
+                                .catch((error) => {
+                                  console.error("Error uploading file:", error);
+                                  alert("An error occurred during upload.");
+                                });
+                            });
+
+                          const gridInstance = $("<div>")
+                            .dxDataGrid({
+                              dataSource: new DevExpress.data.CustomStore({
+                                key: "SphId",
+                                load: function () {
+                                  return $.ajax({
+                                    url: `http://localhost:8080/sph_services/api/sph/filter?project_id=${projectId}`,
+                                    method: "GET",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                    },
+                                  });
+                                },
+                                insert: function (values) {
+                                  if (values.Date) {
+                                    const date = new Date(values.Date);
+                                    values.Date = date
+                                      .toISOString()
+                                      .split("T")[0];
+                                  }
+                                  DevExpress.ui.notify(
+                                    "Adding SPH...",
+                                    "info",
+                                    2000
+                                  );
+                                  return $.ajax({
+                                    url: `${API_BASE_URL}/sph_services/api/sph`,
+                                    method: "POST",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                      "Content-Type": "application/json",
+                                    },
+                                    data: JSON.stringify({
+                                      ...values,
+                                      ProjectId: projectId,
+                                    }),
+                                  })
+                                    .done(() => {
+                                      DevExpress.ui.notify(
+                                        "SPH added successfully!",
+                                        "success",
+                                        2000
+                                      );
+                                      pollDataReload(options.component);
+                                    })
+                                    .fail(() => {
+                                      DevExpress.ui.notify(
+                                        "Failed to add SPH.",
+                                        "error",
+                                        2000
+                                      );
+                                    });
+                                },
+                                update: function (key, values) {
+                                  const updatedData = {
                                     ...values,
                                     ProjectId: projectId,
-                                  }),
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPH added successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
+                                  };
+                                  DevExpress.ui.notify(
+                                    "Updating SPH...",
+                                    "info",
+                                    2000
+                                  );
+                                  return $.ajax({
+                                    url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
+                                    method: "PUT",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                      "Content-Type": "application/json",
+                                    },
+                                    data: JSON.stringify(updatedData),
                                   })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to add SPH.",
-                                      "error",
-                                      2000
-                                    );
-                                  });
-                              },
-                              update: function (key, values) {
-                                const updatedData = {
-                                  ...values,
-                                  ProjectId: projectId,
-                                };
-                                DevExpress.ui.notify(
-                                  "Updating SPH...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
-                                  method: "PUT",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                    "Content-Type": "application/json",
-                                  },
-                                  data: JSON.stringify(updatedData),
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPH updated successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
+                                    .done(() => {
+                                      DevExpress.ui.notify(
+                                        "SPH updated successfully!",
+                                        "success",
+                                        2000
+                                      );
+                                      pollDataReload(options.component);
+                                    })
+                                    .fail(() => {
+                                      DevExpress.ui.notify(
+                                        "Failed to update SPH.",
+                                        "error",
+                                        2000
+                                      );
+                                    });
+                                },
+                                remove: function (key) {
+                                  DevExpress.ui.notify(
+                                    "Deleting SPH...",
+                                    "info",
+                                    2000
+                                  );
+                                  return $.ajax({
+                                    url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
+                                    method: "DELETE",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                    },
                                   })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to update SPH.",
-                                      "error",
-                                      2000
-                                    );
+                                    .done(() => {
+                                      DevExpress.ui.notify(
+                                        "SPH deleted successfully!",
+                                        "success",
+                                        2000
+                                      );
+                                      pollDataReload(options.component);
+                                    })
+                                    .fail(() => {
+                                      DevExpress.ui.notify(
+                                        "Failed to delete SPH.",
+                                        "error",
+                                        2000
+                                      );
+                                    });
+                                },
+                              }),
+                              keyExpr: "SphId",
+                              editing: {
+                                mode: "batch",
+                                allowAdding: true,
+                                allowUpdating: true,
+                                allowDeleting: true,
+                              },
+                              showBorders: true,
+                              columnAutoWidth: true, // Auto-resize columns
+                              wordWrapEnabled: true, // Wrap text in cells
+                              searchPanel: {
+                                visible: true,
+                                placeholder: "Search...",
+                              },
+                              headerFilter: { visible: false }, // Ensure header filter is disabled
+                              filterRow: { visible: false }, // Disable the filter row
+                              onCellPrepared: function (e) {
+                                if (
+                                  e.rowType === "data" &&
+                                  e.column.allowEditing === false
+                                ) {
+                                  // Apply custom style to non-editable cells
+                                  e.cellElement.css({
+                                    backgroundColor: "#f5f5f5", // Light gray background
+                                    color: "#999", // Light text color
                                   });
+                                }
                               },
-                              remove: function (key) {
-                                DevExpress.ui.notify(
-                                  "Deleting SPH...",
-                                  "info",
-                                  2000
-                                );
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/sph_services/api/sph/${key}`,
-                                  method: "DELETE",
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem(
-                                      "authToken"
-                                    )}`,
-                                  },
-                                })
-                                  .done(() => {
-                                    DevExpress.ui.notify(
-                                      "SPH deleted successfully!",
-                                      "success",
-                                      2000
-                                    );
-                                    pollDataReload(options.component);
-                                  })
-                                  .fail(() => {
-                                    DevExpress.ui.notify(
-                                      "Failed to delete SPH.",
-                                      "error",
-                                      2000
-                                    );
-                                  });
-                              },
-                            }),
-                            keyExpr: "SphId",
-                            editing: {
-                              mode: "batch",
-                              allowAdding: true,
-                              allowUpdating: true,
-                              allowDeleting: true,
-                            },
-                            showBorders: true,
-                            columnAutoWidth: true, // Auto-resize columns
-                            wordWrapEnabled: true, // Wrap text in cells
-                            searchPanel: {
-                              visible: true,
-                              placeholder: "Search...",
-                            },
-                            headerFilter: { visible: false }, // Ensure header filter is disabled
-                            filterRow: { visible: false }, // Disable the filter row
-                            columns: [
-                              {
-                                dataField: "Subject",
-                                caption: "SPH Name",
-                                validationRules: [{ type: "required" }],
-                                headerFilter: { allowSearch: true },
-                              },
-                              {
-                                dataField: "Location",
-                                caption: "Location",
-                                headerFilter: { allowSearch: true },
-                              },
-                              {
-                                dataField: "Date",
-                                caption: "Date",
-                                dataType: "date",
-                              },
-                              {
-                                dataField: "RecepientName",
-                                caption: "Recipient Name",
-                              },
-                              {
-                                caption: "SPK",
-                                type: "buttons",
-                                buttons: [
-                                  {
-                                    hint: "Generate SPK",
-                                    icon: "export", // Use a predefined DevExtreme icon
-                                    onClick: function (e) {
-                                      const data = e.row.data;
+                              columns: [
+                                {
+                                  dataField: "Subject",
+                                  caption: "SPH Name",
+                                  validationRules: [{ type: "required" }],
+                                  headerFilter: { allowSearch: true },
+                                },
+                                {
+                                  dataField: "Location",
+                                  caption: "Location",
+                                  headerFilter: { allowSearch: true },
+                                },
+                                {
+                                  dataField: "Date",
+                                  caption: "Date",
+                                  dataType: "date",
+                                },
+                                {
+                                  dataField: "RecepientName",
+                                  caption: "Recipient Name",
+                                },
+                                {
+                                  caption: "SPK",
+                                  type: "buttons",
+                                  buttons: [
+                                    {
+                                      hint: "Generate SPK",
+                                      icon: "export", // Use a predefined DevExtreme icon
+                                      onClick: function (e) {
+                                        const data = e.row.data;
 
-                                      // Create and show the popup
-                                      const popup = $("<div>")
-                                        .appendTo("body")
-                                        .dxPopup({
-                                          title: "Generate SPK",
-                                          visible: true,
-                                          width: 500,
-                                          height: 400,
-                                          closeOnOutsideClick: true,
-                                          showCloseButton: true,
-                                          contentTemplate: function (
-                                            contentElement
-                                          ) {
-                                            const formContainer =
-                                              $("<div>").appendTo(
-                                                contentElement
-                                              );
+                                        // Create and show the popup
+                                        const popup = $("<div>")
+                                          .appendTo("body")
+                                          .dxPopup({
+                                            title: "Generate SPK",
+                                            visible: true,
+                                            width: 500,
+                                            height: 400,
+                                            closeOnOutsideClick: true,
+                                            showCloseButton: true,
+                                            contentTemplate: function (
+                                              contentElement
+                                            ) {
+                                              const formContainer =
+                                                $("<div>").appendTo(
+                                                  contentElement
+                                                );
 
-                                            // Display SPH and Subject information
-                                            formContainer.append(`
+                                              // Display SPH and Subject information
+                                              formContainer.append(`
                       <div style="padding: 20px;">
                         <div>
                           <label><b>SPH:</b></label>
@@ -1474,653 +1704,695 @@
                       </div>
                     `);
 
-                                            // Add TextArea for user input
-                                            const textArea = $("<div>")
-                                              .dxTextArea({
-                                                height: 100,
-                                                placeholder:
-                                                  "Enter description...",
-                                              })
-                                              .appendTo(formContainer);
+                                              // Add TextArea for user input
+                                              const textArea = $("<div>")
+                                                .dxTextArea({
+                                                  height: 100,
+                                                  placeholder:
+                                                    "Enter description...",
+                                                })
+                                                .appendTo(formContainer);
 
-                                            // Add Button to call the API
-                                            $("<div style='margin-top: 20px;'>")
-                                              .dxButton({
-                                                text: "Submit",
-                                                type: "success",
-                                                onClick: function () {
-                                                  // Get user input from TextArea
-                                                  const description = textArea
-                                                    .dxTextArea("instance")
-                                                    .option("value");
+                                              // Add Button to call the API
+                                              $(
+                                                "<div style='margin-top: 20px;'>"
+                                              )
+                                                .dxButton({
+                                                  text: "Submit",
+                                                  type: "success",
+                                                  onClick: function () {
+                                                    // Get user input from TextArea
+                                                    const description = textArea
+                                                      .dxTextArea("instance")
+                                                      .option("value");
 
-                                                  // API Request Payload
-                                                  const payload = {
-                                                    Date: new Date()
-                                                      .toISOString()
-                                                      .split("T")[0],
-                                                    ProjectId: data.ProjectId,
-                                                    ProjectName:
-                                                      data.ProjectName,
-                                                    Subject:
-                                                      description ||
-                                                      data.Subject, // Use description if provided
-                                                    SphId: data.SphId,
-                                                  };
+                                                    // API Request Payload
+                                                    const payload = {
+                                                      Date: new Date()
+                                                        .toISOString()
+                                                        .split("T")[0],
+                                                      ProjectId: data.ProjectId,
+                                                      ProjectName:
+                                                        data.ProjectName,
+                                                      Subject:
+                                                        description ||
+                                                        data.Subject, // Use description if provided
+                                                      SphId: data.SphId,
+                                                    };
 
-                                                  // Call the API
-                                                  $.ajax({
-                                                    url: `${API_BASE_URL}/spk_services/api/spk`,
-                                                    method: "POST",
-                                                    contentType:
-                                                      "application/json",
-                                                    data: JSON.stringify(
-                                                      payload
-                                                    ),
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                    },
-                                                    success: function () {
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                      DevExpress.ui.notify(
-                                                        "SPK generated successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-
-                                                      // Close popup on success
-                                                      const popupInstance =
-                                                        popup.dxPopup(
-                                                          "instance"
+                                                    // Call the API
+                                                    $.ajax({
+                                                      url: `${API_BASE_URL}/spk_services/api/spk`,
+                                                      method: "POST",
+                                                      contentType:
+                                                        "application/json",
+                                                      data: JSON.stringify(
+                                                        payload
+                                                      ),
+                                                      headers: {
+                                                        Authorization: `Bearer ${localStorage.getItem(
+                                                          "authToken"
+                                                        )}`,
+                                                      },
+                                                      success: function () {
+                                                        pollDataReload(
+                                                          options.component
                                                         );
-                                                      if (popupInstance)
-                                                        popupInstance.hide();
-                                                    },
-                                                    error: function (err) {
-                                                      console.error(
-                                                        "Failed to generate SPK:",
-                                                        err
-                                                      );
-                                                      DevExpress.ui.notify(
-                                                        "Failed to generate SPK.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    },
-                                                  });
-                                                },
-                                              })
-                                              .appendTo(formContainer);
-                                          },
-                                        })
-                                        .dxPopup("instance");
+                                                        DevExpress.ui.notify(
+                                                          "SPK generated successfully!",
+                                                          "success",
+                                                          2000
+                                                        );
 
-                                      // Correctly hide the popup on close
-                                      popup.option("onHiding", function () {
-                                        popup.element().remove();
-                                      });
-                                    },
-                                  },
-                                ],
-                              },
-                              {
-                                caption: "Actions",
-                                type: "buttons",
-                                buttons: [
-                                  "edit", // Include the default Edit button
-                                  "delete", // Include the default Delete button
-                                ],
-                              },
-                            ],
-                            masterDetail: {
-                              enabled: true,
-                              template: function (sphContainer, sphOptions) {
-                                const sphId = sphOptions.data.SphId;
+                                                        // Close popup on success
+                                                        const popupInstance =
+                                                          popup.dxPopup(
+                                                            "instance"
+                                                          );
+                                                        if (popupInstance)
+                                                          popupInstance.hide();
+                                                      },
+                                                      error: function (err) {
+                                                        console.error(
+                                                          "Failed to generate SPK:",
+                                                          err
+                                                        );
+                                                        DevExpress.ui.notify(
+                                                          "Failed to generate SPK.",
+                                                          "error",
+                                                          2000
+                                                        );
+                                                      },
+                                                    });
+                                                  },
+                                                })
+                                                .appendTo(formContainer);
+                                            },
+                                          })
+                                          .dxPopup("instance");
 
-                                $("<div>")
-                                  .dxDataGrid({
-                                    dataSource: new DevExpress.data.CustomStore(
-                                      {
-                                        key: "SphSectionId",
-                                        load: function () {
-                                          return Promise.resolve(
-                                            sphOptions.data.Sections || []
-                                          );
-                                        },
-                                        insert: function (values) {
-                                          DevExpress.ui.notify(
-                                            "Adding SPH Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections`,
-                                            method: "POST",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            data: JSON.stringify(values),
-                                          })
-                                            .done(() => {
-                                              pollDataReload(
-                                                sphOptions.component
-                                              );
-                                              DevExpress.ui.notify(
-                                                "SPH Section added successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to add SPH Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                        update: function (key, values) {
-                                          DevExpress.ui.notify(
-                                            "Updating SPH Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
-                                            method: "PUT",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            data: JSON.stringify(values),
-                                          })
-                                            .done(() => {
-                                              pollDataReload(
-                                                sphOptions.component
-                                              );
-                                              DevExpress.ui.notify(
-                                                "SPH Section updated successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to update SPH Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                        remove: function (key) {
-                                          DevExpress.ui.notify(
-                                            "Deleting SPH Section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
-                                            method: "DELETE",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                            },
-                                          })
-                                            .done(() => {
-                                              pollDataReload(
-                                                sphOptions.component
-                                              );
-                                              DevExpress.ui.notify(
-                                                "SPH Section deleted successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to delete SPH Section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                      }
-                                    ),
-                                    keyExpr: "SphSectionId",
-                                    editing: {
-                                      mode: "batch",
-                                      allowAdding: true,
-                                      allowUpdating: true,
-                                      allowDeleting: true,
-                                    },
-                                    showBorders: true,
-                                    columnAutoWidth: true,
-                                    wordWrapEnabled: true,
-                                    searchPanel: {
-                                      visible: true,
-                                      placeholder: "Search...",
-                                    },
-                                    headerFilter: { visible: false }, // Ensure header filter is disabled
-                                    filterRow: { visible: false }, // Disable the filter row
-                                    columns: [
-                                      {
-                                        dataField: "SectionTitle",
-                                        caption: "Section Title",
-                                        validationRules: [{ type: "required" }],
-                                        headerFilter: { allowSearch: true },
+                                        // Correctly hide the popup on close
+                                        popup.option("onHiding", function () {
+                                          popup.element().remove();
+                                        });
                                       },
-                                    ],
-                                    masterDetail: {
-                                      enabled: true,
-                                      template: function (
-                                        sectionContainer,
-                                        sectionOptions
-                                      ) {
-                                        const sectionId =
-                                          sectionOptions.data.SphSectionId;
+                                    },
+                                  ],
+                                },
+                                {
+                                  caption: "Actions",
+                                  type: "buttons",
+                                  buttons: [
+                                    "edit", // Include the default Edit button
+                                    "delete", // Include the default Delete button
+                                  ],
+                                },
+                              ],
+                              masterDetail: {
+                                enabled: true,
+                                template: function (sphContainer, sphOptions) {
+                                  const sphId = sphOptions.data.SphId;
 
-                                        $("<div>")
-                                          .dxDataGrid({
-                                            dataSource:
-                                              new DevExpress.data.CustomStore({
-                                                key: "SphDetailId",
-                                                load: function () {
-                                                  return Promise.resolve(
-                                                    sectionOptions.data
-                                                      .Details || []
-                                                  );
-                                                },
-                                                insert: function (values) {
-                                                  // Ensure numeric values are converted from strings
-                                                  if (
-                                                    values.UnitPrice !==
-                                                    undefined
-                                                  ) {
-                                                    values.UnitPrice =
-                                                      parseFloat(
-                                                        values.UnitPrice
-                                                      ) || 0; // Convert to float or default to 0
-                                                  }
-                                                  if (
-                                                    values.DiscountPrice !==
-                                                    undefined
-                                                  ) {
-                                                    values.DiscountPrice =
-                                                      parseFloat(
-                                                        values.DiscountPrice
-                                                      ) || 0;
-                                                  }
-                                                  if (
-                                                    values.Quantity !==
-                                                    undefined
-                                                  ) {
-                                                    values.Quantity =
-                                                      parseFloat(
+                                  $("<div>")
+                                    .dxDataGrid({
+                                      dataSource:
+                                        new DevExpress.data.CustomStore({
+                                          key: "SphSectionId",
+                                          load: function () {
+                                            return Promise.resolve(
+                                              sphOptions.data.Sections || []
+                                            );
+                                          },
+                                          insert: function (values) {
+                                            DevExpress.ui.notify(
+                                              "Adding SPH Section...",
+                                              "info",
+                                              2000
+                                            );
+                                            return $.ajax({
+                                              url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections`,
+                                              method: "POST",
+                                              headers: {
+                                                Authorization: `Bearer ${localStorage.getItem(
+                                                  "authToken"
+                                                )}`,
+                                                "Content-Type":
+                                                  "application/json",
+                                              },
+                                              data: JSON.stringify(values),
+                                            })
+                                              .done(() => {
+                                                pollDataReload(
+                                                  sphOptions.component
+                                                );
+                                                DevExpress.ui.notify(
+                                                  "SPH Section added successfully!",
+                                                  "success",
+                                                  2000
+                                                );
+                                              })
+                                              .fail(() => {
+                                                DevExpress.ui.notify(
+                                                  "Failed to add SPH Section.",
+                                                  "error",
+                                                  2000
+                                                );
+                                              });
+                                          },
+                                          update: function (key, values) {
+                                            DevExpress.ui.notify(
+                                              "Updating SPH Section...",
+                                              "info",
+                                              2000
+                                            );
+                                            return $.ajax({
+                                              url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
+                                              method: "PUT",
+                                              headers: {
+                                                Authorization: `Bearer ${localStorage.getItem(
+                                                  "authToken"
+                                                )}`,
+                                                "Content-Type":
+                                                  "application/json",
+                                              },
+                                              data: JSON.stringify(values),
+                                            })
+                                              .done(() => {
+                                                pollDataReload(
+                                                  sphOptions.component
+                                                );
+                                                DevExpress.ui.notify(
+                                                  "SPH Section updated successfully!",
+                                                  "success",
+                                                  2000
+                                                );
+                                              })
+                                              .fail(() => {
+                                                DevExpress.ui.notify(
+                                                  "Failed to update SPH Section.",
+                                                  "error",
+                                                  2000
+                                                );
+                                              });
+                                          },
+                                          remove: function (key) {
+                                            DevExpress.ui.notify(
+                                              "Deleting SPH Section...",
+                                              "info",
+                                              2000
+                                            );
+                                            return $.ajax({
+                                              url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${key}`,
+                                              method: "DELETE",
+                                              headers: {
+                                                Authorization: `Bearer ${localStorage.getItem(
+                                                  "authToken"
+                                                )}`,
+                                              },
+                                            })
+                                              .done(() => {
+                                                pollDataReload(
+                                                  sphOptions.component
+                                                );
+                                                DevExpress.ui.notify(
+                                                  "SPH Section deleted successfully!",
+                                                  "success",
+                                                  2000
+                                                );
+                                              })
+                                              .fail(() => {
+                                                DevExpress.ui.notify(
+                                                  "Failed to delete SPH Section.",
+                                                  "error",
+                                                  2000
+                                                );
+                                              });
+                                          },
+                                        }),
+                                      keyExpr: "SphSectionId",
+                                      editing: {
+                                        mode: "batch",
+                                        allowAdding: true,
+                                        allowUpdating: true,
+                                        allowDeleting: true,
+                                      },
+                                      showBorders: true,
+                                      columnAutoWidth: true,
+                                      wordWrapEnabled: true,
+                                      searchPanel: {
+                                        visible: true,
+                                        placeholder: "Search...",
+                                      },
+                                      headerFilter: { visible: false }, // Ensure header filter is disabled
+                                      filterRow: { visible: false }, // Disable the filter row
+                                      onCellPrepared: function (e) {
+                                        if (
+                                          e.rowType === "data" &&
+                                          e.column.allowEditing === false
+                                        ) {
+                                          // Apply custom style to non-editable cells
+                                          e.cellElement.css({
+                                            backgroundColor: "#f5f5f5", // Light gray background
+                                            color: "#999", // Light text color
+                                          });
+                                        }
+                                      },
+                                      columns: [
+                                        {
+                                          dataField: "SectionTitle",
+                                          caption: "Section Title",
+                                          validationRules: [
+                                            { type: "required" },
+                                          ],
+                                          headerFilter: { allowSearch: true },
+                                        },
+                                      ],
+                                      masterDetail: {
+                                        enabled: true,
+                                        template: function (
+                                          sectionContainer,
+                                          sectionOptions
+                                        ) {
+                                          const sectionId =
+                                            sectionOptions.data.SphSectionId;
+
+                                          $("<div>")
+                                            .dxDataGrid({
+                                              dataSource:
+                                                new DevExpress.data.CustomStore(
+                                                  {
+                                                    key: "SphDetailId",
+                                                    load: function () {
+                                                      return Promise.resolve(
+                                                        sectionOptions.data
+                                                          .Details || []
+                                                      );
+                                                    },
+                                                    insert: function (values) {
+                                                      // Ensure numeric values are converted from strings
+                                                      if (
+                                                        values.UnitPrice !==
+                                                        undefined
+                                                      ) {
+                                                        values.UnitPrice =
+                                                          parseFloat(
+                                                            values.UnitPrice
+                                                          ) || 0; // Convert to float or default to 0
+                                                      }
+                                                      if (
+                                                        values.DiscountPrice !==
+                                                        undefined
+                                                      ) {
+                                                        values.DiscountPrice =
+                                                          parseFloat(
+                                                            values.DiscountPrice
+                                                          ) || 0;
+                                                      }
+                                                      if (
+                                                        values.Quantity !==
+                                                        undefined
+                                                      ) {
+                                                        values.Quantity =
+                                                          parseFloat(
+                                                            values.Quantity
+                                                          ) || 0;
+                                                      }
+
+                                                      // Automatically calculate TotalPrice before sending to the server
+                                                      if (
+                                                        values.UnitPrice &&
+                                                        values.DiscountPrice !==
+                                                          null &&
                                                         values.Quantity
-                                                      ) || 0;
-                                                  }
+                                                      ) {
+                                                        const discountedPrice =
+                                                          values.UnitPrice -
+                                                          (values.UnitPrice *
+                                                            values.DiscountPrice) /
+                                                            100;
+                                                        values.TotalPrice =
+                                                          discountedPrice *
+                                                          values.Quantity;
+                                                      } else {
+                                                        values.TotalPrice = 0; // Default to 0 if required fields are missing
+                                                      }
 
-                                                  // Automatically calculate TotalPrice before sending to the server
-                                                  if (
-                                                    values.UnitPrice &&
-                                                    values.DiscountPrice !==
-                                                      null &&
-                                                    values.Quantity
-                                                  ) {
-                                                    const discountedPrice =
-                                                      values.UnitPrice -
-                                                      (values.UnitPrice *
-                                                        values.DiscountPrice) /
-                                                        100;
-                                                    values.TotalPrice =
-                                                      discountedPrice *
-                                                      values.Quantity;
-                                                  } else {
-                                                    values.TotalPrice = 0; // Default to 0 if required fields are missing
-                                                  }
+                                                      DevExpress.ui.notify(
+                                                        "Adding SPH Detail...",
+                                                        "info",
+                                                        2000
+                                                      );
 
-                                                  DevExpress.ui.notify(
-                                                    "Adding SPH Detail...",
-                                                    "info",
-                                                    2000
-                                                  );
-
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details`,
-                                                    method: "POST",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                      "Content-Type":
-                                                        "application/json",
+                                                      return $.ajax({
+                                                        url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details`,
+                                                        method: "POST",
+                                                        headers: {
+                                                          Authorization: `Bearer ${localStorage.getItem(
+                                                            "authToken"
+                                                          )}`,
+                                                          "Content-Type":
+                                                            "application/json",
+                                                        },
+                                                        data: JSON.stringify(
+                                                          values
+                                                        ), // Send the processed values
+                                                      })
+                                                        .done(() => {
+                                                          DevExpress.ui.notify(
+                                                            "SPH Detail added successfully!",
+                                                            "success",
+                                                            2000
+                                                          );
+                                                          pollDataReload(
+                                                            sectionOptions.component
+                                                          );
+                                                        })
+                                                        .fail(() => {
+                                                          DevExpress.ui.notify(
+                                                            "Failed to add SPH Detail.",
+                                                            "error",
+                                                            2000
+                                                          );
+                                                        });
                                                     },
-                                                    data: JSON.stringify(
+
+                                                    update: function (
+                                                      key,
                                                       values
-                                                    ), // Send the processed values
-                                                  })
-                                                    .done(() => {
+                                                    ) {
                                                       DevExpress.ui.notify(
-                                                        "SPH Detail added successfully!",
-                                                        "success",
+                                                        "Updating SPH Detail...",
+                                                        "info",
                                                         2000
                                                       );
-                                                      pollDataReload(
-                                                        sectionOptions.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to add SPH Detail.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
 
-                                                update: function (key, values) {
-                                                  DevExpress.ui.notify(
-                                                    "Updating SPH Detail...",
-                                                    "info",
-                                                    2000
-                                                  );
+                                                      // Ensure numeric values are converted from strings
+                                                      if (
+                                                        values.UnitPrice !==
+                                                        undefined
+                                                      ) {
+                                                        values.UnitPrice =
+                                                          parseFloat(
+                                                            values.UnitPrice
+                                                          ) || 0; // Convert to float or default to 0
+                                                      }
+                                                      if (
+                                                        values.DiscountPrice !==
+                                                        undefined
+                                                      ) {
+                                                        values.DiscountPrice =
+                                                          parseFloat(
+                                                            values.DiscountPrice
+                                                          ) || 0;
+                                                      }
+                                                      if (
+                                                        values.Quantity !==
+                                                        undefined
+                                                      ) {
+                                                        values.Quantity =
+                                                          parseFloat(
+                                                            values.Quantity
+                                                          ) || 0;
+                                                      }
 
-                                                  // Ensure numeric values are converted from strings
-                                                  if (
-                                                    values.UnitPrice !==
-                                                    undefined
-                                                  ) {
-                                                    values.UnitPrice =
-                                                      parseFloat(
-                                                        values.UnitPrice
-                                                      ) || 0; // Convert to float or default to 0
-                                                  }
-                                                  if (
-                                                    values.DiscountPrice !==
-                                                    undefined
-                                                  ) {
-                                                    values.DiscountPrice =
-                                                      parseFloat(
-                                                        values.DiscountPrice
-                                                      ) || 0;
-                                                  }
-                                                  if (
-                                                    values.Quantity !==
-                                                    undefined
-                                                  ) {
-                                                    values.Quantity =
-                                                      parseFloat(
+                                                      // Recalculate TotalPrice if necessary fields are present
+                                                      if (
+                                                        values.UnitPrice &&
+                                                        values.DiscountPrice !==
+                                                          null &&
                                                         values.Quantity
-                                                      ) || 0;
-                                                  }
+                                                      ) {
+                                                        const discountedPrice =
+                                                          values.UnitPrice -
+                                                          (values.UnitPrice *
+                                                            values.DiscountPrice) /
+                                                            100;
+                                                        values.TotalPrice =
+                                                          discountedPrice *
+                                                          values.Quantity;
+                                                      }
 
-                                                  // Recalculate TotalPrice if necessary fields are present
-                                                  if (
-                                                    values.UnitPrice &&
-                                                    values.DiscountPrice !==
-                                                      null &&
-                                                    values.Quantity
-                                                  ) {
-                                                    const discountedPrice =
-                                                      values.UnitPrice -
-                                                      (values.UnitPrice *
-                                                        values.DiscountPrice) /
-                                                        100;
-                                                    values.TotalPrice =
-                                                      discountedPrice *
-                                                      values.Quantity;
-                                                  }
-
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
-                                                    method: "PUT",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                      "Content-Type":
-                                                        "application/json",
+                                                      return $.ajax({
+                                                        url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
+                                                        method: "PUT",
+                                                        headers: {
+                                                          Authorization: `Bearer ${localStorage.getItem(
+                                                            "authToken"
+                                                          )}`,
+                                                          "Content-Type":
+                                                            "application/json",
+                                                        },
+                                                        data: JSON.stringify(
+                                                          values
+                                                        ), // Send the processed values
+                                                      })
+                                                        .done(() => {
+                                                          pollDataReload(
+                                                            options.component
+                                                          );
+                                                          DevExpress.ui.notify(
+                                                            "SPH Detail updated successfully!",
+                                                            "success",
+                                                            2000
+                                                          );
+                                                        })
+                                                        .fail(() => {
+                                                          DevExpress.ui.notify(
+                                                            "Failed to update SPH Detail.",
+                                                            "error",
+                                                            2000
+                                                          );
+                                                        });
                                                     },
-                                                    data: JSON.stringify(
-                                                      values
-                                                    ), // Send the processed values
-                                                  })
-                                                    .done(() => {
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                      DevExpress.ui.notify(
-                                                        "SPH Detail updated successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to update SPH Detail.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
 
-                                                remove: function (key) {
-                                                  DevExpress.ui.notify(
-                                                    "Deleting SPH Detail...",
-                                                    "info",
-                                                    2000
-                                                  );
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
-                                                    method: "DELETE",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
+                                                    remove: function (key) {
+                                                      DevExpress.ui.notify(
+                                                        "Deleting SPH Detail...",
+                                                        "info",
+                                                        2000
+                                                      );
+                                                      return $.ajax({
+                                                        url: `${API_BASE_URL}/sph_services/api/sph/${sphId}/sections/${sectionId}/details/${key}`,
+                                                        method: "DELETE",
+                                                        headers: {
+                                                          Authorization: `Bearer ${localStorage.getItem(
+                                                            "authToken"
+                                                          )}`,
+                                                        },
+                                                      })
+                                                        .done(() => {
+                                                          DevExpress.ui.notify(
+                                                            "SPH Detail deleted successfully!",
+                                                            "success",
+                                                            2000
+                                                          );
+                                                          pollDataReload(
+                                                            sectionOptions.component
+                                                          );
+                                                        })
+                                                        .fail(() => {
+                                                          DevExpress.ui.notify(
+                                                            "Failed to delete SPH Detail.",
+                                                            "error",
+                                                            2000
+                                                          );
+                                                        });
                                                     },
-                                                  })
-                                                    .done(() => {
-                                                      DevExpress.ui.notify(
-                                                        "SPH Detail deleted successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                      pollDataReload(
-                                                        sectionOptions.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to delete SPH Detail.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
-                                              }),
-                                            keyExpr: "SphDetailId",
-                                            editing: {
-                                              mode: "batch", // Batch mode for details
-                                              allowAdding: true,
-                                              allowUpdating: true,
-                                              allowDeleting: true,
-                                            },
-                                            showBorders: true,
-                                            columnAutoWidth: true,
-                                            wordWrapEnabled: true,
-                                            searchPanel: {
-                                              visible: true,
-                                              placeholder: "Search...",
-                                            },
-                                            headerFilter: { visible: false }, // Ensure header filter is disabled
-                                            filterRow: { visible: false }, // Disable the filter row
-                                            columns: [
-                                              {
-                                                dataField: "ItemDescription",
-                                                caption: "Item Description",
-                                                validationRules: [
-                                                  { type: "required" },
-                                                ],
+                                                  }
+                                                ),
+                                              keyExpr: "SphDetailId",
+                                              editing: {
+                                                mode: "batch", // Batch mode for details
+                                                allowAdding: true,
+                                                allowUpdating: true,
+                                                allowDeleting: true,
                                               },
-                                              {
-                                                dataField: "Quantity",
-                                                caption: "Quantity",
-                                                dataType: "number",
+                                              showBorders: true,
+                                              columnAutoWidth: true,
+                                              wordWrapEnabled: true,
+                                              searchPanel: {
+                                                visible: true,
+                                                placeholder: "Search...",
                                               },
-                                              {
-                                                dataField: "Unit",
-                                                caption: "Unit",
-                                              },
-                                              {
-                                                dataField: "UnitPrice",
-                                                caption: "Unit Price",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                              },
-                                              {
-                                                dataField: "DiscountPrice",
-                                                caption: "Discount (%)",
-                                                dataType: "number",
-                                                editorOptions: {
-                                                  min: 0,
-                                                  max: 100,
-                                                },
-                                              },
-                                              {
-                                                dataField: "TotalPrice",
-                                                caption: "Total Price",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                                calculateCellValue: function (
-                                                  data
+                                              headerFilter: { visible: false }, // Ensure header filter is disabled
+                                              filterRow: { visible: false }, // Disable the filter row
+                                              onCellPrepared: function (e) {
+                                                if (
+                                                  e.rowType === "data" &&
+                                                  e.column.allowEditing ===
+                                                    false
                                                 ) {
-                                                  // Calculate Total Price considering UnitPrice, DiscountPrice, and Quantity
-                                                  if (
-                                                    data.UnitPrice &&
-                                                    data.DiscountPrice !=
-                                                      null &&
-                                                    data.Quantity
-                                                  ) {
-                                                    const discountedPrice =
-                                                      data.UnitPrice -
-                                                      (data.UnitPrice *
-                                                        data.DiscountPrice) /
-                                                        100;
-                                                    return (
-                                                      discountedPrice *
-                                                      data.Quantity
-                                                    );
-                                                  }
-                                                  return 0; // Return 0 if any value is missing
-                                                },
+                                                  // Apply custom style to non-editable cells
+                                                  e.cellElement.css({
+                                                    backgroundColor: "#f5f5f5", // Light gray background
+                                                    color: "#999", // Light text color
+                                                  });
+                                                }
                                               },
-                                            ],
-
-                                            summary: {
-                                              totalItems: [
+                                              columns: [
                                                 {
-                                                  column: "TotalPrice",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
+                                                  dataField: "ItemDescription",
+                                                  caption: "Item Description",
+                                                  validationRules: [
+                                                    { type: "required" },
+                                                  ],
+                                                },
+                                                {
+                                                  dataField: "Quantity",
+                                                  caption: "Quantity",
+                                                  dataType: "number",
+                                                },
+                                                {
+                                                  dataField: "Unit",
+                                                  caption: "Unit",
+                                                },
+                                                {
+                                                  dataField: "UnitPrice",
+                                                  caption: "Unit Price",
+                                                  dataType: "number",
+                                                  format: {
                                                     type: "currency",
                                                     currency: "IDR",
                                                   },
-                                                  displayFormat: "Total: {0}",
+                                                },
+                                                {
+                                                  dataField: "DiscountPrice",
+                                                  caption: "Discount (%)",
+                                                  dataType: "number",
+                                                  editorOptions: {
+                                                    min: 0,
+                                                    max: 100,
+                                                  },
+                                                },
+                                                {
+                                                  dataField: "TotalPrice",
+                                                  caption: "Total Price",
+                                                  dataType: "number",
+                                                  format: {
+                                                    type: "currency",
+                                                    currency: "IDR",
+                                                  },
+                                                  calculateCellValue: function (
+                                                    data
+                                                  ) {
+                                                    // Calculate Total Price considering UnitPrice, DiscountPrice, and Quantity
+                                                    if (
+                                                      data.UnitPrice &&
+                                                      data.DiscountPrice !=
+                                                        null &&
+                                                      data.Quantity
+                                                    ) {
+                                                      const discountedPrice =
+                                                        data.UnitPrice -
+                                                        (data.UnitPrice *
+                                                          data.DiscountPrice) /
+                                                          100;
+                                                      return (
+                                                        discountedPrice *
+                                                        data.Quantity
+                                                      );
+                                                    }
+                                                    return 0; // Return 0 if any value is missing
+                                                  },
                                                 },
                                               ],
-                                            },
-                                            onRowInserting: function (e) {
-                                              // Extract values with fallback defaults to prevent undefined or null issues
-                                              const unitPrice =
-                                                e.data.UnitPrice || 0; // Default to 0 if undefined or null
-                                              const discountPrice =
-                                                e.data.DiscountPrice || 0; // Default to 0
-                                              const quantity =
-                                                e.data.Quantity || 0; // Default to 0
 
-                                              if (
-                                                unitPrice > 0 &&
-                                                quantity > 0
-                                              ) {
-                                                // Calculate discounted price
-                                                const discountedPrice =
-                                                  unitPrice -
-                                                  (unitPrice * discountPrice) /
-                                                    100;
-                                                // Calculate total price and ensure it's a float
-                                                e.data.TotalPrice = parseFloat(
-                                                  (
-                                                    discountedPrice * quantity
-                                                  ).toFixed(2)
-                                                );
-                                              } else {
-                                                // Default to 0 if calculation cannot be performed
-                                                e.data.TotalPrice = 0;
-                                              }
-                                            },
-                                            onRowUpdating: function (e) {
-                                              // Calculate TotalPrice before updating
-                                              const updatedData = {
-                                                ...e.oldData,
-                                                ...e.newData, // Merge old data with new data
-                                              };
+                                              summary: {
+                                                totalItems: [
+                                                  {
+                                                    column: "TotalPrice",
+                                                    summaryType: "sum",
+                                                    valueFormat: {
+                                                      type: "currency",
+                                                      currency: "IDR",
+                                                    },
+                                                    displayFormat: "Total: {0}",
+                                                  },
+                                                ],
+                                              },
+                                              onRowInserting: function (e) {
+                                                // Extract values with fallback defaults to prevent undefined or null issues
+                                                const unitPrice =
+                                                  e.data.UnitPrice || 0; // Default to 0 if undefined or null
+                                                const discountPrice =
+                                                  e.data.DiscountPrice || 0; // Default to 0
+                                                const quantity =
+                                                  e.data.Quantity || 0; // Default to 0
 
-                                              const unitPrice =
-                                                updatedData.UnitPrice || 0;
-                                              const discountPrice =
-                                                updatedData.DiscountPrice || 0;
-                                              const quantity =
-                                                updatedData.Quantity || 0;
+                                                if (
+                                                  unitPrice > 0 &&
+                                                  quantity > 0
+                                                ) {
+                                                  // Calculate discounted price
+                                                  const discountedPrice =
+                                                    unitPrice -
+                                                    (unitPrice *
+                                                      discountPrice) /
+                                                      100;
+                                                  // Calculate total price and ensure it's a float
+                                                  e.data.TotalPrice =
+                                                    parseFloat(
+                                                      (
+                                                        discountedPrice *
+                                                        quantity
+                                                      ).toFixed(2)
+                                                    );
+                                                } else {
+                                                  // Default to 0 if calculation cannot be performed
+                                                  e.data.TotalPrice = 0;
+                                                }
+                                              },
+                                              onRowUpdating: function (e) {
+                                                // Calculate TotalPrice before updating
+                                                const updatedData = {
+                                                  ...e.oldData,
+                                                  ...e.newData, // Merge old data with new data
+                                                };
 
-                                              if (unitPrice && quantity) {
-                                                const discountedPrice =
-                                                  unitPrice -
-                                                  (unitPrice * discountPrice) /
-                                                    100;
-                                                updatedData.TotalPrice =
-                                                  parseFloat(
-                                                    (
-                                                      discountedPrice * quantity
-                                                    ).toFixed(2)
-                                                  );
-                                              } else {
-                                                updatedData.TotalPrice = 0; // Default to 0 if required fields are missing
-                                              }
+                                                const unitPrice =
+                                                  updatedData.UnitPrice || 0;
+                                                const discountPrice =
+                                                  updatedData.DiscountPrice ||
+                                                  0;
+                                                const quantity =
+                                                  updatedData.Quantity || 0;
 
-                                              // Update the `newData` to include the calculated TotalPrice
-                                              e.newData = {
-                                                ...e.newData,
-                                                TotalPrice:
-                                                  updatedData.TotalPrice,
-                                              };
-                                            },
-                                          })
-                                          .appendTo(sectionContainer);
+                                                if (unitPrice && quantity) {
+                                                  const discountedPrice =
+                                                    unitPrice -
+                                                    (unitPrice *
+                                                      discountPrice) /
+                                                      100;
+                                                  updatedData.TotalPrice =
+                                                    parseFloat(
+                                                      (
+                                                        discountedPrice *
+                                                        quantity
+                                                      ).toFixed(2)
+                                                    );
+                                                } else {
+                                                  updatedData.TotalPrice = 0; // Default to 0 if required fields are missing
+                                                }
+
+                                                // Update the `newData` to include the calculated TotalPrice
+                                                e.newData = {
+                                                  ...e.newData,
+                                                  TotalPrice:
+                                                    updatedData.TotalPrice,
+                                                };
+                                              },
+                                            })
+                                            .appendTo(sectionContainer);
+                                        },
                                       },
-                                    },
-                                  })
-                                  .appendTo(sphContainer);
+                                    })
+                                    .appendTo(sphContainer);
+                                },
                               },
-                            },
-                          });
+                            })
+                            .appendTo(container);
+
+                          return container;
                         },
                       },
                       {
@@ -2198,23 +2470,38 @@
                                     headerFilter: {
                                       visible: true,
                                     },
+                                    onCellPrepared: function (e) {
+                                      if (
+                                        e.rowType === "data" &&
+                                        e.column.allowEditing === false
+                                      ) {
+                                        // Apply custom style to non-editable cells
+                                        e.cellElement.css({
+                                          backgroundColor: "#f5f5f5", // Light gray background
+                                          color: "#999", // Light text color
+                                        });
+                                      }
+                                    },
                                     columns: [
                                       {
                                         dataField: "SectionName",
                                         caption: "Installation Area",
                                         cellTemplate: function (
                                           container,
-                                          options
+                                          sectionOptions
                                         ) {
-                                          if (options.data.isSection) {
+                                          if (sectionOptions.data.isSection) {
                                             $("<div>")
                                               .css({ fontWeight: "bold" })
-                                              .text(options.data.SectionName)
+                                              .text(
+                                                sectionOptions.data.SectionName
+                                              )
                                               .appendTo(container);
                                           } else {
                                             $("<div>")
                                               .text(
-                                                options.data.Description || "-"
+                                                sectionOptions.data
+                                                  .Description || "-"
                                               )
                                               .appendTo(container);
                                           }
@@ -2434,6 +2721,18 @@
                                   .appendTo(container);
                               },
                             },
+                            onCellPrepared: function (e) {
+                              if (
+                                e.rowType === "data" &&
+                                e.column.allowEditing === false
+                              ) {
+                                // Apply custom style to non-editable cells
+                                e.cellElement.css({
+                                  backgroundColor: "#f5f5f5", // Light gray background
+                                  color: "#999", // Light text color
+                                });
+                              }
+                            },
                             columns: [
                               {
                                 dataField: "Subject",
@@ -2444,6 +2743,140 @@
                                 caption: "Date",
                                 dataType: "date",
                                 format: "dd/MM/yyyy",
+                              },
+                              {
+                                caption: "BA",
+                                type: "buttons",
+                                buttons: [
+                                  {
+                                    hint: "Generate BA",
+                                    icon: "export", // Use a predefined DevExtreme icon
+                                    onClick: function (e) {
+                                      const data = e.row.data;
+
+                                      // Create and show the popup
+                                      const popup = $("<div>")
+                                        .appendTo("body")
+                                        .dxPopup({
+                                          title: "Generate BA",
+                                          visible: true,
+                                          width: 500,
+                                          height: 400,
+                                          closeOnOutsideClick: true,
+                                          showCloseButton: true,
+                                          contentTemplate: function (
+                                            contentElement
+                                          ) {
+                                            const formContainer =
+                                              $("<div>").appendTo(
+                                                contentElement
+                                              );
+
+                                            // Display SPH and Subject information
+                                            formContainer.append(`
+                      <div style="padding: 20px;">
+                        <div>
+                          <label><b>SPK:</b></label>
+                          <span>${data.Subject}</span>
+                        </div>
+                        <div style="margin-top: 20px;">
+                          <label><b>Description:</b></label>
+                        </div>
+                      </div>
+                    `);
+
+                                            // Add TextArea for user input
+                                            const textArea = $("<div>")
+                                              .dxTextArea({
+                                                height: 100,
+                                                placeholder:
+                                                  "Enter description...",
+                                              })
+                                              .appendTo(formContainer);
+
+                                            // Add Button to call the API
+                                            $("<div style='margin-top: 20px;'>")
+                                              .dxButton({
+                                                text: "Submit",
+                                                type: "success",
+                                                onClick: function () {
+                                                  // Get user input from TextArea
+                                                  const description = textArea
+                                                    .dxTextArea("instance")
+                                                    .option("value");
+
+                                                  // API Request Payload
+                                                  const payload = {
+                                                    BADate: new Date()
+                                                      .toISOString()
+                                                      .split("T")[0],
+                                                    ProjectId: data.ProjectId,
+                                                    ProjectName:
+                                                      data.ProjectName,
+                                                    BASubject:
+                                                      description ||
+                                                      data.Subject, // Use description if provided
+                                                    SphId: data.SphId,
+                                                  };
+
+                                                  // Call the API
+                                                  $.ajax({
+                                                    url: `${API_BASE_URL}/ba_services/api/ba`,
+                                                    method: "POST",
+                                                    contentType:
+                                                      "application/json",
+                                                    data: JSON.stringify(
+                                                      payload
+                                                    ),
+                                                    headers: {
+                                                      Authorization: `Bearer ${localStorage.getItem(
+                                                        "authToken"
+                                                      )}`,
+                                                    },
+                                                    success: function () {
+                                                      pollDataReload(
+                                                        options.component
+                                                      );
+                                                      DevExpress.ui.notify(
+                                                        "SPK generated successfully!",
+                                                        "success",
+                                                        2000
+                                                      );
+
+                                                      // Close popup on success
+                                                      const popupInstance =
+                                                        popup.dxPopup(
+                                                          "instance"
+                                                        );
+                                                      if (popupInstance)
+                                                        popupInstance.hide();
+                                                    },
+                                                    error: function (err) {
+                                                      console.error(
+                                                        "Failed to generate SPK:",
+                                                        err
+                                                      );
+                                                      DevExpress.ui.notify(
+                                                        "Failed to generate SPK.",
+                                                        "error",
+                                                        2000
+                                                      );
+                                                    },
+                                                  });
+                                                },
+                                              })
+                                              .appendTo(formContainer);
+                                          },
+                                        })
+                                        .dxPopup("instance");
+
+                                      // Correctly hide the popup on close
+                                      popup.option("onHiding", function () {
+                                        popup.element().remove();
+                                      });
+                                    },
+                                  },
+                                ],
                               },
                               {
                                 type: "buttons",
@@ -2589,6 +3022,18 @@
                                 caption: "Progress Stage",
                               },
                             ],
+                            onCellPrepared: function (e) {
+                              if (
+                                e.rowType === "data" &&
+                                e.column.allowEditing === false
+                              ) {
+                                // Apply custom style to non-editable cells
+                                e.cellElement.css({
+                                  backgroundColor: "#f5f5f5", // Light gray background
+                                  color: "#999", // Light text color
+                                });
+                              }
+                            },
                             masterDetail: {
                               enabled: true,
                               template: function (container, options) {
@@ -2641,6 +3086,18 @@
                                     mode: "batch",
                                     allowUpdating: true,
                                     startEditAction: "click",
+                                  },
+                                  onCellPrepared: function (e) {
+                                    if (
+                                      e.rowType === "data" &&
+                                      e.column.allowEditing === false
+                                    ) {
+                                      // Apply custom style to non-editable cells
+                                      e.cellElement.css({
+                                        backgroundColor: "#f5f5f5", // Light gray background
+                                        color: "#999", // Light text color
+                                      });
+                                    }
                                   },
                                   columns: [
                                     {
