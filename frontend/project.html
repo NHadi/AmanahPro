@@ -1076,60 +1076,142 @@
                                 const breakdownId =
                                   breakdownOptions.data.BreakdownId;
 
+                                const detailData =
+                                  breakdownOptions.data.Sections.flatMap(
+                                    (section) => {
+                                      const sectionRow = {
+                                        DetailId: `section-${section.BreakdownSectionId}`, // Unique ID for section
+                                        BreakdownSectionId:
+                                          section.BreakdownSectionId,
+                                        SectionTitle: section.SectionTitle,
+                                        isSection: true, // Mark this row as a section
+                                        Sort: section.Sort,
+                                        Items: section.Items || [], // Preserve original items
+                                      };
+
+                                      const itemRows = (
+                                        section.Items || []
+                                      ).map((item, index) => ({
+                                        ...item,
+                                        DetailId: item.BreakdownItemId, // Use the actual ItemId as the unique ID
+                                        BreakdownSectionId:
+                                          section.BreakdownSectionId,
+                                        isSection: false, // Mark this row as an item
+                                      }));
+
+                                      return [sectionRow, ...itemRows];
+                                    }
+                                  );
+
                                 $("<div>")
                                   .dxDataGrid({
-                                    dataSource: new DevExpress.data.CustomStore(
+                                    dataSource: detailData,
+                                    keyExpr: "DetailId", // Use DetailId for unique identification
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    wordWrapEnabled: true,
+                                    editing: {
+                                      mode: "batch", // Enable batch mode
+                                      allowUpdating: true, // Allow editing
+                                      allowAdding: false,
+                                      allowDeleting: false,
+                                    },
+                                    pager: {
+                                      visible: false, // Hide pagination controls
+                                    },
+                                    paging: {
+                                      enabled: false, // Disable pagination
+                                    },
+                                    columns: [
                                       {
-                                        key: "BreakdownSectionId",
-                                        load: function () {
-                                          return Promise.resolve(
-                                            breakdownOptions.data.Sections || []
-                                          );
+                                        dataField: "Sort",
+                                        caption: "No",
+                                        width: 50,
+                                        alignment: "center",
+                                        calculateCellValue: function (rowData) {
+                                          return rowData.isSection
+                                            ? rowData.Sort
+                                            : "";
                                         },
-                                        insert: function (values) {
-                                          DevExpress.ui.notify(
-                                            "Adding section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections`,
-                                            method: "POST",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            data: JSON.stringify(values),
-                                          })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section added successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(
-                                                breakdownOptions.component
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to add section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
+                                      },
+                                      {
+                                        dataField: "SectionTitle",
+                                        caption: "Description",
+                                        allowEditing: false, // Sections are read-only
+                                        calculateCellValue: function (rowData) {
+                                          return rowData.isSection
+                                            ? rowData.SectionTitle
+                                            : rowData.Description;
                                         },
-                                        update: function (key, values) {
-                                          DevExpress.ui.notify(
-                                            "Updating section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
+                                        cellTemplate: function (
+                                          container,
+                                          options
+                                        ) {
+                                          if (options.data.isSection) {
+                                            $("<div>")
+                                              .css({
+                                                "font-weight": "bold",
+                                                "text-transform": "uppercase",
+                                              })
+                                              .text(options.value)
+                                              .appendTo(container);
+                                          } else {
+                                            $("<div>")
+                                              .text(options.value)
+                                              .appendTo(container);
+                                          }
+                                        },
+                                      },
+                                      {
+                                        dataField: "UnitPrice",
+                                        caption: "Harga Satuan",
+                                        alignment: "right",
+                                        dataType: "number",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: function (rowData) {
+                                          return !rowData.isSection; // Editable only for item rows
+                                        },
+                                      },
+                                    ],
+                                    summary: {
+                                      totalItems: [
+                                        {
+                                          column: "UnitPrice",
+                                          summaryType: "sum",
+                                          displayFormat: "Grand Total: Rp {0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    onSaved: function (e) {
+                                      const changes = e.changes
+                                        .filter(
+                                          (change) => !change.data.isSection
+                                        ) // Filter out section rows
+                                        .map((change) => ({
+                                          UnitPrice: change.data.UnitPrice,
+                                          SectionId:
+                                            change.data.BreakdownSectionId,
+                                          Key: change.key,
+                                        }));
+
+                                      if (changes.length > 0) {
+                                        DevExpress.ui.notify(
+                                          "Saving changes...",
+                                          "info",
+                                          2000
+                                        );
+
+                                        // Iterate through each change and make an API call
+                                        const promises = changes.map((update) =>
+                                          $.ajax({
+                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${update.SectionId}/items/${update.Key}`,
                                             method: "PUT",
                                             headers: {
                                               Authorization: `Bearer ${localStorage.getItem(
@@ -1138,265 +1220,42 @@
                                               "Content-Type":
                                                 "application/json",
                                             },
-                                            data: JSON.stringify(values),
+                                            data: JSON.stringify({
+                                              UnitPrice: update.UnitPrice,
+                                            }),
                                           })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section updated successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(
-                                                breakdownOptions.component
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to update section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                        remove: function (key) {
-                                          DevExpress.ui.notify(
-                                            "Deleting section...",
-                                            "info",
-                                            2000
-                                          );
-                                          return $.ajax({
-                                            url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${key}`,
-                                            method: "DELETE",
-                                            headers: {
-                                              Authorization: `Bearer ${localStorage.getItem(
-                                                "authToken"
-                                              )}`,
-                                            },
-                                          })
-                                            .done(() => {
-                                              DevExpress.ui.notify(
-                                                "Section deleted successfully!",
-                                                "success",
-                                                2000
-                                              );
-                                              pollDataReload(
-                                                breakdownOptions.component
-                                              );
-                                            })
-                                            .fail(() => {
-                                              DevExpress.ui.notify(
-                                                "Failed to delete section.",
-                                                "error",
-                                                2000
-                                              );
-                                            });
-                                        },
-                                      }
-                                    ),
-                                    keyExpr: "BreakdownSectionId",
-                                    editing: {
-                                      mode: "batch",
-                                      allowAdding: false,
-                                      allowUpdating: false,
-                                      allowDeleting: false,
-                                    },
-                                    showBorders: true,
-                                    columnAutoWidth: true,
-                                    wordWrapEnabled: true,
-                                    showColumnHeaders: false, // Hide the column headers
-                                    searchPanel: {
-                                      visible: true,
-                                      placeholder: "Search...",
-                                    },
-                                    headerFilter: { visible: false }, // Ensure header filter is disabled
-                                    filterRow: { visible: false }, // Disable the filter row
-                                    columns: [
-                                      {
-                                        dataField: "SectionTitle",
-                                        caption: "Section Title",
-                                        validationRules: [{ type: "required" }],
-                                        headerFilter: { allowSearch: true },
-                                      },
-                                    ],
-                                    masterDetail: {
-                                      enabled: true,
-                                      template: function (
-                                        sectionContainer,
-                                        sectionOptions
-                                      ) {
-                                        const sectionId =
-                                          sectionOptions.data
-                                            .BreakdownSectionId;
+                                        );
 
-                                        $("<div>")
-                                          .dxDataGrid({
-                                            dataSource:
-                                              new DevExpress.data.CustomStore({
-                                                key: "BreakdownItemId",
-                                                load: function () {
-                                                  return Promise.resolve(
-                                                    sectionOptions.data.Items ||
-                                                      []
-                                                  );
-                                                },
-                                                insert: function (values) {
-                                                  DevExpress.ui.notify(
-                                                    "Adding item...",
-                                                    "info",
-                                                    2000
-                                                  );
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items`,
-                                                    method: "POST",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                      "Content-Type":
-                                                        "application/json",
-                                                    },
-                                                    data: JSON.stringify(
-                                                      values
-                                                    ),
-                                                  })
-                                                    .done(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Item added successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to add item.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
-                                                update: function (key, values) {
-                                                  DevExpress.ui.notify(
-                                                    "Updating item...",
-                                                    "info",
-                                                    2000
-                                                  );
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
-                                                    method: "PUT",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                      "Content-Type":
-                                                        "application/json",
-                                                    },
-                                                    data: JSON.stringify(
-                                                      values
-                                                    ),
-                                                  })
-                                                    .done(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Item updated successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to update item.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
-                                                remove: function (key) {
-                                                  DevExpress.ui.notify(
-                                                    "Deleting item...",
-                                                    "info",
-                                                    2000
-                                                  );
-                                                  return $.ajax({
-                                                    url: `${API_BASE_URL}/breakdown_management_services/api/breakdowns/${breakdownId}/sections/${sectionId}/items/${key}`,
-                                                    method: "DELETE",
-                                                    headers: {
-                                                      Authorization: `Bearer ${localStorage.getItem(
-                                                        "authToken"
-                                                      )}`,
-                                                    },
-                                                  })
-                                                    .done(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Item deleted successfully!",
-                                                        "success",
-                                                        2000
-                                                      );
-                                                      pollDataReload(
-                                                        options.component
-                                                      );
-                                                    })
-                                                    .fail(() => {
-                                                      DevExpress.ui.notify(
-                                                        "Failed to delete item.",
-                                                        "error",
-                                                        2000
-                                                      );
-                                                    });
-                                                },
-                                              }),
-                                            keyExpr: "BreakdownItemId",
-                                            editing: {
-                                              mode: "batch",
-                                              allowAdding: false,
-                                              allowUpdating: true,
-                                              allowDeleting: false,
-                                            },
-                                            showBorders: true,
-                                            columnAutoWidth: true,
-                                            wordWrapEnabled: true,
-                                            searchPanel: {
-                                              visible: true,
-                                              placeholder: "Search...",
-                                            },
-                                            headerFilter: { visible: false }, // Ensure header filter is disabled
-                                            filterRow: { visible: false }, // Disable the filter row
-                                            columns: [
-                                              {
-                                                dataField: "Description",
-                                                caption: "Item Description",
-                                                allowEditing: false, // Section rows are never editable
-                                              },
-                                              {
-                                                dataField: "UnitPrice",
-                                                caption: "Unit Price",
-                                                dataType: "number",
-                                                format: {
-                                                  type: "currency",
-                                                  currency: "IDR",
-                                                },
-                                              },
-                                            ],
-                                            summary: {
-                                              totalItems: [
-                                                {
-                                                  column: "UnitPrice",
-                                                  summaryType: "sum",
-                                                  valueFormat: {
-                                                    type: "currency",
-                                                    currency: "IDR",
-                                                  },
-                                                  displayFormat: "Total: {0}",
-                                                },
-                                              ],
-                                            },
+                                        // Wait for all API calls to complete
+                                        Promise.all(promises)
+                                          .then(() => {
+                                            DevExpress.ui.notify(
+                                              "All changes saved successfully!",
+                                              "success",
+                                              2000
+                                            );
                                           })
-                                          .appendTo(sectionContainer);
-                                      },
+                                          .catch(() => {
+                                            DevExpress.ui.notify(
+                                              "Failed to save some changes.",
+                                              "error",
+                                              2000
+                                            );
+                                          });
+                                      }
+                                    },
+
+                                    onRowPrepared: function (e) {
+                                      if (
+                                        e.rowType === "data" &&
+                                        e.data.isSection
+                                      ) {
+                                        // Style section rows
+                                        e.rowElement.css({
+                                          "background-color": "#f9f9f9",
+                                          "font-weight": "bold",
+                                        });
+                                      }
                                     },
                                   })
                                   .appendTo(breakdownContainer);
