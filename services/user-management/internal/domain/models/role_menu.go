@@ -4,11 +4,16 @@ import (
 	"time"
 )
 
+// RoleMenu model
 type RoleMenu struct {
 	RoleID     int       `gorm:"column:role_id;primaryKey"`
 	MenuID     int       `gorm:"column:menu_id;primaryKey"`
-	Permission string    `gorm:"column:permission;type:varchar(10);not null"`
-	AssignedAt time.Time `gorm:"column:assigned_at;default:GETDATE()"`
+	Permission string    `gorm:"type:varchar(10);not null"`
+	AssignedAt time.Time `gorm:"autoCreateTime"`
+
+	// Relationships
+	Role *Role `gorm:"foreignKey:RoleID"`
+	Menu *Menu `gorm:"foreignKey:MenuID"`
 }
 
 func (RoleMenu) TableName() string {

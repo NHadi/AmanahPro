@@ -245,23 +245,24 @@ func (s *SphService) GetSphDetailByID(detailID int) (*models.SphDetail, error) {
 
 	return detail, nil
 }
-func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []byte, organizationID int, userID int) error {
+
+func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []byte, organizationID int, userID int) (float64, error) {
 	// Load Excel from bytes
 	f, err := excelize.OpenReader(bytes.NewReader(fileBytes))
 	if err != nil {
-		return fmt.Errorf("failed to open Excel file: %v", err)
+		return 0, fmt.Errorf("failed to open Excel file: %v", err)
 	}
 
 	// Get all rows from the first sheet
 	rows, err := f.GetRows(f.GetSheetName(0))
 	if err != nil {
-		return fmt.Errorf("failed to read Excel rows: %v", err)
+		return 0, fmt.Errorf("failed to read Excel rows: %v", err)
 	}
 
 	currentDate := time.Now().Format("2006-01-02")           // Get current date in yyyy-MM-dd format
 	parsedDate, err := time.Parse("2006-01-02", currentDate) // Parse it into a time.Time object
 	if err != nil {
-		return fmt.Errorf("failed to parse date: %v", err)
+		return 0, fmt.Errorf("failed to parse date: %v", err)
 	}
 
 	// Create SPH record
@@ -276,11 +277,12 @@ func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []b
 	}
 
 	if err := s.sphRepo.Create(&sph); err != nil {
-		return fmt.Errorf("failed to create SPH: %v", err)
+		return 0, fmt.Errorf("failed to create SPH: %v", err)
 	}
 
 	var currentSectionID int
-	headerFound := false // Flag to indicate whether the header row has been found
+	headerFound := false   // Flag to indicate whether the header row has been found
+	var grandTotal float64 // Variable to accumulate the grand total
 
 	for rowIndex, row := range rows {
 		if len(row) == 0 {
@@ -316,7 +318,7 @@ func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []b
 				CreatedBy:      &userID,
 			}
 			if err := s.sectionRepo.Create(&section); err != nil {
-				return fmt.Errorf("failed to create SPH section: %v", err)
+				return 0, fmt.Errorf("failed to create SPH section: %v", err)
 			}
 			currentSectionID = section.SphSectionId // Get the inserted SectionId
 			continue
@@ -329,28 +331,11 @@ func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []b
 				continue
 			}
 
-			// Parse UnitPrice and DiscountPrice from the row
-			unitPrice := parseFloat(row[4])     // Original price
-			discountPrice := parseFloat(row[5]) // Discounted price
-
-			// Initialize discountPercentage
-			var discountPercentage *float64
-
-			// Calculate the discount percentage dynamically if unitPrice is not nil
-			if unitPrice != nil && *unitPrice > 0 && discountPrice != nil {
-				calculatedPercentage := ((*unitPrice - *discountPrice) / *unitPrice) * 100
-				discountPercentage = &calculatedPercentage // Assign to a pointer
-			} else {
-				defaultPercentage := 0.0
-				discountPercentage = &defaultPercentage // Handle cases where calculation isn't possible
+			// Parse TotalPrice
+			totalPrice := parseFloat(row[6])
+			if totalPrice != nil {
+				grandTotal += *totalPrice // Add to grand total
 			}
-
-			// Log the calculated discount for debugging
-			log.Printf("Calculated Discount Percentage: %.2f%% for UnitPrice: %.2f and DiscountPrice: %.2f",
-				*discountPercentage,
-				unitPrice,
-				discountPrice,
-			)
 
 			detail := models.SphDetail{
 				SectionId:       currentSectionID, // Use the actual SectionId
@@ -358,20 +343,28 @@ func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []b
 				Quantity:        parseFloat(row[2]),
 				Unit:            &row[3],
 				UnitPrice:       parseFloat(row[4]),
-				DiscountPrice:   discountPercentage,
-				TotalPrice:      parseFloat(row[6]),
+				DiscountPrice:   parseFloat(row[5]),
+				TotalPrice:      totalPrice,
 				OrganizationId:  &organizationID,
 				CreatedBy:       &userID,
 			}
 			if err := s.detailRepo.Create(&detail); err != nil {
-				return fmt.Errorf("failed to create SPH detail: %v", err)
+				return 0, fmt.Errorf("failed to create SPH detail: %v", err)
 			}
 		}
 	}
 
+	// Log the grand total for debugging
+	log.Printf("Grand Total: %.2f", grandTotal)
+	sph.Total = &grandTotal
+	if err := s.sphRepo.Update(&sph); err != nil {
+		log.Printf("Error updating SPH: %v", err)
+	}
+	// Successfully processed the Excel and updated the project
 	s.PublishFullReindexEvent(sph.SphId)
 
-	return nil
+	// Return the grand total along with nil error (indicating success)
+	return grandTotal, nil
 }
 
 // Helper function to check if a string is an alphabet

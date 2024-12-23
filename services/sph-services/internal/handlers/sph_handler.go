@@ -577,12 +577,16 @@ func (h *SphHandler) ImportSphFromExcel(c *gin.Context) {
 		return
 	}
 
-	// Call the service to process the file
-	err = h.sphService.ImportSphFromExcel(metadata, fileBytes, *claims.OrganizationId, claims.UserID)
+	// Call the service to process the file and get the grand total
+	grandTotal, err := h.sphService.ImportSphFromExcel(metadata, fileBytes, *claims.OrganizationId, claims.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Excel imported successfully"})
+	// Return the grand total as part of the response
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "SPH import successful",
+		"grandTotal": grandTotal,
+	})
 }

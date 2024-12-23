@@ -62,7 +62,7 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Create JWT token with user ID in claims
 	claims := &jwtModels.JWTClaims{
 		UserID:         user.UserID,
-		OrganizationId: user.OrganizationId,
+		OrganizationId: user.OrganizationID,
 		Username:       user.Username,
 		Email:          user.Email,
 		StandardClaims: jwt.StandardClaims{

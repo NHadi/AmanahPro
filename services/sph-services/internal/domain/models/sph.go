@@ -14,6 +14,8 @@ type Sph struct {
 	Location       *string     `gorm:"column:Location;type:varchar(255);null"`      // Location of SPH
 	Date           *CustomDate `gorm:"column:Date;type:date;null"`                  // Date of SPH
 	RecepientName  *string     `gorm:"column:RecepientName;type:varchar(255);null"` // Name of the recipient
+	Total          *float64    `gorm:"column:Total;type:decimal(15,2);null"`        // Total price of the item
+	OpnameTotal    *float64    `gorm:"column:OpnameTotal;type:decimal(15,2);null"`  // OpnameTotal
 	CreatedBy      *int        `gorm:"column:CreatedBy;null"`                       // Created by user ID
 	CreatedAt      *time.Time  `gorm:"column:CreatedAt;autoCreateTime"`             // Creation timestamp
 	UpdatedBy      *int        `gorm:"column:UpdatedBy;null"`                       // Updated by user ID

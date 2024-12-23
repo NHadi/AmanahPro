@@ -8,10 +8,11 @@ import (
 // SPK represents the SPK table in the database
 type SPK struct {
 	SpkId          int         `gorm:"primaryKey;column:SpkId;autoIncrement"`        // Primary key
-	SphId          int         `gorm:"column:SphId;not null"`                        // Foreign key to SPH
+	SphId          *int        `gorm:"column:SphId;null"`                            // Foreign key to SPH
 	ProjectId      *int        `gorm:"column:ProjectId;null"`                        // Foreign key to Projects
 	ProjectName    *string     `gorm:"column:ProjectName;type:varchar(255);null"`    // Project name
 	Subject        *string     `gorm:"column:Subject;type:varchar(255);null"`        // SPK subject
+	Mandor         *string     `gorm:"column:Mandor;type:varchar(255);null"`         // Mandor
 	Date           *CustomDate `gorm:"column:Date;type:date;null"`                   // Date of SPK
 	TotalJasa      *float64    `gorm:"column:TotalJasa;type:decimal(15,2);null"`     // Total Jasa Cost
 	TotalMaterial  *float64    `gorm:"column:TotalMaterial;type:decimal(15,2);null"` // Total Material Cost

@@ -15,7 +15,7 @@ func NewRoleService(roleRepo repositories.RoleRepository) *RoleService {
 
 func (s *RoleService) CreateRole(roleName, description string) (*models.Role, error) {
 	role := &models.Role{
-		RoleName:    roleName,
+		Name:        roleName,
 		Description: description,
 	}
 	err := s.roleRepo.Create(role)

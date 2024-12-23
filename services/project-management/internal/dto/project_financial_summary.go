@@ -14,4 +14,5 @@ type ProjectFinancialSummaryDTO struct {
 	BB          float64 `json:"BB"`
 	OPR         float64 `json:"OPR"`
 	Saldo       float64 `json:"Saldo"`
+	FEE         float64 `json:"FEE"`
 }

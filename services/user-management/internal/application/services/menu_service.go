@@ -44,7 +44,7 @@ func (s *MenuService) GetMenusWithPermissions(roleID int) ([]dto.MenuWithPermiss
 
 		menuWithPermissionDTOs = append(menuWithPermissionDTOs, dto.MenuWithPermissionDTO{
 			MenuID:     menu.MenuID,
-			MenuName:   menu.MenuName,
+			MenuName:   menu.Name,
 			Path:       menu.Path,
 			Permission: permission.Permission,
 		})
@@ -55,10 +55,10 @@ func (s *MenuService) GetMenusWithPermissions(roleID int) ([]dto.MenuWithPermiss
 
 func (s *MenuService) CreateMenu(menuName, path, icon string, order int) (*models.Menu, error) {
 	menu := &models.Menu{
-		MenuName: menuName,
-		Path:     path,
-		Icon:     icon,
-		Order:    order,
+		Name:  menuName,
+		Path:  path,
+		Icon:  icon,
+		Order: &order,
 	}
 	err := s.menuRepository.Create(menu)
 	return menu, err

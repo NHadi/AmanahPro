@@ -6,21 +6,28 @@ type SpkDTO struct {
 	SpkId int `json:"SpkId,omitempty"`
 	SphId int `json:"SphId,omitempty"`
 
-	ProjectId   *int               `json:"ProjectId"`
-	ProjectName *string            `json:"ProjectName"`
-	Subject     *string            `json:"Subject"`
-	Date        *models.CustomDate `json:"Date,omitempty"`
+	ProjectId     *int     `json:"ProjectId"`
+	ProjectName   *string  `json:"ProjectName"`
+	Mandor        *string  `json:"Mandor"`
+	TotalJasa     *float64 `json:"TotalJasa"`
+	TotalMaterial *float64 `json:"TotalMaterial"`
+
+	Subject *string            `json:"Subject"`
+	Date    *models.CustomDate `json:"Date,omitempty"`
 }
 
 // ToModel maps the DTO to the domain model
 func (dto *SpkDTO) ToModel(userID int) *models.SPK {
 	spk := &models.SPK{
-		SpkId:       dto.SpkId,
-		ProjectId:   dto.ProjectId,
-		ProjectName: dto.ProjectName,
-		Subject:     dto.Subject,
-		Date:        dto.Date,
-		CreatedBy:   &userID,
+		SpkId:         dto.SpkId,
+		ProjectId:     dto.ProjectId,
+		ProjectName:   dto.ProjectName,
+		Subject:       dto.Subject,
+		Date:          dto.Date,
+		CreatedBy:     &userID,
+		Mandor:        dto.Mandor,
+		TotalJasa:     dto.TotalJasa,
+		TotalMaterial: dto.TotalMaterial,
 	}
 
 	return spk
@@ -40,6 +47,12 @@ func (dto *SpkDTO) ToModelForUpdate(existing *models.SPK, userID int) *models.SP
 	}
 	if dto.Date != nil {
 		existing.Date = dto.Date
+	}
+	if dto.TotalJasa != nil {
+		existing.TotalJasa = dto.TotalJasa
+	}
+	if dto.TotalMaterial != nil {
+		existing.TotalMaterial = dto.TotalMaterial
 	}
 
 	existing.UpdatedBy = &userID

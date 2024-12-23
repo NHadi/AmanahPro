@@ -609,7 +609,7 @@
           });
         }
 
-        function initializeProjectsGrid(projects) {
+        function initializeProjectsGrid() {
           $("#projects-grid").dxDataGrid({
             dataSource: new DevExpress.data.CustomStore({
               key: "ProjectID",
@@ -701,19 +701,19 @@
                     dataType: "date",
                     format: "dd-MMM-yyyy",
                     width: 100,
-                    allowEditing: true, // Non-editable column
+                    allowEditing: false, // Non-editable column
                   },
                   {
                     dataField: "PO_SPH",
                     caption: "PO / SPH",
                     format: { type: "currency", currency: "IDR" },
-                    allowEditing: true, // Editable column
+                    allowEditing: false, // Editable column
                   },
                   {
                     dataField: "Termin",
                     caption: "TERMIN",
                     format: { type: "currency", currency: "IDR" },
-                    allowEditing: true, // Editable column
+                    allowEditing: false, // Editable column
                   },
                   {
                     dataField: "Deviden",
@@ -769,6 +769,12 @@
                     format: { type: "currency", currency: "IDR" },
                     allowEditing: false, // Non-editable column
                   },
+                  {
+                    dataField: "FEE",
+                    caption: "FEE",
+                    format: { type: "currency", currency: "IDR" },
+                    allowEditing: false, // Non-editable column
+                  },
                 ],
               },
               {
@@ -797,12 +803,13 @@
                 let categoryLookupData = [
                   { ID: null, UserName: "Operational" },
                   { ID: null, UserName: "BB" },
+                  { ID: null, UserName: "FEE" },
                 ];
 
                 let categories = []; // To store categories dynamically
 
                 // Fetch Users for Lookup
-                $.ajax({
+                const fetchUsers = $.ajax({
                   url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
                   method: "GET",
                   success: function (response) {
@@ -819,8 +826,11 @@
                   },
                 });
 
-                // Fetch data dynamically
-                $.ajax({
+                // Fetch Financial Data after Users are fetched
+                $.when(fetchUsers).then(() => {
+              
+                  // Fetch data dynamically
+                  $.ajax({
                   url: API_URL,
                   method: "GET",
                   dataType: "json",
@@ -847,7 +857,8 @@
                     // Calculate totals
                     const totalUangMasuk = financialData
                       .filter((row) => row.TransactionType === "Income")
-                      .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                      .reduce(    (sum, item) => sum + (item.Amount || 0) + (item.AmountDeviden || 0), 0);
+
 
                     const totalUangKeluar = financialData
                       .filter((row) => row.TransactionType === "Expense")
@@ -940,7 +951,7 @@
                     const incomeData = financialData.filter(
                       (item) => item.TransactionType === "Income"
                     );
-
+                    console.log({dynamicColumns, categories });
                     // Render Financial Grid
                     $("<div>")
                       .dxTabPanel({
@@ -961,9 +972,9 @@
                                 filterRow: { visible: false }, // Disable the filter row
                                 editing: {
                                   mode: "batch",
-                                  allowUpdating: true,
-                                  allowAdding: true,
-                                  allowDeleting: true,
+                                  allowUpdating: false,
+                                  allowAdding: false,
+                                  allowDeleting: false,
                                 },
                                 columns: [
                                   {
@@ -1006,7 +1017,7 @@
                                     calculateDisplayValue: function (rowData) {
                                       return rowData.TransactionType ===
                                         "Income"
-                                        ? rowData.Amount
+                                        ? rowData.Amount +rowData.AmountDeviden 
                                         : null;
                                     },
                                   },
@@ -1219,13 +1230,21 @@
                                   },
                                   {
                                     dataField: "Amount",
-                                    caption: "Termin",
+                                    caption: "Operational",
                                     format: {
                                       type: "currency",
                                       currency: "IDR",
                                     },
                                     allowEditing: true,
+                                    editorOptions: {
+                                        format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0
+                                        }
+                                    }
                                   },
+                                  
                                   {
                                     dataField: "AmountDeviden",
                                     caption: "Deviden",
@@ -1234,6 +1253,13 @@
                                       currency: "IDR",
                                     },
                                     allowEditing: true,
+                                      editorOptions: {
+                                          format: {
+                                              type: "currency",
+                                              currency: "IDR",
+                                              precision: 0
+                                          }
+                                      }
                                   },
                                 ],
                                 onSaved: function (e) {
@@ -1246,7 +1272,16 @@
                                       change.type === "insert" ||
                                       change.type === "update"
                                     ) {
-                                      // Format TransactionDate to "yyyy-MM-dd"
+                                      const method =
+                                        change.type === "insert"
+                                          ? "POST"
+                                          : "PUT";
+                                      const url =
+                                        method === "POST"
+                                          ? baseUrl
+                                          : `${baseUrl}/${change.key}`;
+
+                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
                                       if (change.data.TransactionDate) {
                                         const TransactionDate = new Date(
                                           change.data.TransactionDate
@@ -1254,7 +1289,7 @@
                                         change.data.TransactionDate =
                                           TransactionDate.toISOString().split(
                                             "T"
-                                          )[0];
+                                          )[0]; // Format to "yyyy-MM-dd"
                                       }
 
                                       const paayload = {
@@ -1273,20 +1308,20 @@
                                       };
 
                                       $.ajax({
-                                        url: baseUrl,
-                                        method: "POST",
+                                        url: url,
+                                        method:method,
                                         contentType: "application/json",
                                         data: JSON.stringify(paayload),
                                         success: () => {
                                           DevExpress.ui.notify(
-                                            "Termin saved successfully!",
+                                            "Data saved successfully!",
                                             "success",
                                             2000
                                           );
                                         },
                                         error: () => {
                                           DevExpress.ui.notify(
-                                            "Failed to save Termin.",
+                                            "Failed to Input.",
                                             "error",
                                             2000
                                           );
@@ -1405,6 +1440,13 @@
                                       currency: "IDR",
                                     },
                                     allowEditing: true,
+                                    editorOptions: {
+                                        format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0
+                                        }
+                                    }
                                   },
                                   {
                                     dataField: "Category",
@@ -1432,7 +1474,6 @@
                                 ],
                                 onSaved: function (e) {
                                   const changes = e.changes;
-
                                   changes.forEach((change) => {
                                     const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
 
@@ -1440,7 +1481,16 @@
                                       change.type === "insert" ||
                                       change.type === "update"
                                     ) {
-                                      // Format TransactionDate to "yyyy-MM-dd"
+                                      const method =
+                                        change.type === "insert"
+                                          ? "POST"
+                                          : "PUT";
+                                      const url =
+                                        method === "POST"
+                                          ? baseUrl
+                                          : `${baseUrl}/${change.key}`;
+
+                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
                                       if (change.data.TransactionDate) {
                                         const TransactionDate = new Date(
                                           change.data.TransactionDate
@@ -1448,39 +1498,39 @@
                                         change.data.TransactionDate =
                                           TransactionDate.toISOString().split(
                                             "T"
-                                          )[0];
+                                          )[0]; // Format to "yyyy-MM-dd"
                                       }
 
-                                      const paayload = {
-                                        Amount: parseFloat(change.data.Amount),
-                                        AmountDeviden: parseFloat(
-                                          change.data.AmountDeviden
-                                        ),
-                                        Category: "",
+                                      // Prepare the payload
+                                      const payload = {
+                                        Amount:
+                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
+                                        Category: change.data.Category,
                                         Description: change.data.Description,
                                         ProjectID: projectId,
                                         ProjectUserID:
                                           change.data.ProjectUserID || null,
                                         TransactionDate:
                                           change.data.TransactionDate,
-                                        TransactionType: "Income",
+                                        TransactionType: "Expense",
                                       };
 
+                                      // Perform Insert/Update
                                       $.ajax({
-                                        url: baseUrl,
-                                        method: "POST",
+                                        url: url,
+                                        method: method,
                                         contentType: "application/json",
-                                        data: JSON.stringify(paayload),
+                                        data: JSON.stringify(payload),
                                         success: () => {
                                           DevExpress.ui.notify(
-                                            "Termin saved successfully!",
+                                            "Data saved successfully!",
                                             "success",
                                             2000
                                           );
                                         },
                                         error: () => {
                                           DevExpress.ui.notify(
-                                            "Failed to save Termin.",
+                                            "Failed to save data.",
                                             "error",
                                             2000
                                           );
@@ -1512,8 +1562,6 @@
                                       });
                                     }
                                   });
-
-                                  // Reload data (if needed)
                                   pollDataReload(options.component);
                                 },
                                 summary: {
@@ -1777,6 +1825,13 @@
                                       currency: "IDR",
                                     },
                                     allowEditing: true,
+                                    editorOptions: {
+                                        format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0
+                                        }
+                                    }
                                   },
                                   {
                                     dataField: "Category",
@@ -1794,16 +1849,11 @@
                                         categoryLookupData.find(
                                           (user) => user.UserName === value
                                         );
-                                      rowData.ProjectUserID =
-                                        selectedUser && selectedUser.ID
-                                          ? selectedUser.ID
-                                          : null;
                                     },
                                   },
                                 ],
                                 onSaved: function (e) {
                                   const changes = e.changes;
-
                                   changes.forEach((change) => {
                                     const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
 
@@ -1811,7 +1861,16 @@
                                       change.type === "insert" ||
                                       change.type === "update"
                                     ) {
-                                      // Format TransactionDate to "yyyy-MM-dd"
+                                      const method =
+                                        change.type === "insert"
+                                          ? "POST"
+                                          : "PUT";
+                                      const url =
+                                        method === "POST"
+                                          ? baseUrl
+                                          : `${baseUrl}/${change.key}`;
+
+                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
                                       if (change.data.TransactionDate) {
                                         const TransactionDate = new Date(
                                           change.data.TransactionDate
@@ -1819,39 +1878,37 @@
                                         change.data.TransactionDate =
                                           TransactionDate.toISOString().split(
                                             "T"
-                                          )[0];
+                                          )[0]; // Format to "yyyy-MM-dd"
                                       }
 
-                                      const paayload = {
-                                        Amount: parseFloat(change.data.Amount),
-                                        AmountDeviden: parseFloat(
-                                          change.data.AmountDeviden
-                                        ),
-                                        Category: "",
+                                      // Prepare the payload
+                                      const payload = {
+                                        Amount:
+                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
+                                        Category: change.data.Category,
                                         Description: change.data.Description,
                                         ProjectID: projectId,
-                                        ProjectUserID:
-                                          change.data.ProjectUserID || null,
-                                        TransactionDate:
-                                          change.data.TransactionDate,
-                                        TransactionType: "Income",
+                                        ProjectUserID: null,
+                                        TransactionDate: change.data.TransactionDate,
+                                        TransactionType:"Expense"
                                       };
 
+                                      // Perform Insert/Update
                                       $.ajax({
-                                        url: baseUrl,
-                                        method: "POST",
+                                        url: url,
+                                        method: method,
                                         contentType: "application/json",
-                                        data: JSON.stringify(paayload),
+                                        data: JSON.stringify(payload),
                                         success: () => {
                                           DevExpress.ui.notify(
-                                            "Termin saved successfully!",
+                                            "Data saved successfully!",
                                             "success",
                                             2000
                                           );
                                         },
                                         error: () => {
                                           DevExpress.ui.notify(
-                                            "Failed to save Termin.",
+                                            "Failed to save data.",
                                             "error",
                                             2000
                                           );
@@ -1883,8 +1940,6 @@
                                       });
                                     }
                                   });
-
-                                  // Reload data (if needed)
                                   pollDataReload(options.component);
                                 },
                                 summary: {
@@ -1933,19 +1988,14 @@
                     );
                   },
                 });
+              
+                });
               },
             },
           });
         }
 
-        fetchProjects()
-          .done(function (data) {
-            initializeProjectsGrid(data);
-          })
-          .fail(function (error) {
-            showNotification("Failed to fetch projects data.", "error");
-            console.error("Failed to fetch projects data:", error);
-          });
+        initializeProjectsGrid();
 
         // CSS to highlight dynamic columns
         const style = `

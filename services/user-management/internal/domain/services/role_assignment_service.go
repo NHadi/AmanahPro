@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	"AmanahPro/services/user-management/internal/domain/models"
 	"AmanahPro/services/user-management/internal/domain/repositories"
 )
 
@@ -18,17 +19,23 @@ func NewRoleAssignmentService(userRoleRepo repositories.UserRoleRepository) *Rol
 
 // AssignRole assigns a role to a user
 func (s *RoleAssignmentService) AssignRole(userID, roleID int) error {
-	// Check if the user already has the role
-	exists, err := s.userRoleRepo.UserHasRole(userID, roleID)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return errors.New("user already has the role")
+	// Remove any existing role assignments for this user
+	if err := s.userRoleRepo.DeleteAllRolesByUserID(userID); err != nil {
+		return errors.New("failed to remove existing role assignments")
 	}
 
-	// Assign the role
-	return s.userRoleRepo.AssignRole(userID, roleID)
+	// Create a new user role assignment with the new role
+	userRole := models.UserRole{
+		UserID: userID,
+		RoleID: roleID,
+	}
+
+	// Insert the new user role into the database
+	if err := s.userRoleRepo.CreateRoleAssignment(&userRole); err != nil {
+		return errors.New("failed to assign role to user")
+	}
+
+	return nil
 }
 
 // RemoveRole removes a role from a user

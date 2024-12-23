@@ -46,3 +46,13 @@ func (r *userRoleRepository) UserHasRole(userID, roleID int) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+// DeleteAllRolesByUserID deletes all role assignments for a user
+func (r *userRoleRepository) DeleteAllRolesByUserID(userID int) error {
+	return r.db.Where("user_id = ?", userID).Delete(&models.UserRole{}).Error
+}
+
+// CreateRoleAssignment creates a new user role assignment
+func (r *userRoleRepository) CreateRoleAssignment(userRole *models.UserRole) error {
+	return r.db.Create(userRole).Error
+}

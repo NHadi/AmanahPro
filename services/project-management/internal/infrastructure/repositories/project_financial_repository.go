@@ -97,36 +97,41 @@ func (s *projectFinancialRepositoryImpl) GetProjectFinancialSummary(organization
 	var summaries []dto.ProjectFinancialSummaryDTO
 
 	query := `
-        SELECT 
-            p.ProjectID,
-            p.ProjectName,
-            p.PO_SPHDate AS Tanggal,
-            p.SPH AS PO_SPH,
-            p.Termin AS Termin,
-            ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) AS Operational,
-            (p.Termin - ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0)) AS Deviden,
-            p.TotalSPK AS SPKMandor,
-            ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) AS BayarMandor,
-            (p.TotalSPK - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0)) AS SisaBayar,
-            ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) AS BB,
-            ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) AS OPR,
-            (
-                ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) -- Operational (Total Income)
-                - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) -- Bayar Mandor
-                - ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) -- BB
-                - ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) -- OPR
-            ) AS Saldo
-        FROM Projects p
-        LEFT JOIN ProjectFinancial pf ON p.ProjectID = pf.ProjectID
-        WHERE p.OrganizationID = ?
-        GROUP BY 
-            p.ProjectID, 
-            p.ProjectName, 
-            p.PO_SPHDate, 
-            p.SPH, 
-            p.Termin, 
-            p.TotalSPK
-    `
+    SELECT 
+        p.ProjectID,
+        p.ProjectName,
+        p.PO_SPHDate AS Tanggal,
+        p.SPH AS PO_SPH,
+		-- Total amount of income
+		ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) AS Operational,
+		-- Total AmountDeviden of income
+		ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.AmountDeviden ELSE 0 END), 0) AS Deviden,
+		-- Sum of Operational and Deviden
+		ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) +
+		ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.AmountDeviden ELSE 0 END), 0) AS Termin,
+        p.TotalSPK AS SPKMandor,
+        ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) AS BayarMandor,
+        (p.TotalSPK - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0)) AS SisaBayar,
+        ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) AS BB,
+        ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) AS OPR,
+		  ISNULL(SUM(CASE WHEN pf.Category = 'FEE' THEN pf.Amount ELSE 0 END), 0) AS FEE,
+        (
+            ISNULL(SUM(CASE WHEN pf.TransactionType = 'Income' THEN pf.Amount ELSE 0 END), 0) -- Operational (Total Income)
+            - ISNULL(SUM(CASE WHEN pf.ProjectUserId IS NOT NULL THEN pf.Amount ELSE 0 END), 0) -- Bayar Mandor
+            - ISNULL(SUM(CASE WHEN pf.Category = 'BB' THEN pf.Amount ELSE 0 END), 0) -- BB
+            - ISNULL(SUM(CASE WHEN pf.Category = 'Operational' THEN pf.Amount ELSE 0 END), 0) -- OPR
+			- ISNULL(SUM(CASE WHEN pf.Category = 'FEE' THEN pf.Amount ELSE 0 END), 0) -- FEE
+        ) AS Saldo
+    FROM Projects p
+    LEFT JOIN ProjectFinancial pf ON p.ProjectID = pf.ProjectID
+    WHERE p.OrganizationID = ?
+    GROUP BY 
+        p.ProjectID, 
+        p.ProjectName, 
+        p.PO_SPHDate, 
+        p.SPH, 
+        p.TotalSPK
+`
 
 	// Execute the query with the OrganizationID as a filter
 	if err := s.db.Raw(query, organizationID).Scan(&summaries).Error; err != nil {

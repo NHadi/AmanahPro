@@ -119,7 +119,10 @@ func main() {
 	api.GET("/menus/:roleID", menuHandler.GetAccessibleMenus)
 	api.POST("/menus", menuHandler.CreateMenu)
 	// User Routes
-	api.POST("/users", userHandler.CreateUser)
+	api.POST("/users", userHandler.CreateUser)                           // Create a new user
+	api.GET("/users/organizations", userHandler.LoadUsersByOrganization) // Get users by organization
+	api.PUT("/users/:user_id", userHandler.UpdateUser)                   // Update an existing user
+
 	// Role Routes
 	api.POST("/roles", roleHandler.CreateRole)
 	api.GET("/roles", roleHandler.GetRoles)

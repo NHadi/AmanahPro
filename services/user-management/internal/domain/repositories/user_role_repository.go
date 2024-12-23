@@ -9,4 +9,6 @@ type UserRoleRepository interface {
 	FindRolesByUserID(userID int) ([]models.Role, error)
 	UserHasRole(userID, roleID int) (bool, error)
 	RemoveRole(userID, roleID int) error
+	DeleteAllRolesByUserID(userID int) error
+	CreateRoleAssignment(userRole *models.UserRole) error
 }
