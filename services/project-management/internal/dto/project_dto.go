@@ -70,9 +70,11 @@ func (dto *ProjectDTO) ToModelForUpdate(existing *models.Project, userID int) *m
 	}
 
 	if dto.TotalSPK != nil {
-		existing.TotalSPK = dto.TotalSPK
+		if existing.TotalSPK == nil {
+			existing.TotalSPK = new(float64)
+		}
+		*existing.TotalSPK += *dto.TotalSPK
 	}
-
 	if dto.SPH != nil {
 		existing.SPH = dto.SPH
 	}

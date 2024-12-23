@@ -530,6 +530,8 @@
     <script src="template/assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="template/assets/js/plugins/chartjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JSZip script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn3.devexpress.com/jslib/22.1.6/js/dx.all.js"></script>
     <script src="global.js"></script>
     <script>
@@ -674,7 +676,7 @@
             searchPanel: { visible: true, placeholder: "Search..." },
             headerFilter: { visible: false }, // Ensure header filter is disabled
             filterRow: { visible: false }, // Disable the filter row
-            paging: { pageSize: 10 },
+            paging: { pageSize: 1000 },
             editing: {
               mode: "batch", // Use Form editing mode
               allowAdding: false,
@@ -801,23 +803,33 @@
                 const API_URL = `${API_BASE_URL}/project_management_services/api/project-financials/project/${projectId}`;
 
                 let categoryLookupData = [
-                  { ID: null, UserName: "Operational" },
-                  { ID: null, UserName: "BB" },
-                  { ID: null, UserName: "FEE" },
+                  { ID: null, UserName: "Operational", Role : null },
+                  { ID: null, UserName: "BB" , Role : null},
+                  { ID: null, UserName: "FEE", Role : null },
                 ];
 
                 let categories = []; // To store categories dynamically
+                let categoriesSPV = []; // To store categories dynamically
 
                 // Fetch Users for Lookup
                 const fetchUsers = $.ajax({
                   url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
                   method: "GET",
                   success: function (response) {
-                    categories = response.map((user) => user.UserName);
+                    categories = response
+                              .filter((user) => user.Role === "Mandor") 
+                              .map((user) => user.UserName); // Map the filtered users to their UserName
+
+                    categoriesSPV = response
+                            .filter((user) => user.Role === "SPV") // Filter only users with the "SPV" role
+                            .map((user) => user.UserName); // Map the filtered users to their UserName
+
+
                     categoryLookupData = categoryLookupData.concat(
                       response.map((user) => ({
                         ID: user.ID,
                         UserName: user.UserName,
+                        Role : user.Role
                       }))
                     );
                   },
@@ -826,53 +838,83 @@
                   },
                 });
 
-                // Fetch Financial Data after Users are fetched
-                $.when(fetchUsers).then(() => {
-              
-                  // Fetch data dynamically
-                  $.ajax({
-                  url: API_URL,
+                let mappedSPKs = [];
+
+                // Fetch Users for Lookup
+                const fetchSPKs = $.ajax({
+                  url: `${API_BASE_URL}/spk_services/api/spk/summary?project_id=${projectId}`,
                   method: "GET",
-                  dataType: "json",
                   success: function (response) {
-                    const financialData = response || []; // API data
-                    console.log("Financial Data:", financialData);
+                    if (response) {
+                      // Filter SPKs with a non-empty Mandor value and map the result
+                      mappedSPKs = response
+                        .filter((spk) => spk.Mandor) // Only include SPKs where Mandor has a value
+                        .map((spk) => ({
+                          spkId: spk.SpkId,
+                          mandor: spk.Mandor,
+                          date: spk.Date,
+                          totalJasa: spk.TotalJasa,
+                          totalMaterial: spk.TotalMaterial,
+                        }));
+                    }
+                  },
+                  error: function (error) {
+                    console.error("Failed to fetch project users:", error);
+                  },
+                });
 
-                    // Calculate summary values
-                    const totalSPH = financialData
-                      .filter((item) => item.TransactionType === "Income")
-                      .reduce((sum, item) => sum + (item.Amount || 0), 0);
+                // Fetch Financial Data after Users are fetched
+                $.when(fetchUsers, fetchSPKs).then(
+                  (usersResponse, spksResponse) => {
+                    // Fetch data dynamically
+                    $.ajax({
+                      url: API_URL,
+                      method: "GET",
+                      dataType: "json",
+                      success: function (response) {
+                        const financialData = response || []; // API data
+                        console.log("Financial Data:", financialData);
 
-                    const totalBayar = financialData
-                      .filter(
-                        (item) =>
-                          item.TransactionType === "Expense" &&
-                          item.Category !== "Operational" &&
-                          item.Category !== "BB"
-                      )
-                      .reduce((sum, item) => sum + (item.Amount || 0), 0);
+                        // Calculate summary values
+                        const totalSPH = financialData
+                          .filter((item) => item.TransactionType === "Income")
+                          .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
-                    const sisaBayar = totalSPH - totalBayar;
+                        const totalBayar = financialData
+                          .filter(
+                            (item) =>
+                              item.TransactionType === "Expense" &&
+                              item.Category !== "Operational" &&
+                              item.Category !== "BB"
+                          )
+                          .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
-                    // Calculate totals
-                    const totalUangMasuk = financialData
-                      .filter((row) => row.TransactionType === "Income")
-                      .reduce(    (sum, item) => sum + (item.Amount || 0) + (item.AmountDeviden || 0), 0);
+                        const sisaBayar = totalSPH - totalBayar;
 
+                        // Calculate totals
+                        const totalUangMasuk = financialData
+                          .filter((row) => row.TransactionType === "Income")
+                          .reduce(
+                            (sum, item) =>
+                              sum +
+                              (item.Amount || 0) +
+                              (item.AmountDeviden || 0),
+                            0
+                          );
 
-                    const totalUangKeluar = financialData
-                      .filter((row) => row.TransactionType === "Expense")
-                      .reduce((sum, row) => sum + (row.Amount || 0), 0);
+                        const totalUangKeluar = financialData
+                          .filter((row) => row.TransactionType === "Expense")
+                          .reduce((sum, row) => sum + (row.Amount || 0), 0);
 
-                    // Render Summary Cards in a Single Row with Improved Design
-                    const summaryCards = `
+                        // Render Summary Cards in a Single Row with Improved Design
+                        const summaryCards = `
     <div class="row mb-4 gx-3 gy-3">
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-sm text-muted mb-1 text-uppercase font-weight-bold">Total SPK</p>
-                        <h5 class="font-weight-bolder mb-0">IDR ${totalSPH.toLocaleString()}</h5>
+                        <h5 class="font-weight-bolder mb-0">IDR ${options.data.SPKMandor.toLocaleString()}</h5>
                     </div>
                     <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
                         <i class="ni ni-folder-17 text-lg"></i>
@@ -934,1062 +976,1225 @@
         </div>
     </div>`;
 
-                    $(summaryCards).appendTo(container);
+                        $(summaryCards).appendTo(container);
 
-                    const dynamicColumns = categories.map((col) => ({
-                      caption: col,
-                      calculateCellValue: (rowData) =>
-                        rowData.Category === col ? rowData.Amount : null,
-                      format: {
-                        type: "currency",
-                        currency: "IDR",
-                        precision: 0,
-                      },
-                      cssClass: "highlight-column",
-                    }));
+                        // Only render SPKs if the list is not empty
+                        if (mappedSPKs.length > 0) {
+                          const spkCards = `
+  <div class="row mb-4 gx-3 gy-3">
+      ${mappedSPKs
+        .map(
+          (spk) => `
+          <div class="col-lg-3 col-md-4 col-sm-6">
+              <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body p-3">
+                      <p class="text-sm text-muted mb-1 text-uppercase font-weight-bold">SPK - ${
+                        spk.mandor || "Unknown Mandor"
+                      }</p>
+                      <h5 class="font-weight-bolder mb-0">IDR ${(
+                        spk.totalJasa || 0
+                      ).toLocaleString()}</h5>
+                  </div>
+              </div>
+          </div>
+      `
+        )
+        .join("")}
+  </div>`;
 
-                    const incomeData = financialData.filter(
-                      (item) => item.TransactionType === "Income"
-                    );
-                    console.log({dynamicColumns, categories });
-                    // Render Financial Grid
-                    $("<div>")
-                      .dxTabPanel({
-                        items: [
-                          {
-                            title: "Financial",
-                            template: function () {
-                              return $("<div>").dxDataGrid({
-                                dataSource: financialData,
-                                keyExpr: "ID",
-                                showBorders: true,
-                                columnAutoWidth: true,
-                                searchPanel: {
-                                  visible: true,
-                                  placeholder: "Search...",
-                                },
-                                headerFilter: { visible: false }, // Ensure header filter is disabled
-                                filterRow: { visible: false }, // Disable the filter row
-                                editing: {
-                                  mode: "batch",
-                                  allowUpdating: false,
-                                  allowAdding: false,
-                                  allowDeleting: false,
-                                },
-                                columns: [
-                                  {
-                                    dataField: "TransactionDate",
-                                    caption: "Tanggal",
-                                    dataType: "date",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Tanggal is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Description",
-                                    caption: "Keterangan",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Keterangan is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    name: "UangMasuk",
-                                    caption: "Uang Masuk",
-                                    dataField: "Amount", // Use a shared field for editing
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    cssClass: "highlight-in",
-                                    allowEditing: true,
-                                    setCellValue: function (rowData, value) {
-                                      rowData.Amount = value;
-                                      rowData.TransactionType = "Income"; // Set type to Income
-                                      rowData.ProjectUserID = null; // Reset ProjectUserID
-                                      rowData.Category = null;
-                                    },
-                                    calculateDisplayValue: function (rowData) {
-                                      return rowData.TransactionType ===
-                                        "Income"
-                                        ? rowData.Amount +rowData.AmountDeviden 
-                                        : null;
-                                    },
-                                  },
-                                  {
-                                    name: "UangKeluar",
-                                    caption: "Uang Keluar",
-                                    dataField: "Amount", // Same field for editing
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    cssClass: "highlight-out",
-                                    allowEditing: true,
-                                    setCellValue: function (rowData, value) {
-                                      rowData.Amount = value;
-                                      rowData.TransactionType = "Expense"; // Set type to Expense
-                                    },
-                                    calculateDisplayValue: function (rowData) {
-                                      return rowData.TransactionType ===
-                                        "Expense"
-                                        ? rowData.Amount
-                                        : null;
-                                    },
-                                  },
-                                  {
-                                    dataField: "Category",
-                                    caption: "Category",
-                                    lookup: {
-                                      dataSource: categoryLookupData,
-                                      valueExpr: "UserName",
-                                      displayExpr: "UserName",
-                                    },
-                                    setCellValue: function (rowData, value) {
-                                      rowData.Category = value;
-                                      const selectedUser =
-                                        categoryLookupData.find(
-                                          (user) => user.UserName === value
-                                        );
-                                      rowData.ProjectUserID =
-                                        selectedUser && selectedUser.ID
-                                          ? selectedUser.ID
-                                          : null;
-                                    },
-                                  },
-                                  ...dynamicColumns,
-                                ],
-                                onSaved: function (e) {
-                                  const changes = e.changes;
-                                  changes.forEach((change) => {
-                                    const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+                          // Append the SPK cards to the container
+                          $(spkCards).appendTo(container);
+                        }
 
-                                    if (
-                                      change.type === "insert" ||
-                                      change.type === "update"
-                                    ) {
-                                      const method =
-                                        change.type === "insert"
-                                          ? "POST"
-                                          : "PUT";
-                                      const url =
-                                        method === "POST"
-                                          ? baseUrl
-                                          : `${baseUrl}/${change.key}`;
-
-                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-                                      if (change.data.TransactionDate) {
-                                        const TransactionDate = new Date(
-                                          change.data.TransactionDate
-                                        );
-                                        change.data.TransactionDate =
-                                          TransactionDate.toISOString().split(
-                                            "T"
-                                          )[0]; // Format to "yyyy-MM-dd"
-                                      }
-
-                                      // Prepare the payload
-                                      const payload = {
-                                        Amount:
-                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
-                                        Category: change.data.Category,
-                                        Description: change.data.Description,
-                                        ProjectID: projectId,
-                                        ProjectUserID:
-                                          change.data.ProjectUserID || null,
-                                        TransactionDate:
-                                          change.data.TransactionDate,
-                                        TransactionType: change.data
-                                          .TransactionType
-                                          ? change.data.TransactionType
-                                          : change.data.Category?.includes(
-                                              "Income"
-                                            )
-                                          ? "Income"
-                                          : "Expense",
-                                      };
-
-                                      // Perform Insert/Update
-                                      $.ajax({
-                                        url: url,
-                                        method: method,
-                                        contentType: "application/json",
-                                        data: JSON.stringify(payload),
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data saved successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to save data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-
-                                    if (change.type === "remove") {
-                                      // DELETE Operation
-                                      const deleteUrl = `${baseUrl}/${change.key}`;
-
-                                      $.ajax({
-                                        url: deleteUrl,
-                                        method: "DELETE",
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data deleted successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to delete data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-                                  });
-                                  pollDataReload(options.component);
-                                },
-
-                                summary: {
-                                  totalItems: [
-                                    ...categories.map((col) => ({
-                                      column: col,
-                                      summaryType: "sum",
-                                      displayFormat: `{0}`,
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    })),
-                                  ],
-                                },
-                                paging: { pageSize: 10 },
-                                export: {
-                                  enabled: true,
-                                  fileName: "ProjectFinancialData",
-                                  allowExportSelectedData: true,
-                                },
-                              });
-                            },
+                        const dynamicColumns = categories.map((col) => ({
+                          caption: col,
+                          calculateCellValue: (rowData) =>
+                            rowData.Category === col ? rowData.Amount : null,
+                          format: {
+                            type: "currency",
+                            currency: "IDR",
+                            precision: 0,
                           },
-                          {
-                            title: "Income Project",
-                            template: function () {
-                              return $("<div>").dxDataGrid({
-                                dataSource: incomeData,
-                                keyExpr: "ID",
-                                showBorders: true,
-                                columnAutoWidth: true,
-                                searchPanel: {
-                                  visible: true,
-                                  placeholder: "Search...",
-                                },
-                                headerFilter: { visible: false }, // Ensure header filter is disabled
-                                filterRow: { visible: false }, // Disable the filter row
-                                editing: {
-                                  mode: "batch",
-                                  allowUpdating: true,
-                                  allowAdding: true,
-                                  allowDeleting: true,
-                                },
-                                columns: [
-                                  {
-                                    dataField: "TransactionDate",
-                                    caption: "Tanggal",
-                                    dataType: "date",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Tanggal is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Description",
-                                    caption: "Keterangan",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Keterangan is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Amount",
-                                    caption: "Operational",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
+                          cssClass: "highlight-column",
+                        }));
+
+                        const dynamicColumnsSPV = categoriesSPV.map((col) => ({
+                          caption: col,
+                          calculateCellValue: (rowData) =>
+                            rowData.Category === col ? rowData.Amount : null,
+                          format: {
+                            type: "currency",
+                            currency: "IDR",
+                            precision: 0,
+                          },
+                          cssClass: "highlight-column",
+                        }));
+
+                        const mergedDynamicColumns = [...dynamicColumns, ...dynamicColumnsSPV];
+
+
+                        const incomeData = financialData.filter(
+                          (item) => item.TransactionType === "Income"
+                        );
+                        console.log({ dynamicColumns, categories });
+                        // Render Financial Grid
+                        $("<div>")
+                          .dxTabPanel({
+                            items: [
+                              {
+                                title: "Financial",
+                                template: function () {
+                                  return $("<div>").dxDataGrid({
+                                    dataSource: financialData,
+                                    keyExpr: "ID",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
                                     },
-                                    allowEditing: true,
-                                    editorOptions: {
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: false,
+                                      allowAdding: false,
+                                      allowDeleting: false,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "TransactionDate",
+                                        caption: "Tanggal",
+                                        dataType: "date",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Tanggal is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Description",
+                                        caption: "Keterangan",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Keterangan is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        name: "UangMasuk",
+                                        caption: "Uang Masuk",
+                                        dataField: "Amount", // Use a shared field for editing
                                         format: {
-                                            type: "currency",
-                                            currency: "IDR",
-                                            precision: 0
-                                        }
-                                    }
-                                  },
-                                  
-                                  {
-                                    dataField: "AmountDeviden",
-                                    caption: "Deviden",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    allowEditing: true,
-                                      editorOptions: {
-                                          format: {
-                                              type: "currency",
-                                              currency: "IDR",
-                                              precision: 0
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        cssClass: "highlight-in",
+                                        allowEditing: true,
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Amount = value;
+                                          rowData.TransactionType = "Income"; // Set type to Income
+                                          rowData.ProjectUserID = null; // Reset ProjectUserID
+                                          rowData.Category = null;
+                                        },
+                                        calculateDisplayValue: function (
+                                          rowData
+                                        ) {
+                                          return rowData.TransactionType ===
+                                            "Income"
+                                            ? rowData.Amount +
+                                                rowData.AmountDeviden
+                                            : null;
+                                        },
+                                      },
+                                      {
+                                        name: "UangKeluar",
+                                        caption: "Uang Keluar",
+                                        dataField: "Amount", // Same field for editing
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        cssClass: "highlight-out",
+                                        allowEditing: true,
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Amount = value;
+                                          rowData.TransactionType = "Expense"; // Set type to Expense
+                                        },
+                                        calculateDisplayValue: function (
+                                          rowData
+                                        ) {
+                                          return rowData.TransactionType ===
+                                            "Expense"
+                                            ? rowData.Amount
+                                            : null;
+                                        },
+                                      },
+                                      {
+                                        dataField: "Category",
+                                        caption: "Category",
+                                        lookup: {
+                                          dataSource: categoryLookupData,
+                                          valueExpr: "UserName",
+                                          displayExpr: "UserName",
+                                        },
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Category = value;
+                                          const selectedUser =
+                                            categoryLookupData.find(
+                                              (user) => user.UserName === value
+                                            );
+                                          rowData.ProjectUserID =
+                                            selectedUser && selectedUser.ID
+                                              ? selectedUser.ID
+                                              : null;
+                                        },
+                                      },
+                                      ...mergedDynamicColumns,
+                                    ],
+                                    onSaved: function (e) {
+                                      const changes = e.changes;
+                                      changes.forEach((change) => {
+                                        const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+
+                                        if (
+                                          change.type === "insert" ||
+                                          change.type === "update"
+                                        ) {
+                                          const method =
+                                            change.type === "insert"
+                                              ? "POST"
+                                              : "PUT";
+                                          const url =
+                                            method === "POST"
+                                              ? baseUrl
+                                              : `${baseUrl}/${change.key}`;
+
+                                          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                          if (change.data.TransactionDate) {
+                                            const TransactionDate = new Date(
+                                              change.data.TransactionDate
+                                            );
+                                            change.data.TransactionDate =
+                                              TransactionDate.toISOString().split(
+                                                "T"
+                                              )[0]; // Format to "yyyy-MM-dd"
                                           }
-                                      }
-                                  },
-                                ],
-                                onSaved: function (e) {
-                                  const changes = e.changes;
 
-                                  changes.forEach((change) => {
-                                    const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+                                          // Prepare the payload
+                                          const payload = {
+                                            Amount:
+                                              parseFloat(change.data.Amount) ||
+                                              0, // Ensure float conversion
+                                            Category: change.data.Category,
+                                            Description:
+                                              change.data.Description,
+                                            ProjectID: projectId,
+                                            ProjectUserID:
+                                              change.data.ProjectUserID || null,
+                                            TransactionDate:
+                                              change.data.TransactionDate,
+                                            TransactionType: change.data
+                                              .TransactionType
+                                              ? change.data.TransactionType
+                                              : change.data.Category?.includes(
+                                                  "Income"
+                                                )
+                                              ? "Income"
+                                              : "Expense",
+                                          };
 
-                                    if (
-                                      change.type === "insert" ||
-                                      change.type === "update"
-                                    ) {
-                                      const method =
-                                        change.type === "insert"
-                                          ? "POST"
-                                          : "PUT";
-                                      const url =
-                                        method === "POST"
-                                          ? baseUrl
-                                          : `${baseUrl}/${change.key}`;
+                                          // Perform Insert/Update
+                                          $.ajax({
+                                            url: url,
+                                            method: method,
+                                            contentType: "application/json",
+                                            data: JSON.stringify(payload),
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data saved successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to save data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
 
-                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-                                      if (change.data.TransactionDate) {
-                                        const TransactionDate = new Date(
-                                          change.data.TransactionDate
-                                        );
-                                        change.data.TransactionDate =
-                                          TransactionDate.toISOString().split(
-                                            "T"
-                                          )[0]; // Format to "yyyy-MM-dd"
-                                      }
+                                        if (change.type === "remove") {
+                                          // DELETE Operation
+                                          const deleteUrl = `${baseUrl}/${change.key}`;
 
-                                      const paayload = {
-                                        Amount: parseFloat(change.data.Amount),
-                                        AmountDeviden: parseFloat(
-                                          change.data.AmountDeviden
-                                        ),
-                                        Category: "",
-                                        Description: change.data.Description,
-                                        ProjectID: projectId,
-                                        ProjectUserID:
-                                          change.data.ProjectUserID || null,
-                                        TransactionDate:
-                                          change.data.TransactionDate,
-                                        TransactionType: "Income",
-                                      };
-
-                                      $.ajax({
-                                        url: url,
-                                        method:method,
-                                        contentType: "application/json",
-                                        data: JSON.stringify(paayload),
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data saved successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to Input.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
+                                          $.ajax({
+                                            url: deleteUrl,
+                                            method: "DELETE",
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
                                       });
-                                    }
-
-                                    if (change.type === "remove") {
-                                      // DELETE Operation
-                                      const deleteUrl = `${baseUrl}/${change.key}`;
-
-                                      $.ajax({
-                                        url: deleteUrl,
-                                        method: "DELETE",
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data deleted successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to delete data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-                                  });
-
-                                  // Reload data (if needed)
-                                  pollDataReload(options.component);
-                                },
-                                summary: {
-                                  totalItems: [
-                                    {
-                                      column: "Amount",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
+                                      pollDataReload(options.component);
                                     },
-                                    {
-                                      column: "AmountDeviden",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    },
-                                  ],
-                                },
-                                paging: { pageSize: 10 },
-                                export: {
-                                  enabled: true,
-                                  fileName: "ProjectFinancialData",
-                                  allowExportSelectedData: true,
-                                },
-                              });
-                            },
-                          },
-                          {
-                            title: "Mandor",
-                            template: function () {
-                              return $("<div>").dxDataGrid({
-                                dataSource: financialData.filter(
-                                  (item) => item.ProjectUserID !== null
-                                ),
-                                keyExpr: "ID",
-                                showBorders: true,
-                                columnAutoWidth: true,
-                                searchPanel: {
-                                  visible: true,
-                                  placeholder: "Search...",
-                                },
-                                headerFilter: { visible: false }, // Ensure header filter is disabled
-                                filterRow: { visible: false }, // Disable the filter row
-                                editing: {
-                                  mode: "batch",
-                                  allowUpdating: true,
-                                  allowAdding: true,
-                                  allowDeleting: true,
-                                },
-                                columns: [
-                                  {
-                                    dataField: "TransactionDate",
-                                    caption: "Tanggal",
-                                    dataType: "date",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Tanggal is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Description",
-                                    caption: "Keterangan",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Keterangan is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Amount",
-                                    caption: "Uang Keluar",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    allowEditing: true,
-                                    editorOptions: {
-                                        format: {
+
+                                    summary: {
+                                      totalItems: [
+                                        ...categories.map((col) => ({
+                                          column: col,
+                                          summaryType: "sum",
+                                          displayFormat: `{0}`,
+                                          valueFormat: {
                                             type: "currency",
                                             currency: "IDR",
-                                            precision: 0
-                                        }
-                                    }
-                                  },
-                                  {
-                                    dataField: "Category",
-                                    caption: "Category",
-                                    lookup: {
-                                      dataSource: categoryLookupData.filter(
-                                        (item) => item.ID !== null
-                                      ),
-                                      valueExpr: "UserName",
-                                      displayExpr: "UserName",
-                                    },
-                                    setCellValue: function (rowData, value) {
-                                      rowData.Category = value;
-                                      const selectedUser =
-                                        categoryLookupData.find(
-                                          (user) => user.UserName === value
-                                        );
-                                      rowData.ProjectUserID =
-                                        selectedUser && selectedUser.ID
-                                          ? selectedUser.ID
-                                          : null;
-                                    },
-                                  },
-                                  ...dynamicColumns,
-                                ],
-                                onSaved: function (e) {
-                                  const changes = e.changes;
-                                  changes.forEach((change) => {
-                                    const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
-
-                                    if (
-                                      change.type === "insert" ||
-                                      change.type === "update"
-                                    ) {
-                                      const method =
-                                        change.type === "insert"
-                                          ? "POST"
-                                          : "PUT";
-                                      const url =
-                                        method === "POST"
-                                          ? baseUrl
-                                          : `${baseUrl}/${change.key}`;
-
-                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-                                      if (change.data.TransactionDate) {
-                                        const TransactionDate = new Date(
-                                          change.data.TransactionDate
-                                        );
-                                        change.data.TransactionDate =
-                                          TransactionDate.toISOString().split(
-                                            "T"
-                                          )[0]; // Format to "yyyy-MM-dd"
-                                      }
-
-                                      // Prepare the payload
-                                      const payload = {
-                                        Amount:
-                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
-                                        Category: change.data.Category,
-                                        Description: change.data.Description,
-                                        ProjectID: projectId,
-                                        ProjectUserID:
-                                          change.data.ProjectUserID || null,
-                                        TransactionDate:
-                                          change.data.TransactionDate,
-                                        TransactionType: "Expense",
-                                      };
-
-                                      // Perform Insert/Update
-                                      $.ajax({
-                                        url: url,
-                                        method: method,
-                                        contentType: "application/json",
-                                        data: JSON.stringify(payload),
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data saved successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to save data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-
-                                    if (change.type === "remove") {
-                                      // DELETE Operation
-                                      const deleteUrl = `${baseUrl}/${change.key}`;
-
-                                      $.ajax({
-                                        url: deleteUrl,
-                                        method: "DELETE",
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data deleted successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to delete data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-                                  });
-                                  pollDataReload(options.component);
-                                },
-                                summary: {
-                                  totalItems: [
-                                    {
-                                      column: "Amount",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    },
-                                    {
-                                      column: "AmountDeviden",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    },
-                                  ],
-                                },
-                                paging: { pageSize: 10 },
-                                export: {
-                                  enabled: true,
-                                  fileName: "ProjectFinancialData",
-                                  allowExportSelectedData: true,
-                                },
-                              });
-                            },
-                          },
-                          {
-                            title: "SPV",
-                            template: function () {
-                              return $("<div>").dxDataGrid({
-                                dataSource: incomeData,
-                                keyExpr: "ID",
-                                showBorders: true,
-                                columnAutoWidth: true,
-                                searchPanel: {
-                                  visible: true,
-                                  placeholder: "Search...",
-                                },
-                                headerFilter: { visible: false }, // Ensure header filter is disabled
-                                filterRow: { visible: false }, // Disable the filter row
-                                editing: {
-                                  mode: "batch",
-                                  allowUpdating: true,
-                                  allowAdding: true,
-                                  allowDeleting: true,
-                                },
-                                columns: [
-                                  {
-                                    dataField: "TransactionDate",
-                                    caption: "Tanggal",
-                                    dataType: "date",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Tanggal is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Description",
-                                    caption: "Keterangan",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Keterangan is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Amount",
-                                    caption: "Termin",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    allowEditing: true,
-                                  },
-                                  {
-                                    dataField: "AmountDeviden",
-                                    caption: "Deviden",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    allowEditing: true,
-                                  },
-                                ],
-                                onSaved: function (e) {
-                                  const changes = e.changes;
-
-                                  changes.forEach((change) => {
-                                    const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
-
-                                    if (
-                                      change.type === "insert" ||
-                                      change.type === "update"
-                                    ) {
-                                      // Format TransactionDate to "yyyy-MM-dd"
-                                      if (change.data.TransactionDate) {
-                                        const TransactionDate = new Date(
-                                          change.data.TransactionDate
-                                        );
-                                        change.data.TransactionDate =
-                                          TransactionDate.toISOString().split(
-                                            "T"
-                                          )[0];
-                                      }
-
-                                      const paayload = {
-                                        Amount: parseFloat(change.data.Amount),
-                                        AmountDeviden: parseFloat(
-                                          change.data.AmountDeviden
-                                        ),
-                                        Category: "",
-                                        Description: change.data.Description,
-                                        ProjectID: projectId,
-                                        ProjectUserID:
-                                          change.data.ProjectUserID || null,
-                                        TransactionDate:
-                                          change.data.TransactionDate,
-                                        TransactionType: "Income",
-                                      };
-
-                                      $.ajax({
-                                        url: baseUrl,
-                                        method: "POST",
-                                        contentType: "application/json",
-                                        data: JSON.stringify(paayload),
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Termin saved successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to save Termin.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-
-                                    if (change.type === "remove") {
-                                      // DELETE Operation
-                                      const deleteUrl = `${baseUrl}/${change.key}`;
-
-                                      $.ajax({
-                                        url: deleteUrl,
-                                        method: "DELETE",
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data deleted successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to delete data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-                                  });
-
-                                  // Reload data (if needed)
-                                  pollDataReload(options.component);
-                                },
-                                summary: {
-                                  totalItems: [
-                                    {
-                                      column: "Amount",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    },
-                                    {
-                                      column: "AmountDeviden",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
-                                    },
-                                  ],
-                                },
-                                paging: { pageSize: 10 },
-                                export: {
-                                  enabled: true,
-                                  fileName: "ProjectFinancialData",
-                                  allowExportSelectedData: true,
-                                },
-                              });
-                            },
-                          },
-                          {
-                            title: "Operational",
-                            template: function () {
-                              return $("<div>").dxDataGrid({
-                                dataSource: financialData.filter(
-                                  (item) => item.Category === "BB" || item.Category === "Operational"
-                                ),
-                                keyExpr: "ID",
-                                showBorders: true,
-                                columnAutoWidth: true,
-                                searchPanel: {
-                                  visible: true,
-                                  placeholder: "Search...",
-                                },
-                                headerFilter: { visible: false }, // Ensure header filter is disabled
-                                filterRow: { visible: false }, // Disable the filter row
-                                editing: {
-                                  mode: "batch",
-                                  allowUpdating: true,
-                                  allowAdding: true,
-                                  allowDeleting: true,
-                                },
-                                columns: [
-                                  {
-                                    dataField: "TransactionDate",
-                                    caption: "Tanggal",
-                                    dataType: "date",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Tanggal is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Description",
-                                    caption: "Keterangan",
-                                    validationRules: [
-                                      {
-                                        type: "required",
-                                        message: "Keterangan is required",
-                                      },
-                                    ],
-                                  },
-                                  {
-                                    dataField: "Amount",
-                                    caption: "Uang Keluar",
-                                    format: {
-                                      type: "currency",
-                                      currency: "IDR",
-                                    },
-                                    allowEditing: true,
-                                    editorOptions: {
-                                        format: {
+                                          },
+                                        })),
+                                        ...categoriesSPV.map((col) => ({
+                                          column: col,
+                                          summaryType: "sum",
+                                          displayFormat: `{0}`,
+                                          valueFormat: {
                                             type: "currency",
                                             currency: "IDR",
-                                            precision: 0
-                                        }
-                                    }
-                                  },
-                                  {
-                                    dataField: "Category",
-                                    caption: "Category",
-                                    lookup: {
-                                      dataSource: categoryLookupData.filter(
-                                        (item) => item.ID === null
-                                      ),
-                                      valueExpr: "UserName",
-                                      displayExpr: "UserName",
+                                          },
+                                        })),
+                                      ],
                                     },
-                                    setCellValue: function (rowData, value) {
-                                      rowData.Category = value;
-                                      const selectedUser =
-                                        categoryLookupData.find(
-                                          (user) => user.UserName === value
-                                        );
+                                    paging: { pageSize: 1000 },
+                                    export: {
+                                      enabled: true,
+                                       fileName: `ProjectFinancialData_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      allowExportSelectedData: true,
                                     },
-                                  },
-                                ],
-                                onSaved: function (e) {
-                                  const changes = e.changes;
-                                  changes.forEach((change) => {
-                                    const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
-
-                                    if (
-                                      change.type === "insert" ||
-                                      change.type === "update"
-                                    ) {
-                                      const method =
-                                        change.type === "insert"
-                                          ? "POST"
-                                          : "PUT";
-                                      const url =
-                                        method === "POST"
-                                          ? baseUrl
-                                          : `${baseUrl}/${change.key}`;
-
-                                      // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
-                                      if (change.data.TransactionDate) {
-                                        const TransactionDate = new Date(
-                                          change.data.TransactionDate
-                                        );
-                                        change.data.TransactionDate =
-                                          TransactionDate.toISOString().split(
-                                            "T"
-                                          )[0]; // Format to "yyyy-MM-dd"
-                                      }
-
-                                      // Prepare the payload
-                                      const payload = {
-                                        Amount:
-                                          parseFloat(change.data.Amount) || 0, // Ensure float conversion
-                                        Category: change.data.Category,
-                                        Description: change.data.Description,
-                                        ProjectID: projectId,
-                                        ProjectUserID: null,
-                                        TransactionDate: change.data.TransactionDate,
-                                        TransactionType:"Expense"
-                                      };
-
-                                      // Perform Insert/Update
-                                      $.ajax({
-                                        url: url,
-                                        method: method,
-                                        contentType: "application/json",
-                                        data: JSON.stringify(payload),
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data saved successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to save data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
-
-                                    if (change.type === "remove") {
-                                      // DELETE Operation
-                                      const deleteUrl = `${baseUrl}/${change.key}`;
-
-                                      $.ajax({
-                                        url: deleteUrl,
-                                        method: "DELETE",
-                                        success: () => {
-                                          DevExpress.ui.notify(
-                                            "Data deleted successfully!",
-                                            "success",
-                                            2000
-                                          );
-                                        },
-                                        error: () => {
-                                          DevExpress.ui.notify(
-                                            "Failed to delete data.",
-                                            "error",
-                                            2000
-                                          );
-                                        },
-                                      });
-                                    }
                                   });
-                                  pollDataReload(options.component);
                                 },
-                                summary: {
-                                  totalItems: [
-                                    {
-                                      column: "Amount",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
+                              },
+                              {
+                                title: "Income Project",
+                                template: function () {
+                                  return $("<div>").dxDataGrid({
+                                    dataSource: incomeData,
+                                    keyExpr: "ID",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
                                     },
-                                    {
-                                      column: "AmountDeviden",
-                                      summaryType: "sum",
-                                      displayFormat: "{0}",
-                                      valueFormat: {
-                                        type: "currency",
-                                        currency: "IDR",
-                                      },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: true,
+                                      allowAdding: true,
+                                      allowDeleting: true,
                                     },
-                                  ],
+                                    columns: [
+                                      {
+                                        dataField: "TransactionDate",
+                                        caption: "Tanggal",
+                                        dataType: "date",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Tanggal is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Description",
+                                        caption: "Keterangan",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Keterangan is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Amount",
+                                        caption: "Operational",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: true,
+                                        editorOptions: {
+                                          format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0,
+                                          },
+                                        },
+                                      },
+
+                                      {
+                                        dataField: "AmountDeviden",
+                                        caption: "Deviden",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: true,
+                                        editorOptions: {
+                                          format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0,
+                                          },
+                                        },
+                                      },
+                                    ],
+                                    onSaved: function (e) {
+                                      const changes = e.changes;
+
+                                      changes.forEach((change) => {
+                                        const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+
+                                        if (
+                                          change.type === "insert" ||
+                                          change.type === "update"
+                                        ) {
+                                          const method =
+                                            change.type === "insert"
+                                              ? "POST"
+                                              : "PUT";
+                                          const url =
+                                            method === "POST"
+                                              ? baseUrl
+                                              : `${baseUrl}/${change.key}`;
+
+                                          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                          if (change.data.TransactionDate) {
+                                            const TransactionDate = new Date(
+                                              change.data.TransactionDate
+                                            );
+                                            change.data.TransactionDate =
+                                              TransactionDate.toISOString().split(
+                                                "T"
+                                              )[0]; // Format to "yyyy-MM-dd"
+                                          }
+
+                                          const paayload = {
+                                            Amount: parseFloat(
+                                              change.data.Amount
+                                            ),
+                                            AmountDeviden: parseFloat(
+                                              change.data.AmountDeviden
+                                            ),
+                                            Category: "",
+                                            Description:
+                                              change.data.Description,
+                                            ProjectID: projectId,
+                                            ProjectUserID:
+                                              change.data.ProjectUserID || null,
+                                            TransactionDate:
+                                              change.data.TransactionDate,
+                                            TransactionType: "Income",
+                                          };
+
+                                          $.ajax({
+                                            url: url,
+                                            method: method,
+                                            contentType: "application/json",
+                                            data: JSON.stringify(paayload),
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data saved successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to Input.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+
+                                        if (change.type === "remove") {
+                                          // DELETE Operation
+                                          const deleteUrl = `${baseUrl}/${change.key}`;
+
+                                          $.ajax({
+                                            url: deleteUrl,
+                                            method: "DELETE",
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+                                      });
+
+                                      // Reload data (if needed)
+                                      pollDataReload(options.component);
+                                    },
+                                    summary: {
+                                      totalItems: [
+                                        {
+                                          column: "Amount",
+                                          summaryType: "sum",
+                                          displayFormat: "{0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                        {
+                                          column: "AmountDeviden",
+                                          summaryType: "sum",
+                                          displayFormat: "{0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    paging: { pageSize: 1000 },
+                                    export: {
+                                      enabled: true,
+                                       fileName: `Report_Income Project_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      allowExportSelectedData: true,
+                                    },
+                                  });
                                 },
-                                paging: { pageSize: 10 },
-                                export: {
-                                  enabled: true,
-                                  fileName: "ProjectFinancialData",
-                                  allowExportSelectedData: true,
+                              },
+                              {
+                                title: "Mandor",
+                                template: function () {
+                                  return $("<div>").dxDataGrid({
+                                    dataSource: financialData.filter(
+                                      (item) => item.ProjectUserID !== null && item.ProjectUser.Role === "Mandor" 
+                                    ),
+                                    keyExpr: "ID",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
+                                    },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: true,
+                                      allowAdding: true,
+                                      allowDeleting: true,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "TransactionDate",
+                                        caption: "Tanggal",
+                                        dataType: "date",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Tanggal is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Description",
+                                        caption: "Keterangan",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Keterangan is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Amount",
+                                        caption: "Uang Keluar",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: true,
+                                        editorOptions: {
+                                          format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0,
+                                          },
+                                        },
+                                      },
+                                      {
+                                        dataField: "Category",
+                                        caption: "Category",
+                                        lookup: {
+                                          dataSource: categoryLookupData.filter(
+                                            (item) => item.ID !== null & item.Role === "Mandor"
+                                          ),
+                                          valueExpr: "UserName",
+                                          displayExpr: "UserName",
+                                        },
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Category = value;
+                                          const selectedUser =
+                                            categoryLookupData.find(
+                                              (user) => user.UserName === value
+                                            );
+                                          rowData.ProjectUserID =
+                                            selectedUser && selectedUser.ID
+                                              ? selectedUser.ID
+                                              : null;
+                                        },
+                                      },
+                                      ...dynamicColumns,
+                                    ],
+                                    onSaved: function (e) {
+                                      const changes = e.changes;
+                                      changes.forEach((change) => {
+                                        const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+
+                                        if (
+                                          change.type === "insert" ||
+                                          change.type === "update"
+                                        ) {
+                                          const method =
+                                            change.type === "insert"
+                                              ? "POST"
+                                              : "PUT";
+                                          const url =
+                                            method === "POST"
+                                              ? baseUrl
+                                              : `${baseUrl}/${change.key}`;
+
+                                          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                          if (change.data.TransactionDate) {
+                                            const TransactionDate = new Date(
+                                              change.data.TransactionDate
+                                            );
+                                            change.data.TransactionDate =
+                                              TransactionDate.toISOString().split(
+                                                "T"
+                                              )[0]; // Format to "yyyy-MM-dd"
+                                          }
+
+                                          // Prepare the payload
+                                          const payload = {
+                                            Amount:
+                                              parseFloat(change.data.Amount) ||
+                                              0, // Ensure float conversion
+                                            Category: change.data.Category,
+                                            Description:
+                                              change.data.Description,
+                                            ProjectID: projectId,
+                                            ProjectUserID:
+                                              change.data.ProjectUserID || null,
+                                            TransactionDate:
+                                              change.data.TransactionDate,
+                                            TransactionType: "Expense",
+                                          };
+
+
+                                          // **Validation Logic Starts Here**
+                                          if (payload.ProjectUserID) {
+                                            // Calculate the total amount for the specified ProjectUserID
+                                            const totalCurrent = financialData
+                                              .filter((item) => item.ProjectUserID === payload.ProjectUserID)
+                                              .reduce((sum, item) => sum + (item.Amount || 0), 0);
+
+                                            // Find the corresponding Mandor using categoryLookupData
+                                            const mandorName = categoryLookupData.find(
+                                              (user) => user.ID === payload.ProjectUserID
+                                            )?.UserName;
+
+                                            // Check if the Mandor exists in mappedSPKs
+                                            const spk = mappedSPKs.find((spk) => spk.mandor === mandorName);
+
+                                            if (spk) {
+                                              // Validation: Ensure totalCurrent + new Amount does not exceed totalJasa
+                                              if (totalCurrent + payload.Amount > spk.totalJasa) {
+                                                DevExpress.ui.notify(
+                                                  `Validation failed: Total amount for ${mandorName} exceeds the limit of IDR ${spk.totalJasa.toLocaleString()}`,
+                                                  "error",
+                                                  5000
+                                                );
+                                                return; // Stop further execution
+                                              }
+                                            }
+                                          }
+
+                                          // **Validation Logic Ends Here**
+
+                                          // Perform Insert/Update
+                                          $.ajax({
+                                            url: url,
+                                            method: method,
+                                            contentType: "application/json",
+                                            data: JSON.stringify(payload),
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data saved successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to save data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+
+                                        if (change.type === "remove") {
+                                          // DELETE Operation
+                                          const deleteUrl = `${baseUrl}/${change.key}`;
+
+                                          $.ajax({
+                                            url: deleteUrl,
+                                            method: "DELETE",
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+                                      });
+                                      pollDataReload(options.component);
+                                    },
+                                    summary: {
+                                      totalItems: [
+                                        ...categories.map((col) => ({
+                                          column: col,
+                                          summaryType: "sum",
+                                          displayFormat: `{0}`,
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        })),
+                                      ],
+                                    },
+                                    paging: { pageSize: 1000 },
+                                    export: {
+                                      enabled: true,
+                                       fileName: `Report_Mandor_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      allowExportSelectedData: true,
+                                    },
+                                  });
                                 },
-                              });
-                            },
-                          },
-                        ],
-                        deferRendering: false,
-                        showNavButtons: true,
-                        selectedIndex: 0,
-                        swipeEnabled: false,
-                      })
-                      .appendTo(container);
-                  },
-                  error: function (error) {
-                    console.error("Error fetching financial data:", error);
-                    $(container).append(
-                      `<p style="color:red;">Failed to load financial data. Please try again later.</p>`
-                    );
-                  },
-                });
-              
-                });
+                              },
+                              {
+                                title: "SPV",
+                                template: function () {
+                                  return $("<div>").dxDataGrid({
+                                    dataSource: financialData.filter(
+                                      (item) => item.ProjectUserID !== null && item.ProjectUser.Role === "SPV" 
+                                    ),
+                                    keyExpr: "ID",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
+                                    },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: true,
+                                      allowAdding: true,
+                                      allowDeleting: true,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "TransactionDate",
+                                        caption: "Tanggal",
+                                        dataType: "date",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Tanggal is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Description",
+                                        caption: "Keterangan",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Keterangan is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Amount",
+                                        caption: "Uang Keluar",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: true,
+                                        editorOptions: {
+                                          format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0,
+                                          },
+                                        },
+                                      },
+                                      {
+                                        dataField: "Category",
+                                        caption: "Category",
+                                        lookup: {
+                                          dataSource: categoryLookupData.filter(
+                                            (item) => item.ID !== null & item.Role === "SPV"
+                                          ),
+                                          valueExpr: "UserName",
+                                          displayExpr: "UserName",
+                                        },
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Category = value;
+                                          const selectedUser =
+                                            categoryLookupData.find(
+                                              (user) => user.UserName === value 
+                                            );
+                                          rowData.ProjectUserID =
+                                            selectedUser && selectedUser.ID
+                                              ? selectedUser.ID
+                                              : null;
+                                        },
+                                      },
+                                      ...dynamicColumnsSPV,
+                                    ],
+                                    onSaved: function (e) {
+                                      const changes = e.changes;
+                                      changes.forEach((change) => {
+                                        const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+
+                                        if (
+                                          change.type === "insert" ||
+                                          change.type === "update"
+                                        ) {
+                                          const method =
+                                            change.type === "insert"
+                                              ? "POST"
+                                              : "PUT";
+                                          const url =
+                                            method === "POST"
+                                              ? baseUrl
+                                              : `${baseUrl}/${change.key}`;
+
+                                          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                          if (change.data.TransactionDate) {
+                                            const TransactionDate = new Date(
+                                              change.data.TransactionDate
+                                            );
+                                            change.data.TransactionDate =
+                                              TransactionDate.toISOString().split(
+                                                "T"
+                                              )[0]; // Format to "yyyy-MM-dd"
+                                          }
+
+                                          // Prepare the payload
+                                          const payload = {
+                                            Amount:
+                                              parseFloat(change.data.Amount) ||
+                                              0, // Ensure float conversion
+                                            Category: change.data.Category,
+                                            Description:
+                                              change.data.Description,
+                                            ProjectID: projectId,
+                                            ProjectUserID:
+                                              change.data.ProjectUserID || null,
+                                            TransactionDate:
+                                              change.data.TransactionDate,
+                                            TransactionType: "Expense",
+                                          };
+
+
+                                          // **Validation Logic Starts Here**
+                                          if (payload.ProjectUserID) {
+                                            // Calculate the total amount for the specified ProjectUserID
+                                            const totalCurrent = financialData
+                                              .filter((item) => item.ProjectUserID === payload.ProjectUserID)
+                                              .reduce((sum, item) => sum + (item.Amount || 0), 0);
+
+                                            // Find the corresponding Mandor using categoryLookupData
+                                            const mandorName = categoryLookupData.find(
+                                              (user) => user.ID === payload.ProjectUserID
+                                            )?.UserName;
+
+                                            // Check if the Mandor exists in mappedSPKs
+                                            const spk = mappedSPKs.find((spk) => spk.mandor === mandorName);
+
+                                            if (spk) {
+                                              // Validation: Ensure totalCurrent + new Amount does not exceed totalJasa
+                                              if (totalCurrent + payload.Amount > spk.totalJasa) {
+                                                DevExpress.ui.notify(
+                                                  `Validation failed: Total amount for ${mandorName} exceeds the limit of IDR ${spk.totalJasa.toLocaleString()}`,
+                                                  "error",
+                                                  5000
+                                                );
+                                                return; // Stop further execution
+                                              }
+                                            }
+                                          }
+
+                                          // **Validation Logic Ends Here**
+
+                                          // Perform Insert/Update
+                                          $.ajax({
+                                            url: url,
+                                            method: method,
+                                            contentType: "application/json",
+                                            data: JSON.stringify(payload),
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data saved successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to save data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+
+                                        if (change.type === "remove") {
+                                          // DELETE Operation
+                                          const deleteUrl = `${baseUrl}/${change.key}`;
+
+                                          $.ajax({
+                                            url: deleteUrl,
+                                            method: "DELETE",
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+                                      });
+                                      pollDataReload(options.component);
+                                    },
+                                    summary: {
+                                      totalItems: [
+                                        ...categories.map((col) => ({
+                                          column: col,
+                                          summaryType: "sum",
+                                          displayFormat: `{0}`,
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        })),
+                                      ],
+                                    },
+                                    paging: { pageSize: 1000 },
+                                    export: {
+                                      enabled: true,
+                                       fileName: `Report_SPV_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      allowExportSelectedData: true,
+                                    },
+                                  });
+                                },
+                              },
+                              {
+                                title: "Operational",
+                                template: function () {
+                                  return $("<div>").dxDataGrid({
+                                    dataSource: financialData.filter(
+                                      (item) =>
+                                        item.Category === "BB" ||
+                                        item.Category === "Operational" ||
+                                        item.Category === "FEE"
+                                    ),
+                                    keyExpr: "ID",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    searchPanel: {
+                                      visible: true,
+                                      placeholder: "Search...",
+                                    },
+                                    headerFilter: { visible: false }, // Ensure header filter is disabled
+                                    filterRow: { visible: false }, // Disable the filter row
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: true,
+                                      allowAdding: true,
+                                      allowDeleting: true,
+                                    },
+                                    columns: [
+                                      {
+                                        dataField: "TransactionDate",
+                                        caption: "Tanggal",
+                                        dataType: "date",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Tanggal is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Description",
+                                        caption: "Keterangan",
+                                        validationRules: [
+                                          {
+                                            type: "required",
+                                            message: "Keterangan is required",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        dataField: "Amount",
+                                        caption: "Uang Keluar",
+                                        format: {
+                                          type: "currency",
+                                          currency: "IDR",
+                                        },
+                                        allowEditing: true,
+                                        editorOptions: {
+                                          format: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                            precision: 0,
+                                          },
+                                        },
+                                      },
+                                      {
+                                        dataField: "Category",
+                                        caption: "Category",
+                                        lookup: {
+                                          dataSource: categoryLookupData.filter(
+                                            (item) => item.ID === null
+                                          ),
+                                          valueExpr: "UserName",
+                                          displayExpr: "UserName",
+                                        },
+                                        setCellValue: function (
+                                          rowData,
+                                          value
+                                        ) {
+                                          rowData.Category = value;
+                                          const selectedUser =
+                                            categoryLookupData.find(
+                                              (user) => user.UserName === value
+                                            );
+                                        },
+                                      },
+                                    ],
+                                    onSaved: function (e) {
+                                      const changes = e.changes;
+                                      changes.forEach((change) => {
+                                        const baseUrl = `${API_BASE_URL}/project_management_services/api/project-financials`;
+
+                                        if (
+                                          change.type === "insert" ||
+                                          change.type === "update"
+                                        ) {
+                                          const method =
+                                            change.type === "insert"
+                                              ? "POST"
+                                              : "PUT";
+                                          const url =
+                                            method === "POST"
+                                              ? baseUrl
+                                              : `${baseUrl}/${change.key}`;
+
+                                          // Ensure StartDate and EndDate are formatted as "yyyy-MM-dd"
+                                          if (change.data.TransactionDate) {
+                                            const TransactionDate = new Date(
+                                              change.data.TransactionDate
+                                            );
+                                            change.data.TransactionDate =
+                                              TransactionDate.toISOString().split(
+                                                "T"
+                                              )[0]; // Format to "yyyy-MM-dd"
+                                          }
+
+                                          // Prepare the payload
+                                          const payload = {
+                                            Amount:
+                                              parseFloat(change.data.Amount) ||
+                                              0, // Ensure float conversion
+                                            Category: change.data.Category,
+                                            Description:
+                                              change.data.Description,
+                                            ProjectID: projectId,
+                                            ProjectUserID: null,
+                                            TransactionDate:
+                                              change.data.TransactionDate,
+                                            TransactionType: "Expense",
+                                          };
+
+                                          // Perform Insert/Update
+                                          $.ajax({
+                                            url: url,
+                                            method: method,
+                                            contentType: "application/json",
+                                            data: JSON.stringify(payload),
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data saved successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to save data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+
+                                        if (change.type === "remove") {
+                                          // DELETE Operation
+                                          const deleteUrl = `${baseUrl}/${change.key}`;
+
+                                          $.ajax({
+                                            url: deleteUrl,
+                                            method: "DELETE",
+                                            success: () => {
+                                              DevExpress.ui.notify(
+                                                "Data deleted successfully!",
+                                                "success",
+                                                2000
+                                              );
+                                            },
+                                            error: () => {
+                                              DevExpress.ui.notify(
+                                                "Failed to delete data.",
+                                                "error",
+                                                2000
+                                              );
+                                            },
+                                          });
+                                        }
+                                      });
+                                      pollDataReload(options.component);
+                                    },
+                                    summary: {
+                                      totalItems: [
+                                        {
+                                          column: "Amount",
+                                          summaryType: "sum",
+                                          displayFormat: "{0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                        {
+                                          column: "AmountDeviden",
+                                          summaryType: "sum",
+                                          displayFormat: "{0}",
+                                          valueFormat: {
+                                            type: "currency",
+                                            currency: "IDR",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    paging: { pageSize: 1000 },
+                                    export: {
+                                      enabled: true,
+                                       fileName: `Report_Operational_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      allowExportSelectedData: true,
+                                    },
+                                  });
+                                },
+                              },
+                            ],
+                            deferRendering: false,
+                            showNavButtons: true,
+                            selectedIndex: 0,
+                            swipeEnabled: false,
+                          })
+                          .appendTo(container);
+                      },
+                      error: function (error) {
+                        console.error("Error fetching financial data:", error);
+                        $(container).append(
+                          `<p style="color:red;">Failed to load financial data. Please try again later.</p>`
+                        );
+                      },
+                    });
+                  }
+                );
               },
             },
           });

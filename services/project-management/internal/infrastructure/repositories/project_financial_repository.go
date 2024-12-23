@@ -78,12 +78,15 @@ func (r *projectFinancialRepositoryImpl) GetByID(financialID int) (*models.Proje
 	return &financial, nil
 }
 
-// GetAllByProjectID retrieves all financial records for a specific project
+// GetAllByProjectID retrieves all financial records for a specific project, including related ProjectUser data
 func (r *projectFinancialRepositoryImpl) GetAllByProjectID(projectID int) ([]models.ProjectFinancial, error) {
 	log.Printf("Retrieving ProjectFinancial records for ProjectID: %d", projectID)
 
 	var financials []models.ProjectFinancial
-	if err := r.db.Where("ProjectID = ?", projectID).Find(&financials).Error; err != nil {
+	if err := r.db.
+		Where("ProjectID = ?", projectID).
+		Preload("ProjectUser"). // Preload the ProjectUser relationship
+		Find(&financials).Error; err != nil {
 		log.Printf("Failed to retrieve records for ProjectID %d: %v", projectID, err)
 		return nil, fmt.Errorf("failed to retrieve ProjectFinancial records: %w", err)
 	}

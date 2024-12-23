@@ -856,7 +856,7 @@
               enabled: true,
               template: function (container, options) {
                 const projectId = options.data.ProjectID;
-
+                let globalSPVLookup = []; // Global variable to store SPV lookup data
                 $("<div>")
                   .dxTabPanel({
                     items: [
@@ -865,7 +865,7 @@
                         template: function () {
                           return $("<div>").dxDataGrid({
                             dataSource: new DevExpress.data.CustomStore({
-                              key: "ID", // Assuming ID is the primary key for users
+                              key: "ID",
                               load: function () {
                                 return $.ajax({
                                   url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
@@ -875,6 +875,10 @@
                                       "authToken"
                                     )}`,
                                   },
+                                }).then((data) => {
+                                  return data
+                                    .filter((user) => user.Role === "Mandor")
+                                    ;
                                 });
                               },
                               insert: function (values) {
@@ -1021,7 +1025,197 @@
                           });
                         },
                       },
-                    ],
+                      {
+                        title: "SPV",
+                        template: function () {
+                          return $("<div>").dxDataGrid({
+                            dataSource: new DevExpress.data.CustomStore({
+                              key: "ID",
+                              load: function () {
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/users`,
+                                  method: "GET",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                }).then((data) => {
+                                  return data
+                                    .filter((user) => user.Role === "SPV")
+                                    .map((user) => ({
+                                      ID: user.ID,
+                                      UserID: user.UserID,
+                                      UserName: user.UserName,
+                                    }));
+                                });
+                              },
+                              insert: function (values) {
+                                console.log("Insert values:", values);
+
+                                if (!values.UserID) {
+                                  DevExpress.ui.notify(
+                                    "Please select a user.",
+                                    "error",
+                                    2000
+                                  );
+                                  return Promise.reject("UserID is required");
+                                }
+
+                                // Retrieve UserName from globalSPVLookup
+                                const selectedUser = globalSPVLookup.find(
+                                  (user) => user.UserID === values.UserID
+                                );
+                                const userName = selectedUser
+                                  ? selectedUser.UserName
+                                  : null;
+
+                                if (!userName) {
+                                  DevExpress.ui.notify(
+                                    "Failed to find UserName for the selected UserID.",
+                                    "error",
+                                    2000
+                                  );
+                                  return Promise.reject("UserName not found");
+                                }
+
+                                DevExpress.ui.notify(
+                                  "Assigning SPV...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/assign-user`,
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                    "Content-Type": "application/json",
+                                  },
+                                  data: JSON.stringify({
+                                    UserID: values.UserID,
+                                    UserName: userName, // Include UserName in the payload
+                                    Role: "SPV",
+                                  }),
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPV assigned successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail((xhr) => {
+                                    console.error(
+                                      "Error assigning SPV:",
+                                      xhr.responseText
+                                    );
+                                    DevExpress.ui.notify(
+                                      xhr.responseJSON?.error ||
+                                        "Failed to assign SPV.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                              remove: function (key) {
+                                DevExpress.ui.notify(
+                                  "Unassigning SPV...",
+                                  "info",
+                                  2000
+                                );
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/project_management_services/api/projects/${projectId}/unassign-user?user_name=${key}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "SPV unassigned successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                    pollDataReload(options.component);
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to unassign SPV.",
+                                      "error",
+                                      2000
+                                    );
+                                  });
+                              },
+                            }),
+                            keyExpr: "UserID",
+                            editing: {
+                              mode: "row", // Inline editing mode
+                              allowAdding: true,
+                              allowUpdating: true,
+                              allowDeleting: true,
+                            },
+                            columns: [
+                              {
+                                dataField: "UserID",
+                                caption: "SPV",
+                                lookup: {
+                                  dataSource: new DevExpress.data.CustomStore({
+                                    key: "UserID",
+                                    load: function () {
+                                      return $.ajax({
+                                        url: `${API_BASE_URL}/user-management/api/users/organizations`,
+                                        method: "GET",
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem(
+                                            "authToken"
+                                          )}`,
+                                        },
+                                      }).then((data) => {
+                                        // Store the lookup data in the global variable
+                                        globalSPVLookup = data
+                                          .filter((user) =>
+                                            user.UserRoles.some(
+                                              (role) =>
+                                                role.Role &&
+                                                role.Role.Name === "SPV"
+                                            )
+                                          )
+                                          .map((user) => ({
+                                            UserID: user.UserID,
+                                            UserName: user.Username,
+                                          }));
+
+                                        return globalSPVLookup;
+                                      });
+                                    },
+                                  }),
+                                  displayExpr: "UserName", // Display Username in dropdown
+                                  valueExpr: "UserID", // Value to store
+                                },
+                              },
+                              {
+                                caption: "Actions",
+                                type: "buttons",
+                                buttons: ["edit", "delete"], // Default edit and delete buttons
+                              },
+                            ],
+                            showBorders: true,
+                            columnAutoWidth: true,
+                            searchPanel: {
+                              visible: true,
+                              placeholder: "Search SPV...",
+                            },
+                            headerFilter: { visible: false },
+                            filterRow: { visible: false },
+                          });
+                        },
+                      },
+                     ],
                     deferRendering: false,
                     showNavButtons: true,
                     selectedIndex: 0,
@@ -2939,7 +3133,7 @@
                                           allowEditing: false,
                                         },
                                       ],
-                                     
+
                                       onRowUpdating: function (e) {
                                         // Merge old and new data
                                         e.newData = {

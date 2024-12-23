@@ -82,6 +82,74 @@ func (h *SpkHandler) FilterSpks(c *gin.Context) {
 	c.JSON(http.StatusOK, spks)
 }
 
+// GetSpkSummary
+// @Summary Get SPK Summary
+// @Description Get a summary of SPK by organization ID and optional SPK ID
+// @Tags SPKs
+// @Security BearerAuth
+// @Param organization_id query int true "Organization ID"
+// @Param spk_id query int false "SPK ID"
+// @Param project_id query int false "Project ID"
+// @Produce json
+// @Success 200 {array} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/spk/summary [get]
+func (h *SpkHandler) GetSpkSummary(c *gin.Context) {
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	organizationID := int(*claims.OrganizationId)
+
+	// Parse optional query parameters
+	spkIDStr := c.Query("spk_id")
+	var spkID *int
+	if spkIDStr != "" {
+		id, err := strconv.Atoi(spkIDStr)
+		if err != nil || id <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid SPK ID"})
+			return
+		}
+		spkID = &id
+	}
+
+	projectIDStr := c.Query("project_id")
+	var projectID *int
+	if projectIDStr != "" {
+		id, err := strconv.Atoi(projectIDStr)
+		if err != nil || id <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
+			return
+		}
+		projectID = &id
+	}
+
+	// Call the service to filter SPKs
+	spks, err := h.spkService.Filter(organizationID, spkID, projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Transform data to return only required fields
+	var summaries []map[string]interface{}
+	for _, spk := range spks {
+		summaries = append(summaries, map[string]interface{}{
+			"SpkId":         spk.SpkId,
+			"Mandor":        spk.Mandor,
+			"Date":          spk.Date,
+			"TotalJasa":     spk.TotalJasa,
+			"TotalMaterial": spk.TotalMaterial,
+		})
+	}
+
+	c.JSON(http.StatusOK, summaries)
+}
+
 // CreateSpk
 // @Summary Create SPK
 // @Description Create a new SPK

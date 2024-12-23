@@ -11,7 +11,9 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 	// SPK routes
 	spks := api.Group("/spk")
 	{
-		spks.GET("/filter", handlers.Spk.FilterSpks)       // Filter SPKs
+		spks.GET("/filter", handlers.Spk.FilterSpks)     // Filter SPKs
+		spks.GET("/summary", handlers.Spk.GetSpkSummary) // Filter SPKs
+
 		spks.POST("", handlers.Spk.CreateSpk)              // Create an SPK
 		spks.PUT("/:spk_id", handlers.Spk.UpdateSpk)       // Update an SPK
 		spks.DELETE("/:spk_id", handlers.Spk.DeleteSpk)    // Delete an SPK
