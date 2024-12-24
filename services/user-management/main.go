@@ -143,33 +143,27 @@ func main() {
 	log.Fatal(r.Run(":" + port))
 }
 
-// determineEnvFilePath determines the correct .env file path based on runtime environment
-func determineEnvFilePath(localEnvPath string) string {
-	// Check for Docker environment
-	if isDockerEnvironment() {
-		return "/app/.env" // Docker container path
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
 	}
-
-	if fileExists(localEnvPath) {
-		return localEnvPath
-	}
-
-	// Fallback to production path
-	return "/root/AmanahPro/.env" // Production path (e.g., VM)
+	return defaultValue
 }
 
-// isDockerEnvironment checks if the application is running inside Docker
-func isDockerEnvironment() bool {
-	// Docker containers usually have a cgroup file
-	if _, err := os.Stat("/.dockerenv"); err == nil {
-		return true
+// determineEnvFilePath determines the correct .env file path based on runtime environment
+func determineEnvFilePath(defaultpath string) string {
+	// Default to production environment
+	if fileExists("/root/AmanahPro/.env") {
+		return "/root/AmanahPro/.env"
 	}
-	// Alternatively, check for specific Docker files
-	cgroupPath := "/proc/1/cgroup"
-	if fileExists(cgroupPath) {
-		return true
+
+	// Default to Docker environment if Docker-specific path exists
+	if fileExists("/app/.env") {
+		return "/app/.env"
 	}
-	return false
+
+	// Development fallback
+	return defaultpath
 }
 
 // fileExists checks if a file or directory exists

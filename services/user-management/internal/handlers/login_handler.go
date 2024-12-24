@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"AmanahPro/services/user-management/internal/application/services"
+	domainModels "AmanahPro/services/user-management/internal/domain/models"
 
 	jwtModels "github.com/NHadi/AmanahPro-common/models"
 
@@ -30,7 +31,8 @@ type LoginRequest struct {
 
 // LoginResponse represents the response payload for a successful login.
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token string                  `json:"token"`
+	Roles []domainModels.UserRole `json:"roles"`
 }
 
 // Login godoc
@@ -83,7 +85,7 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}).Info("User logged in successfully")
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(LoginResponse{Token: tokenString}); err != nil {
+	if err := json.NewEncoder(w).Encode(LoginResponse{Token: tokenString, Roles: user.UserRoles}); err != nil {
 		logrus.WithError(err).Error("Failed to encode login response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

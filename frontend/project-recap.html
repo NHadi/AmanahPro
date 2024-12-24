@@ -134,46 +134,6 @@
             </a>
           </li>
 
-          <li class="nav-item mt-3">
-            <h6
-              class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6"
-            >
-              Dokumen Proyek
-            </h6>
-          </li>
-          <!-- Document Management Section -->
-          <li class="nav-item">
-            <a class="nav-link" href="sph.html">
-              <div
-                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
-              >
-                <i
-                  class="ni ni-single-copy-04 text-dark text-sm opacity-10"
-                ></i>
-              </div>
-              <span class="nav-link-text ms-1">Surat Penawaran Harga</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="spk.html">
-              <div
-                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
-              >
-                <i class="ni ni-paper-diploma text-dark text-sm opacity-10"></i>
-              </div>
-              <span class="nav-link-text ms-1">Surat Perintah Kerja</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="invoice.html">
-              <div
-                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
-              >
-                <i class="ni ni-credit-card text-dark text-sm opacity-10"></i>
-              </div>
-              <span class="nav-link-text ms-1">Invoice</span>
-            </a>
-          </li>
 
           <li class="nav-item mt-3">
             <h6
@@ -183,29 +143,6 @@
             </h6>
           </li>
 
-          <!-- Report Section -->
-          <li class="nav-item">
-            <a class="nav-link" href="ba.html">
-              <div
-                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
-              >
-                <i
-                  class="ni ni-bullet-list-67 text-dark text-sm opacity-10"
-                ></i>
-              </div>
-              <span class="nav-link-text ms-1">Berita Acara Progres</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="project-recap-opname.html">
-              <div
-                class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"
-              >
-                <i class="ni ni-chart-bar-32 text-dark text-sm opacity-10"></i>
-              </div>
-              <span class="nav-link-text ms-1">Rekap Opname Proyek</span>
-            </a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="bank-book.html">
               <div
@@ -536,6 +473,10 @@
     <script src="global.js"></script>
     <script>
       $(document).ready(function () {
+        if(localStorage.getItem("role") !== "Admin") {
+          alert("Only Admin Access This Page.");
+          window.location.href = "login.html";
+        } 
         $("#username-display").html(localStorage.getItem("user"));
 
         // Initialize notification (dxToast)
@@ -883,13 +824,11 @@
                         const totalBayar = financialData
                           .filter(
                             (item) =>
-                              item.TransactionType === "Expense" &&
-                              item.Category !== "Operational" &&
-                              item.Category !== "BB"
+                              item.TransactionType === "Expense" && item.ProjectUserID !== null && item.ProjectUser.Role === "Mandor" 
                           )
                           .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
-                        const sisaBayar = totalSPH - totalBayar;
+                        const sisaBayar = options.data.SPKMandor - totalBayar;
 
                         // Calculate totals
                         const totalUangMasuk = financialData

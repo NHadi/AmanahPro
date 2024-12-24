@@ -93,6 +93,16 @@
           const data = await response.json();
           localStorage.setItem("authToken", data.token); // Store the token
           localStorage.setItem("user", email); // Store the token
+          // Extract the role name from the roles array
+          const roleName = data.roles[0]?.Role?.Name;
+
+          // Store the role name in localStorage
+          if (roleName) {
+              localStorage.setItem("role", roleName);
+              console.log(`Role "${roleName}" has been stored in localStorage.`);
+          } else {
+              console.error("Role not found in the data object.");
+          }
           
           window.location.href = "dashboard.html"; // Redirect to dashboard
         } else {
