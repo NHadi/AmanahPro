@@ -4,8 +4,16 @@ import (
 	"AmanahPro/services/breakdown-services/common/messagebroker"
 	"AmanahPro/services/breakdown-services/internal/domain/models"
 	"AmanahPro/services/breakdown-services/internal/domain/repositories"
+	"AmanahPro/services/breakdown-services/internal/dto"
+	"bytes"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
+	"time"
+	"unicode"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type BreakdownService struct {
@@ -494,4 +502,170 @@ func (s *BreakdownService) syncItems(sectionId int, masterItems []models.MstBrea
 	}
 
 	return nil
+}
+
+func (s *BreakdownService) ImportFromExcel(metadata dto.BreakdownImportDTO, fileBytes []byte, organizationID int, userID int) (models.Breakdown, error) {
+	// Load Excel from bytes
+	f, err := excelize.OpenReader(bytes.NewReader(fileBytes))
+	if err != nil {
+		return models.Breakdown{}, fmt.Errorf("failed to open Excel file: %v", err)
+	}
+
+	// Get all rows from the first sheet
+	rows, err := f.GetRows(f.GetSheetName(0))
+	if err != nil {
+		return models.Breakdown{}, fmt.Errorf("failed to read Excel rows: %v", err)
+	}
+
+	currentDate := time.Now().Format("2006-01-02")
+	parsedDate, err := time.Parse("2006-01-02", currentDate)
+	if err != nil {
+		return models.Breakdown{}, fmt.Errorf("failed to parse date: %v", err)
+	}
+
+	// Create Breakdown record
+	breakdown := models.Breakdown{
+		ProjectId:      *metadata.ProjectId,
+		Subject:        *metadata.Subject,
+		Date:           &models.CustomDate{Time: parsedDate},
+		Location:       metadata.Location,
+		OrganizationId: &organizationID,
+		CreatedBy:      &userID,
+	}
+
+	if err := s.breakdownRepo.Create(&breakdown); err != nil {
+		return breakdown, fmt.Errorf("failed to create SPK: %v", err)
+	}
+
+	var currentSectionID int
+	var sectionSortOrder = 0 // Start section sort order from 1
+	var itemSortOrder = 1    // Start item sort order from 1 within each section
+
+	headerFound := false
+	var grandTotal float64
+
+	for rowIndex, row := range rows {
+		if len(row) == 0 {
+			continue
+		}
+
+		// Detect header row
+		if !headerFound && len(row) >= 6 &&
+			strings.EqualFold(strings.TrimSpace(row[1]), "NO") &&
+			strings.EqualFold(strings.TrimSpace(row[2]), "DESCRIPTION") &&
+			strings.EqualFold(strings.TrimSpace(row[8]), "HARGA SATUAN") {
+			log.Printf("Header row found at line %d", rowIndex+1)
+			headerFound = true
+			continue
+		}
+
+		if !headerFound {
+			log.Printf("Skipping row %d: header not found yet", rowIndex+1)
+			continue
+		}
+
+		// Handle sections
+		if isAlphabet(row[1]) {
+			if len(row) < 2 {
+				log.Printf("Skipping invalid section row at line %d: insufficient columns", rowIndex+1)
+				continue
+			}
+			sectionSortOrder++
+			section := models.BreakdownSection{
+				BreakdownId:    breakdown.BreakdownId,
+				SectionTitle:   row[2],
+				Sort:           sectionSortOrder, // Set incremental sort order
+				OrganizationId: &organizationID,
+				CreatedBy:      &userID,
+			}
+			if err := s.sectionRepo.Create(&section); err != nil {
+				return breakdown, fmt.Errorf("failed to create Breakdown section: %v", err)
+			}
+			currentSectionID = section.BreakdownSectionId
+			itemSortOrder = 0 // Reset item sort order for new section
+			continue
+		}
+
+		// Handle items
+		if isNumeric(row[1]) {
+			if len(row) < 7 {
+				log.Printf("Skipping invalid detail row at line %d: insufficient columns", rowIndex+1)
+				continue
+			}
+
+			totalPrice := parseFloatNonPointer(row[8])
+			if totalPrice != 0 {
+				grandTotal += totalPrice
+			}
+
+			itemSortOrder++
+			detail := models.BreakdownItem{
+				SectionId:      currentSectionID,
+				Description:    row[2],
+				UnitPrice:      totalPrice,
+				Sort:           itemSortOrder, // Set incremental sort order
+				OrganizationId: &organizationID,
+				CreatedBy:      &userID,
+			}
+			if err := s.itemRepo.Create(&detail); err != nil {
+				return breakdown, fmt.Errorf("failed to create Breakdown detail: %v", err)
+			}
+		}
+	}
+
+	breakdown.Total = &grandTotal
+
+	if err := s.breakdownRepo.Update(&breakdown); err != nil {
+		log.Printf("Error updating Breakdown: %v", err)
+	}
+
+	s.PublishFullReindexEvent(breakdown.BreakdownId)
+
+	return breakdown, nil
+}
+
+// Helper function to check if a string is an alphabet
+func isAlphabet(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	return unicode.IsLetter(rune(input[0]))
+}
+
+// Helper function to check if a string is numeric
+func isNumeric(input string) bool {
+	_, err := strconv.Atoi(input)
+	return err == nil
+}
+
+// Helper function to parse a string into a float pointer
+func parseFloat(input string) *float64 {
+	// Remove "Rp" and trim spaces
+	cleaned := strings.ReplaceAll(input, "Rp", "")
+	// Remove commas and trim spaces
+	cleaned = strings.ReplaceAll(cleaned, ",", "")
+	cleaned = strings.TrimSpace(cleaned)
+
+	// Attempt to parse the cleaned string
+	value, err := strconv.ParseFloat(cleaned, 64)
+	if err != nil {
+		return nil // Return nil if parsing fails
+	}
+	return &value
+}
+
+// Helper function to parse a string into a float64 value
+func parseFloatNonPointer(input string) float64 {
+	// Trim spaces and unwanted characters
+	cleaned := strings.ReplaceAll(input, "Rp", "")
+	// Remove commas and trim spaces
+	cleaned = strings.ReplaceAll(cleaned, ",", "")
+	cleaned = strings.TrimSpace(cleaned)
+
+	// Attempt to parse the cleaned string
+	value, err := strconv.ParseFloat(cleaned, 64)
+	if err != nil {
+		return 0 // Return 0 if parsing fails (or choose another default value)
+	}
+	return value
 }

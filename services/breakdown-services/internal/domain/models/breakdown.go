@@ -10,6 +10,7 @@ type Breakdown struct {
 	Subject        string      `gorm:"column:Subject;type:varchar(255);not null"`     // Breakdown subject
 	Location       *string     `gorm:"column:Location;type:varchar(255);null"`        // Optional location
 	Date           *CustomDate `gorm:"column:Date;type:date;null"`                    // Breakdown date
+	Total          *float64    `gorm:"column:Total;type:decimal(18,2);null"`          // Total price of the item
 	CreatedBy      *int        `gorm:"column:CreatedBy;null"`                         // Created by user ID
 	CreatedAt      *time.Time  `gorm:"column:CreatedAt;autoCreateTime"`               // Creation timestamp
 	UpdatedBy      *int        `gorm:"column:UpdatedBy;null"`                         // Updated by user ID

@@ -85,7 +85,7 @@ func (r *projectFinancialRepositoryImpl) GetAllByProjectID(projectID int) ([]mod
 	var financials []models.ProjectFinancial
 	if err := r.db.
 		Where("ProjectID = ?", projectID).
-		Preload("ProjectUser"). // Preload the ProjectUser relationship
+		Preload("ProjectUser").Preload("Project"). // Preload the ProjectUser relationship
 		Find(&financials).Error; err != nil {
 		log.Printf("Failed to retrieve records for ProjectID %d: %v", projectID, err)
 		return nil, fmt.Errorf("failed to retrieve ProjectFinancial records: %w", err)
@@ -144,4 +144,92 @@ func (s *projectFinancialRepositoryImpl) GetProjectFinancialSummary(organization
 
 	log.Println("Successfully retrieved project financial summary")
 	return summaries, nil
+}
+
+// GetProjectFinancialSPVSummary retrieves financial summary data for all projects for a specific user, including details.
+func (s *projectFinancialRepositoryImpl) GetProjectFinancialSPVSummary(userID int) ([]dto.ProjectFinancialSPVSummaryDTO, error) {
+	var summaries []dto.ProjectFinancialSPVSummaryDTO
+
+	// Query for summaries
+	summaryQuery := `
+    SELECT 
+        a.ProjectID,
+        b.ProjectName,
+		a.ProjectUserId,
+		a.Category,
+        SUM(CASE WHEN a.TransactionType = 'Expense' THEN a.Amount ELSE 0 END) AS TotalUangMasuk,
+        SUM(CASE WHEN a.TransactionType = 'Expense-SPV' THEN a.Amount ELSE 0 END) AS TotalUangKeluar,
+        SUM(CASE WHEN a.TransactionType = 'Expense' THEN a.Amount ELSE 0 END) -
+        SUM(CASE WHEN a.TransactionType = 'Expense-SPV' THEN a.Amount ELSE 0 END) AS Sisa
+    FROM [AmanahProjectDb].[dbo].[ProjectFinancial] a
+    LEFT JOIN Projects b ON a.ProjectID = b.ProjectID
+    LEFT JOIN ProjectUser c ON a.ProjectUserId = c.Id
+    WHERE c.Role = 'SPV' AND c.UserID = ?
+    GROUP BY a.ProjectID, b.ProjectName,	a.ProjectUserId, a.Category;
+    `
+
+	// Execute the query for summaries
+	if err := s.db.Debug().Raw(summaryQuery, userID).Scan(&summaries).Error; err != nil {
+		log.Printf("Error fetching project financial summary: %v", err)
+		return nil, err
+	}
+
+	// Populate details for each summary
+	for i, summary := range summaries {
+		var details []dto.ProjectFinancialSPVDetailDTO
+
+		detailQuery := `
+        SELECT 
+			a.ID,
+            a.TransactionDate,
+            a.Descrtiption AS Description,
+            a.Amount,
+            a.TransactionType,
+            c.UserrName as UserName
+        FROM [AmanahProjectDb].[dbo].[ProjectFinancial] a
+        LEFT JOIN ProjectUser c ON a.ProjectUserId = c.Id
+        WHERE a.ProjectID = ? AND c.Role = 'SPV' AND c.UserID = ?
+		order by a.TransactionDate desc;
+        `
+
+		// Execute the query for details
+		if err := s.db.Raw(detailQuery, summary.ProjectID, userID).Scan(&details).Error; err != nil {
+			log.Printf("Error fetching details for project ID %d: %v", summary.ProjectID, err)
+			return nil, err
+		}
+
+		// Assign details to the summary
+		summaries[i].Details = details
+	}
+
+	log.Println("Successfully retrieved project financial summary with details")
+	return summaries, nil
+}
+
+// GetProjectFinancialDetails retrieves financial detail data for a specific project.
+func (s *projectFinancialRepositoryImpl) GetProjectFinancialSPVDetails(userID int, projectID int) ([]dto.ProjectFinancialSPVDetailDTO, error) {
+	var details []dto.ProjectFinancialSPVDetailDTO
+
+	query := `
+    SELECT 
+        a.TransactionDate,
+        a.Descrtiption,
+        a.Amount,
+        a.TransactionType,
+        a.ProjectUserId,
+        c.UserName
+    FROM [AmanahProjectDb].[dbo].[ProjectFinancial] a
+    LEFT JOIN Projects b ON a.ProjectID = b.ProjectID
+    LEFT JOIN ProjectUser c ON a.ProjectUserId = c.Id
+    WHERE c.Role = 'SPV' AND c.UserID = ? AND a.ProjectID = ?;
+    `
+
+	// Execute the query
+	if err := s.db.Raw(query, userID, projectID).Scan(&details).Error; err != nil {
+		log.Printf("Error fetching project financial details: %v", err)
+		return nil, err
+	}
+
+	log.Println("Successfully retrieved project financial details")
+	return details, nil
 }

@@ -12,4 +12,6 @@ type ProjectFinancialRepository interface {
 	GetByID(id int) (*models.ProjectFinancial, error)
 	GetAllByProjectID(projectID int) ([]models.ProjectFinancial, error)
 	GetProjectFinancialSummary(organizationID int) ([]dto.ProjectFinancialSummaryDTO, error)
+	GetProjectFinancialSPVSummary(userID int) ([]dto.ProjectFinancialSPVSummaryDTO, error)
+	GetProjectFinancialSPVDetails(userID int, projectID int) ([]dto.ProjectFinancialSPVDetailDTO, error)
 }

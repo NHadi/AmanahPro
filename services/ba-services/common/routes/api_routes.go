@@ -16,7 +16,7 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 		bas.PUT("/:ba_id", handlers.BA.UpdateBA)                // Update a BA
 		bas.DELETE("/:ba_id", handlers.BA.DeleteBA)             // Delete a BA
 		bas.POST("/:ba_id/progress", handlers.BA.AddBAProgress) // Add progress to a BA
-
+		bas.POST("/import", handlers.BA.ImportFromExcel)        // Create a BA
 		// BA Sections
 		sections := bas.Group("/:ba_id/sections")
 		{

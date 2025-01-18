@@ -134,7 +134,6 @@
             </a>
           </li>
 
-
           <li class="nav-item mt-3">
             <h6
               class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6"
@@ -473,10 +472,10 @@
     <script src="global.js"></script>
     <script>
       $(document).ready(function () {
-        if(localStorage.getItem("role") !== "Admin") {
+        if (localStorage.getItem("role") !== "Admin") {
           alert("Only Admin Access This Page.");
           window.location.href = "login.html";
-        } 
+        }
         $("#username-display").html(localStorage.getItem("user"));
 
         // Initialize notification (dxToast)
@@ -510,16 +509,18 @@
           let pendingPayments = 0; // Sisa Bayar
           let totalExpenses = 0; // Total of BayarMandor + BB + OPR
 
-          // Iterate through data to calculate totals
-          data.forEach((project) => {
-            totalBudget += project.PO_SPH || 0;
-            remainingBudget += project.Saldo || 0;
-            pendingPayments += project.SisaBayar || 0;
-            totalExpenses +=
-              (project.BayarMandor || 0) +
-              (project.BB || 0) +
-              (project.OPR || 0);
-          });
+          if (data) {
+            // Iterate through data to calculate totals
+            data.forEach((project) => {
+              totalBudget += project.PO_SPH || 0;
+              remainingBudget += project.Saldo || 0;
+              pendingPayments += project.SisaBayar || 0;
+              totalExpenses +=
+                (project.BayarMandor || 0) +
+                (project.BB || 0) +
+                (project.OPR || 0);
+            });
+          }
 
           // Update DOM elements
           $("#total-budget-card").text(`IDR ${totalBudget.toLocaleString()}`);
@@ -744,9 +745,9 @@
                 const API_URL = `${API_BASE_URL}/project_management_services/api/project-financials/project/${projectId}`;
 
                 let categoryLookupData = [
-                  { ID: null, UserName: "Operational", Role : null },
-                  { ID: null, UserName: "BB" , Role : null},
-                  { ID: null, UserName: "FEE", Role : null },
+                  { ID: null, UserName: "Operational", Role: null },
+                  { ID: null, UserName: "BB", Role: null },
+                  { ID: null, UserName: "FEE", Role: null },
                 ];
 
                 let categories = []; // To store categories dynamically
@@ -758,19 +759,18 @@
                   method: "GET",
                   success: function (response) {
                     categories = response
-                              .filter((user) => user.Role === "Mandor") 
-                              .map((user) => user.UserName); // Map the filtered users to their UserName
+                      .filter((user) => user.Role === "Mandor")
+                      .map((user) => user.UserName); // Map the filtered users to their UserName
 
                     categoriesSPV = response
-                            .filter((user) => user.Role === "SPV") // Filter only users with the "SPV" role
-                            .map((user) => user.UserName); // Map the filtered users to their UserName
-
+                      .filter((user) => user.Role === "SPV") // Filter only users with the "SPV" role
+                      .map((user) => user.UserName); // Map the filtered users to their UserName
 
                     categoryLookupData = categoryLookupData.concat(
                       response.map((user) => ({
                         ID: user.ID,
                         UserName: user.UserName,
-                        Role : user.Role
+                        Role: user.Role,
                       }))
                     );
                   },
@@ -824,7 +824,9 @@
                         const totalBayar = financialData
                           .filter(
                             (item) =>
-                              item.TransactionType === "Expense" && item.ProjectUserID !== null && item.ProjectUser.Role === "Mandor" 
+                              item.TransactionType === "Expense" &&
+                              item.ProjectUserID !== null &&
+                              item.ProjectUser.Role === "Mandor"
                           )
                           .reduce((sum, item) => sum + (item.Amount || 0), 0);
 
@@ -969,8 +971,10 @@
                           cssClass: "highlight-column",
                         }));
 
-                        const mergedDynamicColumns = [...dynamicColumns, ...dynamicColumnsSPV];
-
+                        const mergedDynamicColumns = [
+                          ...dynamicColumns,
+                          ...dynamicColumnsSPV,
+                        ];
 
                         const incomeData = financialData.filter(
                           (item) => item.TransactionType === "Income"
@@ -984,7 +988,10 @@
                                 title: "Financial",
                                 template: function () {
                                   return $("<div>").dxDataGrid({
-                                    dataSource: financialData,
+                                    dataSource: financialData.filter(
+                                      (item) =>
+                                        item.TransactionType !== "Expense-SPV"
+                                    ),
                                     keyExpr: "ID",
                                     showBorders: true,
                                     columnAutoWidth: true,
@@ -1229,7 +1236,9 @@
                                     paging: { pageSize: 1000 },
                                     export: {
                                       enabled: true,
-                                       fileName: `ProjectFinancialData_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      fileName: `ProjectFinancialData_${new Date()
+                                        .toLocaleDateString("en-GB")
+                                        .replace(/\//g, "-")}`,
                                       allowExportSelectedData: true,
                                     },
                                   });
@@ -1434,7 +1443,9 @@
                                     paging: { pageSize: 1000 },
                                     export: {
                                       enabled: true,
-                                       fileName: `Report_Income Project_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      fileName: `Report_Income Project_${new Date()
+                                        .toLocaleDateString("en-GB")
+                                        .replace(/\//g, "-")}`,
                                       allowExportSelectedData: true,
                                     },
                                   });
@@ -1445,7 +1456,9 @@
                                 template: function () {
                                   return $("<div>").dxDataGrid({
                                     dataSource: financialData.filter(
-                                      (item) => item.ProjectUserID !== null && item.ProjectUser.Role === "Mandor" 
+                                      (item) =>
+                                        item.ProjectUserID !== null &&
+                                        item.ProjectUser.Role === "Mandor"
                                     ),
                                     keyExpr: "ID",
                                     showBorders: true,
@@ -1505,7 +1518,9 @@
                                         caption: "Category",
                                         lookup: {
                                           dataSource: categoryLookupData.filter(
-                                            (item) => item.ID !== null & item.Role === "Mandor"
+                                            (item) =>
+                                              (item.ID !== null) &
+                                              (item.Role === "Mandor")
                                           ),
                                           valueExpr: "UserName",
                                           displayExpr: "UserName",
@@ -1572,25 +1587,40 @@
                                             TransactionType: "Expense",
                                           };
 
-
                                           // **Validation Logic Starts Here**
                                           if (payload.ProjectUserID) {
                                             // Calculate the total amount for the specified ProjectUserID
                                             const totalCurrent = financialData
-                                              .filter((item) => item.ProjectUserID === payload.ProjectUserID)
-                                              .reduce((sum, item) => sum + (item.Amount || 0), 0);
+                                              .filter(
+                                                (item) =>
+                                                  item.ProjectUserID ===
+                                                  payload.ProjectUserID
+                                              )
+                                              .reduce(
+                                                (sum, item) =>
+                                                  sum + (item.Amount || 0),
+                                                0
+                                              );
 
                                             // Find the corresponding Mandor using categoryLookupData
-                                            const mandorName = categoryLookupData.find(
-                                              (user) => user.ID === payload.ProjectUserID
-                                            )?.UserName;
+                                            const mandorName =
+                                              categoryLookupData.find(
+                                                (user) =>
+                                                  user.ID ===
+                                                  payload.ProjectUserID
+                                              )?.UserName;
 
                                             // Check if the Mandor exists in mappedSPKs
-                                            const spk = mappedSPKs.find((spk) => spk.mandor === mandorName);
+                                            const spk = mappedSPKs.find(
+                                              (spk) => spk.mandor === mandorName
+                                            );
 
                                             if (spk) {
                                               // Validation: Ensure totalCurrent + new Amount does not exceed totalJasa
-                                              if (totalCurrent + payload.Amount > spk.totalJasa) {
+                                              if (
+                                                totalCurrent + payload.Amount >
+                                                spk.totalJasa
+                                              ) {
                                                 DevExpress.ui.notify(
                                                   `Validation failed: Total amount for ${mandorName} exceeds the limit of IDR ${spk.totalJasa.toLocaleString()}`,
                                                   "error",
@@ -1668,7 +1698,9 @@
                                     paging: { pageSize: 1000 },
                                     export: {
                                       enabled: true,
-                                       fileName: `Report_Mandor_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      fileName: `Report_Mandor_${new Date()
+                                        .toLocaleDateString("en-GB")
+                                        .replace(/\//g, "-")}`,
                                       allowExportSelectedData: true,
                                     },
                                   });
@@ -1679,7 +1711,10 @@
                                 template: function () {
                                   return $("<div>").dxDataGrid({
                                     dataSource: financialData.filter(
-                                      (item) => item.ProjectUserID !== null && item.ProjectUser.Role === "SPV" 
+                                      (item) =>
+                                        item.ProjectUserID !== null &&
+                                        item.ProjectUser.Role === "SPV" &&
+                                        item.TransactionType === "Expense"
                                     ),
                                     keyExpr: "ID",
                                     showBorders: true,
@@ -1739,7 +1774,9 @@
                                         caption: "Category",
                                         lookup: {
                                           dataSource: categoryLookupData.filter(
-                                            (item) => item.ID !== null & item.Role === "SPV"
+                                            (item) =>
+                                              (item.ID !== null) &
+                                              (item.Role === "SPV")
                                           ),
                                           valueExpr: "UserName",
                                           displayExpr: "UserName",
@@ -1751,7 +1788,7 @@
                                           rowData.Category = value;
                                           const selectedUser =
                                             categoryLookupData.find(
-                                              (user) => user.UserName === value 
+                                              (user) => user.UserName === value
                                             );
                                           rowData.ProjectUserID =
                                             selectedUser && selectedUser.ID
@@ -1806,25 +1843,40 @@
                                             TransactionType: "Expense",
                                           };
 
-
                                           // **Validation Logic Starts Here**
                                           if (payload.ProjectUserID) {
                                             // Calculate the total amount for the specified ProjectUserID
                                             const totalCurrent = financialData
-                                              .filter((item) => item.ProjectUserID === payload.ProjectUserID)
-                                              .reduce((sum, item) => sum + (item.Amount || 0), 0);
+                                              .filter(
+                                                (item) =>
+                                                  item.ProjectUserID ===
+                                                  payload.ProjectUserID
+                                              )
+                                              .reduce(
+                                                (sum, item) =>
+                                                  sum + (item.Amount || 0),
+                                                0
+                                              );
 
                                             // Find the corresponding Mandor using categoryLookupData
-                                            const mandorName = categoryLookupData.find(
-                                              (user) => user.ID === payload.ProjectUserID
-                                            )?.UserName;
+                                            const mandorName =
+                                              categoryLookupData.find(
+                                                (user) =>
+                                                  user.ID ===
+                                                  payload.ProjectUserID
+                                              )?.UserName;
 
                                             // Check if the Mandor exists in mappedSPKs
-                                            const spk = mappedSPKs.find((spk) => spk.mandor === mandorName);
+                                            const spk = mappedSPKs.find(
+                                              (spk) => spk.mandor === mandorName
+                                            );
 
                                             if (spk) {
                                               // Validation: Ensure totalCurrent + new Amount does not exceed totalJasa
-                                              if (totalCurrent + payload.Amount > spk.totalJasa) {
+                                              if (
+                                                totalCurrent + payload.Amount >
+                                                spk.totalJasa
+                                              ) {
                                                 DevExpress.ui.notify(
                                                   `Validation failed: Total amount for ${mandorName} exceeds the limit of IDR ${spk.totalJasa.toLocaleString()}`,
                                                   "error",
@@ -1888,7 +1940,7 @@
                                     },
                                     summary: {
                                       totalItems: [
-                                        ...categories.map((col) => ({
+                                        ...categoriesSPV.map((col) => ({
                                           column: col,
                                           summaryType: "sum",
                                           displayFormat: `{0}`,
@@ -1902,7 +1954,9 @@
                                     paging: { pageSize: 1000 },
                                     export: {
                                       enabled: true,
-                                       fileName: `Report_SPV_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      fileName: `Report_SPV_${new Date()
+                                        .toLocaleDateString("en-GB")
+                                        .replace(/\//g, "-")}`,
                                       allowExportSelectedData: true,
                                     },
                                   });
@@ -2111,7 +2165,9 @@
                                     paging: { pageSize: 1000 },
                                     export: {
                                       enabled: true,
-                                       fileName: `Report_Operational_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`,
+                                      fileName: `Report_Operational_${new Date()
+                                        .toLocaleDateString("en-GB")
+                                        .replace(/\//g, "-")}`,
                                       allowExportSelectedData: true,
                                     },
                                   });
@@ -2122,6 +2178,204 @@
                             showNavButtons: true,
                             selectedIndex: 0,
                             swipeEnabled: false,
+                          })
+                          .appendTo(container);
+
+// Filter data for "Expense-SPV"
+const expenseSPVData = financialData.filter(
+  (item) => item.TransactionType === "Expense-SPV"
+);
+
+// Group expense data by "Category"
+const groupedExpenseData = expenseSPVData.reduce((acc, item) => {
+  const category = item.Category || "Uncategorized";
+  if (!acc[category]) {
+    acc[category] = [];
+  }
+  acc[category].push(item);
+  return acc;
+}, {});
+
+// Calculate total expenses for each category
+const expenseTotals = Object.keys(groupedExpenseData).map((category) => ({
+  category,
+  totalExpense: groupedExpenseData[category].reduce(
+    (sum, item) => sum + item.Amount,
+    0
+  ),
+}));
+
+// Filter data for "Income-SPV"
+const incomeSPVData = financialData.filter(
+  (item) =>
+    item.ProjectUserID !== null &&
+    item.ProjectUser.Role === "SPV" &&
+    item.TransactionType === "Expense"
+);
+
+// Group income data by "Category"
+const groupedIncomeData = incomeSPVData.reduce((acc, item) => {
+  const category = item.Category || "Uncategorized";
+  if (!acc[category]) {
+    acc[category] = [];
+  }
+  acc[category].push(item);
+  return acc;
+}, {});
+
+// Calculate total income for each category
+const incomeTotals = Object.keys(groupedIncomeData).map((category) => ({
+  category,
+  totalIncome: groupedIncomeData[category].reduce(
+    (sum, item) => sum + item.Amount,
+    0
+  ),
+}));
+
+// Merge income and expense totals to calculate balances
+const balances = expenseTotals.map((expense) => {
+  const income = incomeTotals.find((income) => income.category === expense.category);
+  const totalIncome = income ? income.totalIncome : 0;
+  const totalExpense = expense.totalExpense;
+
+  return {
+    category: expense.category,
+    totalIncome,
+    totalExpense,
+    balance: totalIncome - totalExpense,
+  };
+});
+
+
+
+
+
+                        // Add cards for each category
+                        const cardContainer = $("<div>")
+                          .css({
+                            marginTop: "1%",
+                            marginBottom: "1%",
+                          })
+                          .appendTo(container);
+
+                          
+balances.forEach((balance) => {
+  $("<div>")
+    .addClass("col-lg-3 col-md-4 col-sm-6")
+    .append(
+      $("<div>")
+        .addClass("card shadow-sm border-0 h-100")
+        .append(
+          $("<div>")
+            .addClass("card-body p-3")
+            .append(
+              $("<p>")
+                .addClass("text-sm text-muted mb-1 text-uppercase font-weight-bold")
+                .text(balance.category || "Uncategorized")
+            )
+            .append(
+              $("<h5>")
+                .addClass("font-weight-bolder mb-0")
+                .html(
+                  `Income: IDR ${balance.totalIncome.toLocaleString()}<br>
+                   Expense: IDR ${balance.totalExpense.toLocaleString()}<br>
+                   Balance: IDR ${balance.balance.toLocaleString()}`
+                )
+            )
+        )
+    )
+    .appendTo(cardContainer);
+});
+
+                        // totals.forEach((total) => {
+                        //   $("<div>")
+                        //     .addClass("col-lg-3 col-md-4 col-sm-6")
+                        //     .append(
+                        //       $("<div>")
+                        //         .addClass("card shadow-sm border-0 h-100")
+                        //         .append(
+                        //           $("<div>")
+                        //             .addClass("card-body p-3")
+                        //             .append(
+                        //               $("<p>")
+                        //                 .addClass(
+                        //                   "text-sm text-muted mb-1 text-uppercase font-weight-bold"
+                        //                 )
+                        //                 .text(total.category || "Uncategorized")
+                        //             )
+                        //             .append(
+                        //               $("<h5>")
+                        //                 .addClass("font-weight-bolder mb-0")
+                        //                 .text(
+                        //                   `IDR ${total.totalAmount.toLocaleString()}`
+                        //                 )
+                        //             )
+                        //         )
+                        //     )
+                        //     .appendTo(cardContainer);
+                        // });
+
+                        // Create tabs dynamically
+                        const tabs = Object.keys(groupedExpenseData).map(
+                          (category) => ({
+                            title: category,
+                            template: function () {
+                              return $("<div>").dxDataGrid({
+                                dataSource: groupedExpenseData[category],
+                                keyExpr: "ID",
+                                showBorders: true,
+                                columnAutoWidth: true,
+                                editing: {
+                                  mode: "cell", // Allow viewing only, no editing
+                                  allowAdding: false, // No row addition
+                                  allowUpdating: false, // No updates
+                                  allowDeleting: false, // No deletions
+                                },
+                                columns: [
+                                  {
+                                    dataField: "TransactionDate",
+                                    caption: "Tanggal",
+                                    dataType: "date",
+                                    format: "dd-MMM-yyyy",
+                                  },
+                                  {
+                                    dataField: "Description",
+                                    caption: "Deskripsi",
+                                  },
+                                  {
+                                    dataField: "Amount",
+                                    caption: "Amount",
+                                    format: {
+                                      type: "currency",
+                                      currency: "IDR",
+                                    },
+                                  },
+                                ],
+                                summary: {
+                                  totalItems: [
+                                    {
+                                      column: "Amount",
+                                      summaryType: "sum",
+                                      displayFormat: "Total: {0}",
+                                      valueFormat: {
+                                        type: "currency",
+                                        currency: "IDR",
+                                      },
+                                    },
+                                  ],
+                                },
+                              });
+                            },
+                          })
+                        );
+
+                        // Render the tabs
+                        $("<div>")
+                          .dxTabPanel({
+                            items: tabs,
+                            deferRendering: false,
+                            showNavButtons: true,
+                            selectedIndex: 0,
                           })
                           .appendTo(container);
                       },

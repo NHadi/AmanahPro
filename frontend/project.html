@@ -140,7 +140,7 @@
           </li>
 
           <!-- Report Section -->
- 
+
           <li class="nav-item">
             <a class="nav-link" href="bank-book.html">
               <div
@@ -475,10 +475,10 @@
     <script src="global.js"></script>
     <script>
       $(document).ready(function () {
-        if(localStorage.getItem("role") !== "Admin") {
+        if (localStorage.getItem("role") !== "Admin") {
           alert("Only Admin Access This Page.");
           window.location.href = "login.html";
-        } 
+        }
         $("#username-display").html(localStorage.getItem("user"));
 
         // Initialize notification (dxToast)
@@ -818,9 +818,9 @@
                                     )}`,
                                   },
                                 }).then((data) => {
-                                  return data
-                                    .filter((user) => user.Role === "Mandor")
-                                    ;
+                                  return data.filter(
+                                    (user) => user.Role === "Mandor"
+                                  );
                                 });
                               },
                               insert: function (values) {
@@ -1157,7 +1157,7 @@
                           });
                         },
                       },
-                     ],
+                    ],
                     deferRendering: false,
                     showNavButtons: true,
                     selectedIndex: 0,
@@ -1171,7 +1171,149 @@
                       {
                         title: "Breakdown",
                         template: function () {
-                          return $("<div>").dxDataGrid({
+                          // Add Upload button and container for grid
+                          const container = $("<div>")
+                            .append(
+                              $(
+                                "<button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#uploadBreakdownModal'>"
+                              ).text("Upload Breakdown")
+                            )
+                            .append($("<div>").attr("id", "grid-container"));
+
+                          // Bootstrap Modal for Upload SPH
+                          const modalHtml = `
+<div class="modal fade" id="uploadBreakdownModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form class="upload-form-breakdown">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadBreakdownModal">Upload Breakdown</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="subject" class="form-label">Subject</label>
+            <input type="text" class="form-control subject-input" required />
+          </div>
+          <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" class="form-control location-input" />
+          </div>
+          <div class="mb-3">
+            <label for="fileUpload" class="form-label">File</label>
+            <input type="file" class="form-control file-upload-input-breakdown" accept=".xlsx" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>`;
+
+                          $(modalHtml).appendTo("body");
+
+                          // Handle form submission using event delegation for dynamic forms
+                          $(document)
+                            .off("submit", ".upload-form-breakdown")
+                            .on("submit", ".upload-form-breakdown", function (e) {
+                              e.preventDefault();
+
+                              // Collect form data
+                              const form = $(this);
+                              const subject = form.find(".subject-input").val();                    
+                              const location = form
+                                .find(".location-input")
+                                .val();
+                              const fileInput =
+                                form.find(".file-upload-input-breakdown")[0].files[0];
+
+                              if (!fileInput) {
+                                alert("Please select a file to upload.");
+                                return;
+                              }
+
+                              // Create FormData
+                              const uploadData = new FormData();
+                              uploadData.append(
+                                "Date",
+                                new Date().toISOString().split("T")[0]
+                              );
+                              uploadData.append("ProjectId", projectId);
+                              uploadData.append("Subject", subject);
+                              uploadData.append("Location", location);
+                              uploadData.append("file", fileInput);
+
+                              // Perform the upload
+                              fetch(
+                                `${API_BASE_URL}/breakdown_management_services/api/breakdowns/import`,
+                                {
+                                  method: "POST",
+                                  body: uploadData,
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                }
+                              )
+                                .then((response) => {
+                                  if (!response.ok) {
+                                    throw new Error("Upload failed");
+                                  }
+                                  return response.json();
+                                })
+                                .then((data) => {
+                                  console.log(data);
+                                  const grandTotal = data.data.Total; // Extract grandTotal from the response
+
+                                  // Call the API to update the project with SPH details
+                                  return fetch(
+                                    `${API_BASE_URL}/project_management_services/api/projects/${projectId}`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${localStorage.getItem(
+                                          "authToken"
+                                        )}`,
+                                      },
+                                      body: JSON.stringify({                                    
+                                        TotalBreakdown: grandTotal,
+                                      }),
+                                    }
+                                  );
+                                })
+                                .then((response) => {
+                                  if (!response.ok) {
+                                    throw new Error("Project update failed");
+                                  }
+                                  return response.json();
+                                })
+                                .then(() => {
+                                  pollDataReload(options.component); // Reload data
+                                  DevExpress.ui.notify(
+                                    "SPH uploaded and project updated successfully!",
+                                    "success",
+                                    2000
+                                  );
+
+                                  const modal = bootstrap.Modal.getInstance(
+                                    document.getElementById("uploadBreakdownModal")
+                                  );
+                                  modal.hide();
+                                })
+                                .catch((error) => {
+                                  console.error("Error:", error);
+                                  alert(
+                                    "An error occurred during the process."
+                                  );
+                                });
+                            });
+                          //sini
+                          const gridInstance = $("<div>").dxDataGrid({
                             dataSource: new DevExpress.data.CustomStore({
                               key: "BreakdownId",
                               load: function () {
@@ -1664,7 +1806,9 @@
                                   .appendTo(breakdownContainer);
                               },
                             },
-                          });
+                          })   .appendTo(container);
+
+return container;
                         },
                       },
                       {
@@ -2802,8 +2946,9 @@
                                 .find(".mandor-input")
                                 .val();
 
-                              const fileInput =
-                                form.find(".file-upload-input-spk")[0].files[0];
+                              const fileInput = form.find(
+                                ".file-upload-input-spk"
+                              )[0].files[0];
 
                               if (!fileInput) {
                                 alert("Please select a file to upload.");
@@ -3239,7 +3384,7 @@
                                 },
                                 {
                                   dataField: "TotalMaterial",
-                                  caption: "Total Material", //sini
+                                  caption: "Total Material",
                                   format: {
                                     type: "currency",
                                     currency: "IDR",
@@ -3253,142 +3398,7 @@
                                     },
                                   },
                                 },
-                                {
-                                  caption: "BA",
-                                  type: "buttons",
-                                  buttons: [
-                                    {
-                                      hint: "Generate BA",
-                                      icon: "export", // Use a predefined DevExtreme icon
-                                      onClick: function (e) {
-                                        const data = e.row.data;
 
-                                        // Create and show the popup
-                                        const popup = $("<div>")
-                                          .appendTo("body")
-                                          .dxPopup({
-                                            title: "Generate BA",
-                                            visible: true,
-                                            width: 500,
-                                            height: 400,
-                                            closeOnOutsideClick: true,
-                                            showCloseButton: true,
-                                            contentTemplate: function (
-                                              contentElement
-                                            ) {
-                                              const formContainer =
-                                                $("<div>").appendTo(
-                                                  contentElement
-                                                );
-
-                                              // Display SPH and Subject information
-                                              formContainer.append(`
-                      <div style="padding: 20px;">
-                        <div>
-                          <label><b>SPK:</b></label>
-                          <span>${data.Subject}</span>
-                        </div>
-                        <div style="margin-top: 20px;">
-                          <label><b>Description:</b></label>
-                        </div>
-                      </div>
-                    `);
-
-                                              // Add TextArea for user input
-                                              const textArea = $("<div>")
-                                                .dxTextArea({
-                                                  height: 100,
-                                                  placeholder:
-                                                    "Enter description...",
-                                                })
-                                                .appendTo(formContainer);
-
-                                              // Add Button to call the API
-                                              $(
-                                                "<div style='margin-top: 20px;'>"
-                                              )
-                                                .dxButton({
-                                                  text: "Submit",
-                                                  type: "success",
-                                                  onClick: function () {
-                                                    // Get user input from TextArea
-                                                    const description = textArea
-                                                      .dxTextArea("instance")
-                                                      .option("value");
-
-                                                    // API Request Payload
-                                                    const payload = {
-                                                      BADate: new Date()
-                                                        .toISOString()
-                                                        .split("T")[0],
-                                                      ProjectId: data.ProjectId,
-                                                      ProjectName:
-                                                        data.ProjectName,
-                                                      BASubject:
-                                                        description ||
-                                                        data.Subject, // Use description if provided
-                                                      SphId: data.SphId,
-                                                    };
-
-                                                    // Call the API
-                                                    $.ajax({
-                                                      url: `${API_BASE_URL}/ba_services/api/ba`,
-                                                      method: "POST",
-                                                      contentType:
-                                                        "application/json",
-                                                      data: JSON.stringify(
-                                                        payload
-                                                      ),
-                                                      headers: {
-                                                        Authorization: `Bearer ${localStorage.getItem(
-                                                          "authToken"
-                                                        )}`,
-                                                      },
-                                                      success: function () {
-                                                        pollDataReload(
-                                                          options.component
-                                                        );
-                                                        DevExpress.ui.notify(
-                                                          "SPK generated successfully!",
-                                                          "success",
-                                                          2000
-                                                        );
-
-                                                        // Close popup on success
-                                                        const popupInstance =
-                                                          popup.dxPopup(
-                                                            "instance"
-                                                          );
-                                                        if (popupInstance)
-                                                          popupInstance.hide();
-                                                      },
-                                                      error: function (err) {
-                                                        console.error(
-                                                          "Failed to generate SPK:",
-                                                          err
-                                                        );
-                                                        DevExpress.ui.notify(
-                                                          "Failed to generate SPK.",
-                                                          "error",
-                                                          2000
-                                                        );
-                                                      },
-                                                    });
-                                                  },
-                                                })
-                                                .appendTo(formContainer);
-                                            },
-                                          })
-                                          .dxPopup("instance");
-
-                                        // Correctly hide the popup on close
-                                        popup.option("onHiding", function () {
-                                          popup.element().remove();
-                                        });
-                                      },
-                                    },
-                                  ],
-                                },
                                 {
                                   type: "buttons",
                                   buttons: [
@@ -3457,424 +3467,657 @@
                       {
                         title: "BA",
                         template: function () {
-                          const masterGridContainer = $("<div>");
+                          // Add Upload button and container for grid
+                          const container = $("<div>")
+                            .append(
+                              $(
+                                "<button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#uploadModalBA'>"
+                              ).text("Upload BA")
+                            )
+                            .append($("<div>").attr("id", "grid-container"));
 
-                          // Generate the Master Grid
-                          const masterGrid = masterGridContainer.dxDataGrid({
-                            dataSource: new DevExpress.data.CustomStore({
-                              key: "ProgressId",
-                              load: function () {
-                                return $.ajax({
-                                  url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
-                                  method: "GET",
+                          // Bootstrap Modal for Upload BA
+                          const modalHtml = `
+<div class="modal fade" id="uploadModalBA" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+<div class="modal-content">
+  <form class="upload-form-ba">
+    <div class="modal-header">
+      <h5 class="modal-title" id="uploadModalLabel">Upload BA</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="subject" class="form-label">Subject</label>
+        <input type="text" class="form-control subject-input-ba" required />
+      </div>
+      <div class="mb-3">
+        <label for="RecepientName" class="form-label">Recepient Name</label>
+        <input type="text" class="form-control RecepientName-input" />
+      </div>
+      <div class="mb-3">
+        <label for="fileUpload" class="form-label">File</label>
+        <input type="file" class="form-control file-upload-input-ba" accept=".xlsx" required />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button type="submit" class="btn btn-primary">Upload</button>
+    </div>
+  </form>
+</div>
+</div>
+</div>`;
+
+                          $(modalHtml).appendTo("body");
+
+                          // Handle form submission using event delegation for dynamic forms
+                          $(document)
+                            .off("submit", ".upload-form-ba")
+                            .on("submit", ".upload-form-ba", function (e) {
+                              e.preventDefault();
+
+                              // Collect form data
+                              const form = $(this);
+                              const subject = form
+                                .find(".subject-input-ba")
+                                .val();
+                              const recipientName = form
+                                .find(".RecepientName-input")
+                                .val();
+
+                              const fileInput = form.find(
+                                ".file-upload-input-ba"
+                              )[0].files[0];
+
+                              if (!fileInput) {
+                                alert("Please select a file to upload.");
+                                return;
+                              }
+
+                              // Create FormData
+                              const uploadData = new FormData();
+                              uploadData.append(
+                                "Date",
+                                new Date().toISOString().split("T")[0]
+                              );
+                              uploadData.append("ProjectId", projectId);
+                              uploadData.append("Subject", subject);
+                              uploadData.append("RecepientName", recipientName);
+                              uploadData.append("file", fileInput);
+
+                              // Perform the upload
+                              fetch(
+                                `${API_BASE_URL}/ba_services/api/ba/import`,
+                                {
+                                  method: "POST",
+                                  body: uploadData,
                                   headers: {
                                     Authorization: `Bearer ${localStorage.getItem(
                                       "authToken"
                                     )}`,
                                   },
-                                }).then((data) => {
-                                  const progressStages = [];
-                                  let totalPriceSum = 0; // Initialize total price sum
-
-                                  if (data) {
-                                    data.forEach((ba) => {
-                                      ba.Sections.forEach((section) => {
-                                        section.Details.forEach((detail) => {
-                                          totalPriceSum +=
-                                            parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
-                                        });
-                                      });
-                                    });
-
-                                    data.forEach((ba) => {
-                                      ba.Sections.forEach((section) => {
-                                        section.Details.forEach((detail) => {
-                                          // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
-                                          if (detail.Progress) {
-                                            detail.Progress.forEach(
-                                              (progress, index) => {
-                                                const progressId = `Progress-${
-                                                  index + 1
-                                                }`;
-                                                if (
-                                                  !progressStages.find(
-                                                    (stage) =>
-                                                      stage.ProgressId ===
-                                                      progressId
-                                                  )
-                                                ) {
-                                                  progressStages.push({
-                                                    ProgressId: progressId,
-                                                    ProgressName: `Progress ${
-                                                      index + 1
-                                                    }`,
-                                                    ProgressIndex: index,
-                                                    TotalPriceSum:
-                                                      totalPriceSum, // Pass TotalPriceSum to context
-                                                    Sections: ba.Sections, // Pass sections to detail grid
-                                                  });
-                                                }
-                                              }
-                                            );
-                                          }
-                                        });
-                                      });
-                                    });
+                                }
+                              )
+                                .then((response) => {
+                                  if (!response.ok) {
+                                    throw new Error("Upload failed");
                                   }
-
-                                  return progressStages;
-                                });
-                              },
-                            }),
-                            keyExpr: "ProgressId",
-                            showBorders: true,
-                            columnAutoWidth: true,
-                            wordWrapEnabled: true,
-                            columns: [
-                              {
-                                dataField: "ProgressName",
-                                caption: "Progress Stage",
-                              },
-                            ],
-                            onCellPrepared: function (e) {
-                              if (
-                                e.rowType === "data" &&
-                                e.column.allowEditing === false
-                              ) {
-                                // Apply custom style to non-editable cells
-                                e.cellElement.css({
-                                  backgroundColor: "#f5f5f5", // Light gray background
-                                  color: "#999", // Light text color
-                                });
-                              }
-                            },
-                            masterDetail: {
-                              enabled: true,
-                              template: function (container, options) {
-                                const detailGridContainer =
-                                  $("<div>").appendTo(container);
-                                const progressIndex =
-                                  options.data.ProgressIndex;
-                                const totalPriceSum =
-                                  options.data.TotalPriceSum; // Use TotalPriceSum from master grid
-
-                                const detailData = [];
-                                let rowIdCounter = 0; // Initialize counter for unique RowId
-
-                                options.data.Sections.forEach((section) => {
-                                  detailData.push({
-                                    RowId: `section-${rowIdCounter++}`, // Assign unique RowId for section rows
-                                    SectionName: section.SectionName,
-                                    isSection: true,
-                                  });
-                                  section.Details.forEach((detail) => {
-                                    console.log(detail, "detail");
-                                    console.log(section, "detail");
-
-                                    if (detail.Progress?.[progressIndex]) {
-                                      const progress =
-                                        detail.Progress[progressIndex];
-                                      detailData.push({
-                                        RowId: `detail-${rowIdCounter++}`, // Assign unique RowId for detail rows
-                                        ...detail,
-                                        ProgressCurrentM2:
-                                          progress.ProgressCurrentM2,
-                                        ProgressCurrentPercentage:
-                                          progress.ProgressCurrentPercentage,
-                                        SectionID: section.BASectionId,
-                                        BAID: section.BAID, // Include BAID from context
-                                        ProgressID: progress.BAProgressId, // Progress ID
-                                      });
-                                    }
-                                  });
-                                });
-
-                                // Render the Detail Grid
-                                detailGridContainer.dxDataGrid({
-                                  dataSource: detailData,
-                                  keyExpr: "RowId",
-                                  showBorders: true,
-                                  columnAutoWidth: true,
-                                  wordWrapEnabled: true,
-                                  editing: {
-                                    mode: "batch",
-                                    allowUpdating: true,
-                                    startEditAction: "click",
-                                  },
-                                  onCellPrepared: function (e) {
-                                    if (
-                                      e.rowType === "data" &&
-                                      e.column.allowEditing === false
-                                    ) {
-                                      // Apply custom style to non-editable cells
-                                      e.cellElement.css({
-                                        backgroundColor: "#f5f5f5", // Light gray background
-                                        color: "#999", // Light text color
-                                      });
-                                    }
-                                  },
-                                  columns: [
+                                  return response.json();
+                                })
+                                .then((data) => {
+                                  console.log(data);
+                                  // Call the API to update the project with SPH details
+                                  return fetch(
+                                    `${API_BASE_URL}/project_management_services/api/projects/${projectId}`,
                                     {
-                                      dataField: "SectionName",
-                                      caption: "Installation Area",
-                                      cellTemplate: function (
-                                        container,
-                                        options
-                                      ) {
-                                        if (options.data.isSection) {
-                                          $("<div>")
-                                            .css({ fontWeight: "bold" })
-                                            .text(options.data.SectionName)
-                                            .appendTo(container);
-                                        } else {
-                                          $("<div>")
-                                            .text(options.data.ItemName || "-")
-                                            .appendTo(container);
-                                        }
-                                      },
-                                      allowEditing: false,
-                                      fixed: true,
-                                      fixedPosition: "left",
-                                    },
-                                    {
-                                      dataField: "Quantity",
-                                      caption: "Qty",
-                                      dataType: "number",
-                                      alignment: "right",
-                                      allowEditing: false,
-                                      fixed: true,
-                                      fixedPosition: "left",
-                                    },
-                                    {
-                                      dataField: "Unit",
-                                      caption: "Unit",
-                                      alignment: "center",
-                                      allowEditing: false,
-                                      fixed: true,
-                                      fixedPosition: "left",
-                                    },
-                                    {
-                                      dataField: "WeightPercentage",
-                                      caption: "Weight Percentage",
-                                      dataType: "number",
-                                      alignment: "right",
-                                      allowEditing: false,
-                                      fixed: true,
-                                      fixedPosition: "left",
-                                    },
-                                    ...(progressIndex > 0
-                                      ? [
-                                          {
-                                            caption: "Previous Progress",
-                                            alignment: "center",
-                                            columns: [
-                                              {
-                                                dataField: "ProgressPreviousM2",
-                                                caption: "M2",
-                                                dataType: "number",
-                                                alignment: "right",
-                                                allowEditing: false,
-                                              },
-                                              {
-                                                dataField:
-                                                  "ProgressPreviousPercentage",
-                                                caption: "%",
-                                                dataType: "number",
-                                                alignment: "right",
-                                                allowEditing: false,
-                                              },
-                                            ],
-                                          },
-                                        ]
-                                      : []),
-                                    {
-                                      caption: "Current Progress",
-                                      alignment: "center",
-                                      columns: [
-                                        {
-                                          dataField: "ProgressCurrentM2",
-                                          caption: "M2",
-                                          dataType: "number",
-                                          alignment: "right",
-                                          allowEditing: true,
-                                        },
-                                        {
-                                          dataField:
-                                            "ProgressCurrentPercentage",
-                                          caption: "%",
-                                          dataType: "number",
-                                          alignment: "right",
-                                          allowEditing: false,
-                                          calculateCellValue: function (data) {
-                                            if (
-                                              data.isSection ||
-                                              totalPriceSum === 0
-                                            ) {
-                                              return 0; // Avoid NaN and handle sections
-                                            }
-
-                                            const discountedPrice =
-                                              data.UnitPrice -
-                                              (data.UnitPrice *
-                                                data.DiscountPrice) /
-                                                100;
-
-                                            const percentage =
-                                              ((data.ProgressCurrentM2 *
-                                                discountedPrice) /
-                                                totalPriceSum) *
-                                              100;
-
-                                            return isNaN(percentage)
-                                              ? 0
-                                              : percentage.toFixed(2); // Ensure valid output
-                                          },
-                                        },
-                                      ],
-                                    },
-                                  ],
-                                  onRowUpdating: function (e) {
-                                    // Calculate TotalPrice before updating
-                                    const updatedData = {
-                                      ...e.oldData,
-                                      ...e.newData, // Merge old data with new data
-                                    };
-
-                                    const unitPrice =
-                                      updatedData.UnitPrice || 0;
-                                    const discountPrice =
-                                      updatedData.DiscountPrice || 0;
-                                    const progressCurrentM2 =
-                                      updatedData.ProgressCurrentM2 || 0;
-
-                                    const discountedPrice =
-                                      unitPrice -
-                                      (unitPrice * discountPrice) / 100;
-
-                                    const percentage =
-                                      ((progressCurrentM2 * discountedPrice) /
-                                        totalPriceSum) *
-                                      100;
-
-                                    updatedData.ProgressCurrentPercentage =
-                                      isNaN(percentage)
-                                        ? 0
-                                        : parseFloat(percentage.toFixed(2));
-
-                                    // Update the `newData` to include the calculated ProgressCurrentPercentage
-                                    e.newData = {
-                                      ...e.newData,
-                                      ProgressCurrentPercentage:
-                                        updatedData.ProgressCurrentPercentage,
-                                    };
-
-                                    // API update logic
-                                    const baId = e.oldData.BAID;
-                                    const sectionId = e.oldData.SectionID;
-                                    const detailId = e.oldData.DetailId;
-                                    const progressId = e.oldData.ProgressID;
-
-                                    if (
-                                      !baId ||
-                                      !sectionId ||
-                                      !detailId ||
-                                      !progressId
-                                    ) {
-                                      DevExpress.ui.notify(
-                                        "Failed to update: Required IDs are missing.",
-                                        "error",
-                                        2000
-                                      );
-                                      e.cancel = true;
-                                      return;
-                                    }
-
-                                    DevExpress.ui.notify(
-                                      "Updating item...",
-                                      "info",
-                                      2000
-                                    );
-
-                                    return $.ajax({
-                                      url: `${API_BASE_URL}/ba_services/api/ba/${baId}/sections/${sectionId}/details/${detailId}/progress/${progressId}`,
                                       method: "PUT",
                                       headers: {
+                                        "Content-Type": "application/json",
                                         Authorization: `Bearer ${localStorage.getItem(
                                           "authToken"
                                         )}`,
-                                        "Content-Type": "application/json",
                                       },
-                                      data: JSON.stringify(e.newData),
-                                    })
-                                      .done(() => {
-                                        DevExpress.ui.notify(
-                                          "Item updated successfully!",
-                                          "success",
-                                          2000
-                                        );
-                                      })
-                                      .fail(() => {
-                                        DevExpress.ui.notify(
-                                          "Failed to update item.",
-                                          "error",
-                                          2000
-                                        );
-                                      });
-                                  },
+                                      body: JSON.stringify({
+                                        ProgressCurrentM2:
+                                          data.data.ProgressCurrentM2,
+                                        ProgressCurrentPercentage:
+                                          data.data.ProgressCurrentPercentage,
+                                      }),
+                                    }
+                                  );
+                                })
+                                .then((response) => {
+                                  if (!response.ok) {
+                                    throw new Error("Project update failed");
+                                  }
+                                  return response.json();
+                                })
+                                .then(() => {
+                                  pollDataReload(options.component); // Reload data
+                                  DevExpress.ui.notify(
+                                    "BA uploaded and project updated successfully!",
+                                    "success",
+                                    2000
+                                  );
 
-                                  summary: {
-                                    totalItems: [
+                                  const modal = bootstrap.Modal.getInstance(
+                                    document.getElementById("uploadModalBA")
+                                  );
+                                  modal.hide();
+                                })
+                                .catch((error) => {
+                                  console.error("Error:", error);
+                                  alert(
+                                    "An error occurred during the process."
+                                  );
+                                });
+                            });
+
+                          const masterGridContainer = $("<div>");
+
+                          // Generate the Master Grid
+                          const masterGrid = masterGridContainer
+                            .dxDataGrid({
+                              dataSource: new DevExpress.data.CustomStore({
+                                key: "ProgressId",
+                                load: function () {
+                                  return $.ajax({
+                                    url: `${API_BASE_URL}/ba_services/api/ba/filter?project_id=${projectId}`,
+                                    method: "GET",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                    },
+                                  }).then((data) => {
+                                    const progressStages = [];
+                                    let totalPriceSum = 0; // Initialize total price sum
+
+                                    if (data) {
+                                      data.forEach((ba) => {
+                                        ba.Sections.forEach((section) => {
+                                          section.Details.forEach((detail) => {
+                                            totalPriceSum +=
+                                              parseFloat(detail.TotalPrice) ||
+                                              0; // Aggregate TotalPrice
+                                          });
+                                        });
+                                      });
+
+                                      data.forEach((ba) => {
+                                        ba.Sections.forEach((section) => {
+                                          section.Details.forEach((detail) => {
+                                            // totalPriceSum += parseFloat(detail.TotalPrice) || 0; // Aggregate TotalPrice
+                                            if (detail.Progress) {
+                                              detail.Progress.forEach(
+                                                (progress, index) => {
+                                                  const progressId = `Progress-${
+                                                    index + 1
+                                                  }`;
+                                                  if (
+                                                    !progressStages.find(
+                                                      (stage) =>
+                                                        stage.ProgressId ===
+                                                        progressId
+                                                    )
+                                                  ) {
+                                                    progressStages.push({
+                                                      BAId: ba.BAId,
+                                                      ProgressId: progressId,
+                                                      ProgressName:
+                                                        ba.BASubject,
+                                                      ProgressIndex: index,
+                                                      TotalPriceSum:
+                                                        totalPriceSum, // Pass TotalPriceSum to context
+                                                      Sections: ba.Sections, // Pass sections to detail grid
+                                                    });
+                                                  }
+                                                }
+                                              );
+                                            }
+                                          });
+                                        });
+                                      });
+                                    }
+
+                                    return progressStages;
+                                  });
+                                },
+                                remove: function (key) {
+                                  // Perform API delete request here
+                                  return $.ajax({
+                                    url: `${API_BASE_URL}/ba_services/api/ba/${key}`,
+                                    method: "DELETE",
+                                    headers: {
+                                      Authorization: `Bearer ${localStorage.getItem(
+                                        "authToken"
+                                      )}`,
+                                    },
+                                  })
+                                    .done(() => {
+                                      DevExpress.ui.notify(
+                                        "Item deleted successfully!",
+                                        "success",
+                                        2000
+                                      );
+                                    })
+                                    .fail(() => {
+                                      DevExpress.ui.notify(
+                                        "Failed to delete item.",
+                                        "error",
+                                        2000
+                                      );
+                                      throw new Error("Failed to delete item."); // Throw error to cancel deletion
+                                    });
+                                },
+                              }),
+                              keyExpr: "ProgressId",
+                              showBorders: true,
+                              columnAutoWidth: true,
+                              wordWrapEnabled: true,
+                              columns: [
+                                {
+                                  dataField: "ProgressName",
+                                  caption: "Progress Stage",
+                                },
+                              ],
+                              editing: {
+                                allowUpdating: false,
+                                allowAdding: false,
+                                allowDeleting: true, // Enable delete only at the master grid level
+                              },
+                              onRowRemoving: function (e) {
+                                console.log(e);
+                                const baId = e.data.BAId; // Get the BAID for the row being deleted
+
+                                if (!baId) {
+                                  DevExpress.ui.notify(
+                                    "Failed to delete: BAID is missing.",
+                                    "error",
+                                    2000
+                                  );
+                                  e.cancel = true; // Prevent deletion if BAID is missing
+                                  return;
+                                }
+
+                                DevExpress.ui.notify(
+                                  "Deleting item...",
+                                  "info",
+                                  2000
+                                );
+
+                                return $.ajax({
+                                  url: `${API_BASE_URL}/ba_services/api/ba/${baId}`,
+                                  method: "DELETE",
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem(
+                                      "authToken"
+                                    )}`,
+                                  },
+                                })
+                                  .done(() => {
+                                    DevExpress.ui.notify(
+                                      "Item deleted successfully!",
+                                      "success",
+                                      2000
+                                    );
+                                  })
+                                  .fail(() => {
+                                    DevExpress.ui.notify(
+                                      "Failed to delete item.",
+                                      "error",
+                                      2000
+                                    );
+                                    e.cancel = true; // Prevent row deletion if the API fails
+                                  });
+                              },
+
+                              onCellPrepared: function (e) {
+                                if (
+                                  e.rowType === "data" &&
+                                  e.column.allowEditing === false
+                                ) {
+                                  // Apply custom style to non-editable cells
+                                  e.cellElement.css({
+                                    backgroundColor: "#f5f5f5", // Light gray background
+                                    color: "#999", // Light text color
+                                  });
+                                }
+                              },
+                              masterDetail: {
+                                enabled: true,
+                                template: function (container, options) {
+                                  const detailGridContainer =
+                                    $("<div>").appendTo(container);
+                                  const progressIndex =
+                                    options.data.ProgressIndex;
+                                  const totalPriceSum =
+                                    options.data.TotalPriceSum; // Use TotalPriceSum from master grid
+
+                                  const detailData = [];
+                                  let rowIdCounter = 0; // Initialize counter for unique RowId
+
+                                  options.data.Sections.forEach((section) => {
+                                    detailData.push({
+                                      RowId: `section-${rowIdCounter++}`, // Assign unique RowId for section rows
+                                      SectionName: section.SectionName,
+                                      isSection: true,
+                                    });
+                                    section.Details.forEach((detail) => {
+                                      console.log(detail, "detail");
+                                      console.log(section, "detail");
+
+                                      if (detail.Progress?.[progressIndex]) {
+                                        const progress =
+                                          detail.Progress[progressIndex];
+                                        detailData.push({
+                                          RowId: `detail-${rowIdCounter++}`, // Assign unique RowId for detail rows
+                                          ...detail,
+                                          ProgressCurrentM2:
+                                            progress.ProgressCurrentM2,
+                                          ProgressCurrentPercentage:
+                                            progress.ProgressCurrentPercentage,
+                                          SectionID: section.BASectionId,
+                                          BAID: section.BAID, // Include BAID from context
+                                          ProgressID: progress.BAProgressId, // Progress ID
+                                        });
+                                      }
+                                    });
+                                  });
+
+                                  // Render the Detail Grid
+                                  detailGridContainer.dxDataGrid({
+                                    dataSource: detailData,
+                                    keyExpr: "RowId",
+                                    showBorders: true,
+                                    columnAutoWidth: true,
+                                    wordWrapEnabled: true,
+                                    editing: {
+                                      mode: "batch",
+                                      allowUpdating: true,
+                                      startEditAction: "click",
+                                    },
+                                    onCellPrepared: function (e) {
+                                      if (
+                                        e.rowType === "data" &&
+                                        e.column.allowEditing === false
+                                      ) {
+                                        // Apply custom style to non-editable cells
+                                        e.cellElement.css({
+                                          backgroundColor: "#f5f5f5", // Light gray background
+                                          color: "#999", // Light text color
+                                        });
+                                      }
+                                    },
+                                    columns: [
                                       {
-                                        column: "WeightPercentage",
-                                        summaryType: "sum",
-                                        displayFormat: "Total: {0}%",
-                                        valueFormat: "fixedPoint",
+                                        dataField: "SectionName",
+                                        caption: "Installation Area",
+                                        cellTemplate: function (
+                                          container,
+                                          options
+                                        ) {
+                                          if (options.data.isSection) {
+                                            $("<div>")
+                                              .css({ fontWeight: "bold" })
+                                              .text(options.data.SectionName)
+                                              .appendTo(container);
+                                          } else {
+                                            $("<div>")
+                                              .text(
+                                                options.data.ItemName || "-"
+                                              )
+                                              .appendTo(container);
+                                          }
+                                        },
+                                        allowEditing: false,
+                                        fixed: true,
+                                        fixedPosition: "left",
+                                      },
+                                      {
+                                        dataField: "Quantity",
+                                        caption: "Qty",
+                                        dataType: "number",
+                                        alignment: "right",
+                                        allowEditing: false,
+                                        fixed: true,
+                                        fixedPosition: "left",
+                                      },
+                                      {
+                                        dataField: "Unit",
+                                        caption: "Unit",
+                                        alignment: "center",
+                                        allowEditing: false,
+                                        fixed: true,
+                                        fixedPosition: "left",
+                                      },
+                                      {
+                                        dataField: "WeightPercentage",
+                                        caption: "Weight Percentage",
+                                        dataType: "number",
+                                        alignment: "right",
+                                        allowEditing: false,
+                                        fixed: true,
+                                        fixedPosition: "left",
                                       },
                                       ...(progressIndex > 0
                                         ? [
                                             {
-                                              column: "ProgressPreviousM2",
-                                              summaryType: "sum",
-                                              displayFormat: "Total: {0}",
-                                              valueFormat: "fixedPoint",
-                                            },
-                                            {
-                                              column:
-                                                "ProgressPreviousPercentage",
-                                              summaryType: "sum",
-                                              displayFormat: "Total: {0}%",
-                                              valueFormat: "fixedPoint",
+                                              caption: "Previous Progress",
+                                              alignment: "center",
+                                              columns: [
+                                                {
+                                                  dataField:
+                                                    "ProgressPreviousM2",
+                                                  caption: "M2",
+                                                  dataType: "number",
+                                                  alignment: "right",
+                                                  allowEditing: false,
+                                                },
+                                                {
+                                                  dataField:
+                                                    "ProgressPreviousPercentage",
+                                                  caption: "%",
+                                                  dataType: "number",
+                                                  alignment: "right",
+                                                  allowEditing: false,
+                                                },
+                                              ],
                                             },
                                           ]
                                         : []),
                                       {
-                                        column: "ProgressCurrentM2",
-                                        summaryType: "sum",
-                                        displayFormat: "Total: {0}",
-                                        valueFormat: "fixedPoint",
-                                      },
-                                      {
-                                        column: "ProgressCurrentPercentage",
-                                        summaryType: "sum",
-                                        displayFormat: "Total: {0}%",
-                                        valueFormat: "fixedPoint",
+                                        caption: "Current Progress",
+                                        alignment: "center",
+                                        columns: [
+                                          {
+                                            dataField: "ProgressCurrentM2",
+                                            caption: "M2",
+                                            dataType: "number",
+                                            alignment: "right",
+                                            allowEditing: true,
+                                          },
+                                          {
+                                            dataField:
+                                              "ProgressCurrentPercentage",
+                                            caption: "%",
+                                            dataType: "number",
+                                            alignment: "right",
+                                            allowEditing: false,
+                                            calculateCellValue: function (
+                                              data
+                                            ) {
+                                              if (
+                                                data.isSection ||
+                                                totalPriceSum === 0
+                                              ) {
+                                                return 0; // Avoid NaN and handle sections
+                                              }
+
+                                              const discountedPrice =
+                                                data.UnitPrice -
+                                                (data.UnitPrice *
+                                                  data.DiscountPrice) /
+                                                  100;
+
+                                              const percentage =
+                                                ((data.ProgressCurrentM2 *
+                                                  discountedPrice) /
+                                                  totalPriceSum) *
+                                                100;
+
+                                              return isNaN(percentage)
+                                                ? 0
+                                                : percentage.toFixed(2); // Ensure valid output
+                                            },
+                                          },
+                                        ],
                                       },
                                     ],
-                                  },
-                                  rowPrepared: function (info) {
-                                    if (info.data && info.data.isSection) {
-                                      info.rowElement.css({
-                                        fontWeight: "bold",
-                                        backgroundColor: "#f9f9f9",
-                                      });
-                                    }
-                                  },
-                                });
-                              },
-                            },
-                          });
+                                    onRowUpdating: function (e) {
+                                      // Calculate TotalPrice before updating
+                                      const updatedData = {
+                                        ...e.oldData,
+                                        ...e.newData, // Merge old data with new data
+                                      };
 
-                          return masterGridContainer;
+                                      const unitPrice =
+                                        updatedData.UnitPrice || 0;
+                                      const discountPrice =
+                                        updatedData.DiscountPrice || 0;
+                                      const progressCurrentM2 =
+                                        updatedData.ProgressCurrentM2 || 0;
+
+                                      const discountedPrice =
+                                        unitPrice -
+                                        (unitPrice * discountPrice) / 100;
+
+                                      const percentage =
+                                        ((progressCurrentM2 * discountedPrice) /
+                                          totalPriceSum) *
+                                        100;
+
+                                      updatedData.ProgressCurrentPercentage =
+                                        isNaN(percentage)
+                                          ? 0
+                                          : parseFloat(percentage.toFixed(2));
+
+                                      // Update the `newData` to include the calculated ProgressCurrentPercentage
+                                      e.newData = {
+                                        ...e.newData,
+                                        ProgressCurrentPercentage:
+                                          updatedData.ProgressCurrentPercentage,
+                                      };
+
+                                      // API update logic
+                                      const baId = e.oldData.BAID;
+                                      const sectionId = e.oldData.SectionID;
+                                      const detailId = e.oldData.DetailId;
+                                      const progressId = e.oldData.ProgressID;
+
+                                      if (
+                                        !baId ||
+                                        !sectionId ||
+                                        !detailId ||
+                                        !progressId
+                                      ) {
+                                        DevExpress.ui.notify(
+                                          "Failed to update: Required IDs are missing.",
+                                          "error",
+                                          2000
+                                        );
+                                        e.cancel = true;
+                                        return;
+                                      }
+
+                                      DevExpress.ui.notify(
+                                        "Updating item...",
+                                        "info",
+                                        2000
+                                      );
+
+                                      return $.ajax({
+                                        url: `${API_BASE_URL}/ba_services/api/ba/${baId}/sections/${sectionId}/details/${detailId}/progress/${progressId}`,
+                                        method: "PUT",
+                                        headers: {
+                                          Authorization: `Bearer ${localStorage.getItem(
+                                            "authToken"
+                                          )}`,
+                                          "Content-Type": "application/json",
+                                        },
+                                        data: JSON.stringify(e.newData),
+                                      })
+                                        .done(() => {
+                                          DevExpress.ui.notify(
+                                            "Item updated successfully!",
+                                            "success",
+                                            2000
+                                          );
+                                        })
+                                        .fail(() => {
+                                          DevExpress.ui.notify(
+                                            "Failed to update item.",
+                                            "error",
+                                            2000
+                                          );
+                                        });
+                                    },
+
+                                    summary: {
+                                      totalItems: [
+                                        {
+                                          column: "WeightPercentage",
+                                          summaryType: "sum",
+                                          displayFormat: "Total: {0}%",
+                                          valueFormat: "fixedPoint",
+                                        },
+                                        ...(progressIndex > 0
+                                          ? [
+                                              {
+                                                column: "ProgressPreviousM2",
+                                                summaryType: "sum",
+                                                displayFormat: "Total: {0}",
+                                                valueFormat: "fixedPoint",
+                                              },
+                                              {
+                                                column:
+                                                  "ProgressPreviousPercentage",
+                                                summaryType: "sum",
+                                                displayFormat: "Total: {0}%",
+                                                valueFormat: "fixedPoint",
+                                              },
+                                            ]
+                                          : []),
+                                        {
+                                          column: "ProgressCurrentM2",
+                                          summaryType: "sum",
+                                          displayFormat: "Total: {0}",
+                                          valueFormat: "fixedPoint",
+                                        },
+                                        {
+                                          column: "ProgressCurrentPercentage",
+                                          summaryType: "sum",
+                                          displayFormat: "Total: {0}%",
+                                          valueFormat: "fixedPoint",
+                                        },
+                                      ],
+                                    },
+                                    rowPrepared: function (info) {
+                                      if (info.data && info.data.isSection) {
+                                        info.rowElement.css({
+                                          fontWeight: "bold",
+                                          backgroundColor: "#f9f9f9",
+                                        });
+                                      }
+                                    },
+                                  });
+                                },
+                              },
+                            })
+                            .appendTo(container);
+
+                          return container;
                         },
                       },
                     ],

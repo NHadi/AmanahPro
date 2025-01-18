@@ -292,3 +292,16 @@ func (s *ProjectService) UpdateProjectUser(project *models.ProjectUser) error {
 	log.Printf("Successfully updated project user: %+v", project)
 	return nil
 }
+
+// GetCombinedFinancialData retrieves financial summary data along with details for each project.
+func (s *ProjectFinancialService) GetProjectFinancialSPVSummary(userID int) ([]dto.ProjectFinancialSPVSummaryDTO, error) {
+	// Fetch summaries
+	summaries, err := s.projectFinancialRepo.GetProjectFinancialSPVSummary(userID)
+	if err != nil {
+		log.Printf("Error fetching project financial summaries: %v", err)
+		return nil, err
+	}
+
+	log.Println("Successfully combined project financial data")
+	return summaries, nil
+}

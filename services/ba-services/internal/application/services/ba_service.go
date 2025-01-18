@@ -3,12 +3,19 @@ package services
 import (
 	"AmanahPro/services/ba-services/internal/domain/models"
 	"AmanahPro/services/ba-services/internal/domain/repositories"
+	"AmanahPro/services/ba-services/internal/dto"
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
+	"time"
+	"unicode"
 
 	"github.com/NHadi/AmanahPro-common/messagebroker"
 	pb "github.com/NHadi/AmanahPro-common/protos"
+	"github.com/xuri/excelize/v2"
 )
 
 type BAService struct {
@@ -387,4 +394,211 @@ func (s *BAService) PublishFullReindexEvent(BAId int, traceID string, userID int
 
 	log.Printf("Successfully triggered re-index for BAId: %d", BAId)
 	return nil
+}
+
+func (s *BAService) ImportFromExcel(metadata dto.BAImportDTO, fileBytes []byte, organizationID int, userID int) (models.BA, error) {
+	// Load Excel from bytes
+	f, err := excelize.OpenReader(bytes.NewReader(fileBytes))
+	if err != nil {
+		return models.BA{}, fmt.Errorf("failed to open Excel file: %v", err)
+	}
+
+	// Get all rows from the first sheet
+	rows, err := f.GetRows(f.GetSheetName(0))
+	if err != nil {
+		return models.BA{}, fmt.Errorf("failed to read Excel rows: %v", err)
+	}
+
+	currentDate := time.Now().Format("2006-01-02")           // Get current date in yyyy-MM-dd format
+	parsedDate, err := time.Parse("2006-01-02", currentDate) // Parse it into a time.Time object
+	if err != nil {
+		return models.BA{}, fmt.Errorf("failed to parse date: %v", err)
+	}
+
+	// Create BA record
+	ba := models.BA{
+		ProjectId:      metadata.ProjectId,
+		BASubject:      *metadata.Subject,
+		BADate:         models.CustomDate{Time: parsedDate}, // Set the parsed date
+		RecepientName:  metadata.RecepientName,
+		OrganizationId: &organizationID,
+		CreatedBy:      &userID,
+	}
+
+	if err := s.baRepo.Create(&ba); err != nil {
+		return ba, fmt.Errorf("failed to create BA: %v", err)
+	}
+
+	var currentSectionID int
+	var currentDetailID int
+	headerFound := false                      // Flag to indicate whether the header row has been found
+	var grandTotal float64                    // Variable to accumulate the grand total
+	var totalCurrentProgresPercentage float64 // Variable to accumulate the grand total
+	var totalCurrentProgresM2 float64         // Variable to accumulate the grand total
+	var totalPrevProgresPercentage float64    // Variable to accumulate the grand total
+	var totalPrevProgresM2 float64            // Variable to accumulate the grand total
+
+	for rowIndex, row := range rows {
+		if len(row) == 0 {
+			continue // Skip empty rows
+		}
+
+		// Detect header row
+		if !headerFound && len(row) >= 6 &&
+			strings.EqualFold(strings.TrimSpace(row[0]), "No") &&
+			strings.EqualFold(strings.TrimSpace(row[1]), "Area Pemasangan") &&
+			strings.EqualFold(strings.TrimSpace(row[2]), "Qty") {
+			log.Printf("Header row found at line %d", rowIndex+1)
+			headerFound = true
+			continue // Skip the header row and proceed to the next row
+		}
+
+		// Skip rows until the header row is found
+		if !headerFound {
+			log.Printf("Skipping row %d: header not found yet", rowIndex+1)
+			continue
+		}
+
+		// Check if it's a new section based on "No" column
+		if isAlphabet(row[0]) {
+			if len(row) < 2 { // Ensure section row has enough columns
+				log.Printf("Skipping invalid section row at line %d: insufficient columns", rowIndex+1)
+				continue
+			}
+			section := models.BASection{
+				BAID:           &ba.BAId,
+				SectionName:    &row[1],
+				OrganizationId: &organizationID,
+				CreatedBy:      &userID,
+			}
+			if err := s.sectionRepo.Create(&section); err != nil {
+				return ba, fmt.Errorf("failed to create BA section: %v", err)
+			}
+			currentSectionID = section.BASectionId // Get the inserted SectionId
+			continue
+		}
+
+		// Parse rows as details
+		if isNumeric(row[0]) {
+			if len(row) < 7 { // Ensure detail row has enough columns
+				log.Printf("Skipping invalid detail row at line %d: insufficient columns", rowIndex+1)
+				continue
+			}
+
+			unitPrice := parseFloat(row[4])
+			discountedPrice := parseFloat(row[5])
+			discountPercentage := 0.0
+			totalPrice := parseFloat(row[6])
+
+			// Add to grand totals
+			if totalPrice != nil {
+				grandTotal += *totalPrice
+			}
+
+			totalPrevProgresM2 += parseFloatNonPointer(row[8])
+			totalPrevProgresPercentage += parseFloatNonPointer(row[9])
+			totalCurrentProgresM2 += parseFloatNonPointer(row[10])
+			totalCurrentProgresPercentage += parseFloatNonPointer(row[11])
+
+			if unitPrice != nil && discountedPrice != nil {
+				discountPercentage = ((*unitPrice - *discountedPrice) / *unitPrice) * 100
+			}
+
+			detail := models.BADetail{
+				SectionID:        &currentSectionID,
+				ItemName:         &row[1],
+				Quantity:         parseFloatNonPointer(row[2]),
+				Unit:             &row[3],
+				UnitPrice:        unitPrice,
+				DiscountPrice:    &discountPercentage,
+				TotalPrice:       totalPrice,
+				OrganizationId:   &organizationID,
+				WeightPercentage: parseFloat(row[7]),
+				CreatedBy:        &userID,
+			}
+
+			if err := s.detailRepo.Create(&detail); err != nil {
+				return ba, fmt.Errorf("failed to create BADetail: %v", err)
+			}
+
+			log.Printf("Successfully created BADetail with ID: %v", detail.DetailId)
+
+			currentDetailID = detail.DetailId
+			if currentDetailID == 0 {
+				return ba, fmt.Errorf("BADetail creation failed: DetailId is 0")
+			}
+
+			progress := models.BAProgress{
+				DetailId:                   currentDetailID,
+				ProgressPreviousM2:         parseFloat(row[8]),
+				ProgressPreviousPercentage: parseFloat(row[9]),
+				ProgressCurrentM2:          parseFloat(row[10]),
+				ProgressCurrentPercentage:  parseFloat(row[11]),
+				OrganizationId:             &organizationID,
+				CreatedBy:                  &userID,
+			}
+
+			if err := s.progressRepo.Create(&progress); err != nil {
+				return ba, fmt.Errorf("failed to create BAProgress: %v", err)
+			}
+
+			log.Printf("Successfully created BAProgress for DetailId: %v", currentDetailID)
+		}
+
+	}
+
+	ba.TotalPrice = &grandTotal
+	ba.ProgressPreviousM2 = &totalPrevProgresM2
+	ba.ProgressPreviousPercentage = &totalPrevProgresPercentage
+	ba.ProgressCurrentM2 = &totalCurrentProgresM2
+	ba.ProgressCurrentPercentage = &totalCurrentProgresPercentage
+
+	if err := s.baRepo.Update(&ba); err != nil {
+		log.Printf("Error updating BA: %v", err)
+	}
+	// Successfully processed the Excel and updated the project
+	s.PublishFullReindexEvent(ba.BAId, "", userID)
+
+	// Return the grand total along with nil error (indicating success)
+	return ba, nil
+}
+
+// Helper function to check if a string is an alphabet
+func isAlphabet(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	return unicode.IsLetter(rune(input[0]))
+}
+
+// Helper function to check if a string is numeric
+func isNumeric(input string) bool {
+	_, err := strconv.Atoi(input)
+	return err == nil
+}
+
+// Helper function to parse a string into a float pointer
+func parseFloat(input string) *float64 {
+	// Trim spaces and unwanted characters
+	cleaned := strings.TrimSpace(strings.ReplaceAll(input, ",", ""))
+
+	// Attempt to parse the cleaned string
+	value, err := strconv.ParseFloat(cleaned, 64)
+	if err != nil {
+		return nil // Return nil if parsing fails
+	}
+	return &value
+}
+
+// Helper function to parse a string into a float64 value
+func parseFloatNonPointer(input string) float64 {
+	// Trim spaces and unwanted characters
+	cleaned := strings.TrimSpace(strings.ReplaceAll(input, ",", ""))
+
+	// Attempt to parse the cleaned string
+	value, err := strconv.ParseFloat(cleaned, 64)
+	if err != nil {
+		return 0 // Return 0 if parsing fails (or choose another default value)
+	}
+	return value
 }

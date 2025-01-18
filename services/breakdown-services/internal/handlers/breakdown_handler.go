@@ -6,6 +6,7 @@ import (
 	"AmanahPro/services/breakdown-services/internal/domain/models"
 	"AmanahPro/services/breakdown-services/internal/dto"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -608,4 +609,63 @@ func (h *BreakdownHandler) DeleteBreakdownItem(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// ImportSphFromExcel
+// @Summary Import SPH data from an Excel file
+// @Description Import SPH data along with metadata
+// @Tags SPHs
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param ProjectId formData string true "ProjectId"
+// @Param Subject formData string true "Subject"
+// @Param Date formData string true "Date (yyyy-MM-dd)"
+// @Param Mandor formData string true "Mandor"
+// @Param file formData file true "Excel File"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string
+// @Router /api/breakdowns/import [post]
+func (h *BreakdownHandler) ImportFromExcel(c *gin.Context) {
+	var metadata dto.BreakdownImportDTO
+
+	// Bind form fields to metadata
+	if err := c.ShouldBind(&metadata); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metadata"})
+		return
+	}
+
+	// Parse the file from the request
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File upload failed"})
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
+		return
+	}
+
+	claims, err := helpers.GetClaims(c)
+	if err != nil {
+		return
+	}
+
+	// Call the service to process the file and get the grand total
+	ba, err := h.breakdownService.ImportFromExcel(metadata, fileBytes, *claims.OrganizationId, claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return the grand total as part of the response
+	c.JSON(http.StatusOK, gin.H{
+		"message": "import successful",
+		"data":    ba,
+	})
 }

@@ -337,13 +337,23 @@ func (s *SphService) ImportSphFromExcel(metadata dto.SphImportDTO, fileBytes []b
 				grandTotal += *totalPrice // Add to grand total
 			}
 
+			unitPrice := parseFloat(row[4])
+			discountedPrice := parseFloat(row[5])
+			discountPercentage := 0.0
+
+			if unitPrice != nil && discountedPrice != nil {
+				// Dereference the pointers to get the float64 values
+				discountPercentage = ((*unitPrice - *discountedPrice) / *unitPrice) * 100
+
+			}
+
 			detail := models.SphDetail{
 				SectionId:       currentSectionID, // Use the actual SectionId
 				ItemDescription: &row[1],
 				Quantity:        parseFloat(row[2]),
 				Unit:            &row[3],
 				UnitPrice:       parseFloat(row[4]),
-				DiscountPrice:   parseFloat(row[5]),
+				DiscountPrice:   &discountPercentage,
 				TotalPrice:      totalPrice,
 				OrganizationId:  &organizationID,
 				CreatedBy:       &userID,

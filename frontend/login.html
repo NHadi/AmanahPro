@@ -103,8 +103,14 @@
           } else {
               console.error("Role not found in the data object.");
           }
+
+          if(roleName == "SPV"){
+            window.location.href = "project-recap-spv.html"; // Redirect to dashboard
+          }else {
+            window.location.href = "dashboard.html"; // Redirect to dashboard
+          }
           
-          window.location.href = "dashboard.html"; // Redirect to dashboard
+        
         } else {
           alert("Login failed: Invalid email or password.");
         }

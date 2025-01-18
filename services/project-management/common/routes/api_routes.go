@@ -25,12 +25,13 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 	// Financial routes
 	financial := api.Group("/project-financials")
 	{
-		financial.POST("", handlers.ProjectFinancial.CreateProjectFinancial)                        // Create a financial record
-		financial.PUT("/:financial_id", handlers.ProjectFinancial.UpdateProjectFinancial)           // Update a financial record
-		financial.DELETE("/:financial_id", handlers.ProjectFinancial.DeleteProjectFinancial)        // Delete a financial record
-		financial.GET("/:financial_id", handlers.ProjectFinancial.GetProjectFinancialByID)          // Get a financial record by ID
-		financial.GET("/project/:project_id", handlers.ProjectFinancial.GetAllFinancialByProjectID) // Get all financial records for a project
-		financial.GET("/financial-summary", handlers.ProjectFinancial.GetProjectFinancialSummary)   // Get all financial records for a project
+		financial.POST("", handlers.ProjectFinancial.CreateProjectFinancial)                             // Create a financial record
+		financial.PUT("/:financial_id", handlers.ProjectFinancial.UpdateProjectFinancial)                // Update a financial record
+		financial.DELETE("/:financial_id", handlers.ProjectFinancial.DeleteProjectFinancial)             // Delete a financial record
+		financial.GET("/:financial_id", handlers.ProjectFinancial.GetProjectFinancialByID)               // Get a financial record by ID
+		financial.GET("/project/:project_id", handlers.ProjectFinancial.GetAllFinancialByProjectID)      // Get all financial records for a project
+		financial.GET("/financial-summary", handlers.ProjectFinancial.GetProjectFinancialSummary)        // Get all financial records for a project
+		financial.GET("/financial-spv-summary", handlers.ProjectFinancial.GetProjectFinancialSPVSummary) // Get all financial records for a project
 
 	}
 }

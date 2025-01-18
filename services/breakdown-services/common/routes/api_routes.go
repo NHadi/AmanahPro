@@ -17,7 +17,7 @@ func RegisterAPIRoutes(api *gin.RouterGroup, handlers *handlers.Handlers) {
 		breakdowns.DELETE("/:breakdown_id", handlers.Breakdown.DeleteBreakdown) // Delete a breakdown
 		// Route for syncing breakdown with master data
 		breakdowns.POST("/:breakdown_id/sync", handlers.Breakdown.SyncBreakdownWithMaster)
-
+		breakdowns.POST("/import", handlers.Breakdown.ImportFromExcel)
 		// Breakdown Sections
 		sections := breakdowns.Group("/:breakdown_id/sections")
 		{
